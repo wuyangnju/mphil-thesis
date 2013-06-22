@@ -205,6 +205,180 @@ In this Chapter, we first interpret...!
 
 \chapter{Parallel Computing}
 
+\section{Introduction}
+
+Parallel computing means executing computational tasks simultaneously. It is useful when a large problem can be divided into smaller ones, and such small problems can be carried out at the same time, thus speeding up the whole process. In terms of granularity, parallel computing can be divided into three different levels: bit level, instruction level and task level.
+
+\subsection{Bit-Level Parallelism}
+
+Bit-level parallelism is related to the size of computer word. Inside the processor, several bits are manipulated together, which composes a computer word, and the size of computer word is defined as the number of bits it contains. Historically, 4-bit computer word has been replaced by 8-bit, then 16-bit, 32-bit, until today's 64-bit. Although not very close to ordinary people, computer with 128-bit computer word or even larger one has been made.
+
+\subsection{Instruction-Level Parallelism}
+
+Instruction-level parallelism is a more interesting topic in computer architecture. An instruction is a computer word with special meaning for processors. Any computer program will essentially become a stream of instructions before getting executed, no matter what programming language it is written in. These instructions will get re-ordered and grouped before executing, certainly without changing the result of original instruction stream. Besides, an instruction can be divided into several stages, with each stage corresponding to a certain action, such as instruction fetch, decode, execute, memory access, write back and so on, which enables the instruction pipeline in modern processors. In addition to pipeline, the pipeline units inside some modern processors can even handle more than one action at a time, which is known as super-scalar.
+
+Before instruction-level parallelism is adopted, the instructions inside a stream are executed serially. At any time, there is at most one instruction getting executed. The next instruction won't start unless the previous one finishes. Under such circumstances, the execution time is easy to calculate, which equals the average execution time per instruction, multiplied by the number of instructions. Without changing the amount of instructions inside a stream, the only way to decrease the execution time is to increase CPU clock frequency, which is called frequency scaling.
+
+However, frequency scaling is limited by many physical constraints, like power consumption, heat generation and so on. Thus instruction-level parallelism has become a way out under current physical constraints, and attracts many researchers in the field of computer architecture.
+
+\subsection{Task-Level Parallelism}
+
+Task-level parallelism is a higher level parallelism in the sense that it needs support from both hardware and software. In another word, both bit-level parallelism and instruction-level parallelism are implemented inside processors, making them transparent, or invisible to software. Even operating system, the most fundamental software inside computer, do not have control on bit-level and instruction-level parallelism. 
+
+Earlier computers without task-level parallelism can also support multi-tasking, since multi-tasking operating system takes care of switching different tasks back and force from time to time according to some strategy, including saving and restoring context for each task, and does not have to wait until current task finishes. From the viewpoint of a user, the computer is doing task in parallel, but precisely speaking, such fake parallelism should be called concurrency. 
+
+As for modern computers with task-level parallelism support, like multi-core or multi-processor, which will be introduced later, they do have the ability to make different tasks executing in real parallel, certainly also with the support from software. We will look into the details of how hardware and software support parallel in the next two sections.
+
+\section{Hardware Parallel Support}
+
+\subsection{Multi-core Processor}
+
+Computers with Von Neumann architecture, which is still the dominant computer architecture today, will have at least one processor inside. For a processor, it can contain more than one execution units, or cores, on the same chip. Such processor is known as multi-core processor. Different cores inside the same multi-core processor can handle different instruction streams at the same time, thus achieve the real parallel. By the way, a core can also be super-scalar, thus handles multiple instructions from the same instruction stream. As for Intel's Hyper-Threading technology, which uses the same core to handle a different instruction stream when this core get into idle for some reason, is a form of pseudo multi-core processing.
+
+\subsection{Multi-processor Computer}
+
+One step further from multi-core processor, a computer can have more than one processors, like SMP, standing for symmetric multi-processor, which is a single computer equipped with multiple identical processors. The existence of multiple processors inside the same computer brings about the issue of accessing memory and communicating with each other.
+
+A computer where every address of memory can be accessed within equal latency and bandwidth is recognized as Uniform Memory Access(UMA), otherwise it belongs to Non-Uniform Memory Access (NUMA). SMP is one kind of Uniform Memory Access, while MPP, standing for massively parallel processor, which is a single computer with multiple networked processors, belongs to Non-Uniform Memory Access.
+
+Communication among processors of the same computer can be implemented in many ways, from a simple shared media like memory or bus to complicated internal network involving topologies like star or ring and routing strategies if some processors are not connected directly.
+
+\subsection{Cluster}
+
+A group of standalone computers can be connected via network to compose a cluster. Since these connected computers work together, this cluster can be regarded as one powerful computer. A cluster composed by multiple identical computers connected via TCP/IP Ethernet local area network is called Beowulf cluster, which is the most common type of cluster.
+
+Computers composing a cluster does not have to be identical with each other, which can increase the flexibility, but also increase the difficulty for load balancing. Except from the extra network compared to single computer, other technical issues like configuration, monitoring even fault tolerance also create challenges that can't be ignored.
+
+\subsection{Distributed Computing}
+
+In a narrow sense, distributed computing means using computers communicating over the Internet to work together on a certain problem. Comparing with a cluster, communication cost over the Internet is much higher since the throughput is low while the latency may be unstable. So typically such distributed computing only deals with embarrassingly parallel problems in which communications among sub-problems are not that frequent. SETI@home is one of the best-known example of such distributed computing.
+
+In a wider sense, distributed computing means multiple computational entities, or nodes, with their own local memory and communicating by message passing, working together to archive a certain goal. If these nodes are deployed on different physical machines in a cluster, they possess their own local physical memory and pass messages through network protocols. On the contrary, if they're deployed on the same physical machine, then the nodes are degenerated to local processes and possess their own virtual memory only. Processes on the same physical machine can certainly pass messages through network protocols via local loop network as if they're on different physical machines, but they can also choose to communicate through local operating system as a more efficient choice. For the concept of process, we will introduce it in the next paragraph.
+
+\section{Software Parallel Support}
+
+\subsection{Process upon Operating System}
+
+Process is a fundamental concept in operating system. In section 3.1.3, we introduced how multi-tasking operating system make multiple tasks executed concurrently without hardware task-level parallelism. Here, the tasks should be called processes. Even with the hardware task-level parallelism, modern operating systems also regard different tasks as different processes, and provide basic services like scheduling execution on multiple cores or processors, pass messages if processes need communication, thus taking advantage of the real parallelism ability from corresponding hardware.
+
+Formally speaking, process is an executing instance of a computer program. A computer program alone contains only static instructions, while a process also contains current execution status. Of course, multiple processes can be different instances from the same program.
+
+With the help of operating system, processes are isolated from each other, in the sense that processes have no idea whether they're sharing CPU, memory or other computing resources with other processes, as if they occupy the whole computer, although actually the CPU is time division multiplexed while memory is space division multiplexed. Nevertheless, in this way programmers can focus on one program without considering other processes on the same machine.
+
+On the other hand, processes on the same physical machine can communicate with each other through mechanisms provided by operating system, like shared memory, pipeline, where the output of one process get passed to another as input, and so on.
+
+Achieving parallelism through multiple processes is based on the underlay distributed memory architecture, even they're on the same physical machine, since the operating system isolated the memories by virtual memory mechanise. Another famous memory architecture is called shared memory architecture, and we will use the concept of thread to illustrate it in the next paragraph.
+
+\subsection{Thread inside Process}
+
+Thread is a lighter concept compared with process in the sense that it is always contained inside a process. A process can have multiple threads, but at least have one, the "main" thread. Scheduling and cooperating multiple threads inside the same process involves less about operating system, thus saving computing resources. Besides, the underlay shared memory architecture, covering the memory spaces of containing process, has also provided more convenience and flexibility for programmers.
+
+Except from thread, or precisely the POSIX Thread, OpenMP is another most widely used shared memory API. API is short for Application Programming Interfaces and can be regarded as the conventional way to use libraries installed on or provided by operating system. Both two APIs are supposed to be provided on different operating systems, in another word, cross-platform. However, the API related to process will be different if they're on different kind of operating systems since its highly coupled with underlay operating system and not cross-platform.
+
+\subsection{Communication through Protocol}
+
+The only way for processes deployed on different physical machines to communicate is via network, thus network communication protocols are involved. In other words, network protocols are involved within distributed computing. Network protocol is a set of rules for exchanging messages among computers. No matter whether communicating computers are identical or not, they can communicate with each other as long as they use the same network communication protocol.
+
+Network communication protocol is layered. The theoretical standard is OSI model with seven layers, while the practical standard is TCP/IP model, which only has for broad layers: link layer, Internet layer, transport layer and application layer.
+
+For software developers of distributed application, including pure parallel computing, the design decision starts varying from the Transport layer, with basically two big choices: Transmission Control Protocol(TCP) or User Datagram Protocol(UDP). TCP provides reliable, ordered, error-checked delivery of data, while UDP is connectionless and emphasizes more on lowered overhead and reduced latency. In other words, using UDP brings the chance to speed up communication with the risk of possible invalid transmitted data. Software developers of distributed application can choose to ignore the risk or pay more code on ensuring transmitted data.
+
+Beyond transport layer, software developers also need to make design decision of application layer, say, to use existing protocols like HTTP or develop application specified protocol. HTTP stands for Hypertext Transfer Protocol and is based on client/server model. It is well supported in most dominant programming languages in format of library thus quite easy to use. Developing application specified protocol based on TCP or UDP may gain extra performance but also cost more effect and taking the risk of non-robustness.
+
+\section{Performance and Scalability}
+
+\subsection{Speed-up Ratio}
+
+Speed-up ratio shows how much a parallel program is faster than its corresponding sequential program. It's defined in the following formula:
+
+$$ S_n = \frac{T_1}{T_n} $$
+
+Here $n$ is the number of parallel execution units, $T_1$ is the execution time of the sequential program and $T_2$ is the execution time of the parallel program with n parallel execution units. Linear speed-up or ideal speed-up is archived when $S_n = n$. 
+
+We also defined efficiency as
+
+$$ E_n = \frac{S_n}{n} = \frac{T_1}{nT_n} $$.
+
+It's typically between zero and one, estimating how well the computing power is utilized, or how much cost is brought by communication or other issues. A trivial case is linear speed-up parallel program will always have an efficiency of 1.
+
+\subsection{Amdahl's Law and Gustafson's Law}
+
+Linear speed-up is only an optimally case. Most parallel programs will have a part of the program which is serial, or can not be paralleled at all, and it is this part of serial program will eventually limit the overall speed-up available from parallelism. This is the fact pointed out by Amdahl's law, which defines the speed-up ratio as:
+
+$$ S_n = \frac{1}{(1 - p) + \frac{p}{n}} $$
+
+Here $n$ is the number of parallel execution units, $p$ is the portion of program that can be paralleled, thus $(1-p)$ is the portion of the serial part. As $n$ goes to infinity, we have:
+
+$$ \lim_{n \to +\infty} S_n = \lim_{n \to +\infty} \frac{1}{(1 - p) + \frac{p}{n}} = \frac{1}{1 - p} $$
+
+And this is the maximum speed-up we can archive from parallelism, no matter how well we do in other aspects like scheduling or communication, as long as the portion that can be paralleled is fixed.
+
+Amdahl's Law is pessimistic in the sense that once the computation amount is fixed we can only archive a limited speed-up ratio. However, from another viewpoint of fixing the total execution time instead of total computation amount, we have the optimistic Gustafson's law, which defines the speed-up ratio as:
+
+$$ S_n = (1 - p) + n \times p $$
+
+Here $n$ and $p$ is still the same meaning as what they're in Amdahl's Law but the speed-up ratio does not have a upper limit as $n$ goes to infinity any more.
+
+Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practise, and we will give an example later.
+
+\subsection{More Affecting Issues}
+
+The first issue is dependency, which appears when computing depends upon prior result. These computation must be carried out in order, thus forming a dependence chain and explains how serial portion in a parallel program exists. No program can run more quickly than the longest chain, which is also known as the critical path.
+
+The second one is race condition, which appears when two or more executing units update a certain variable at the same time and causing errors. This is because the two instruction streams can cross with each other in any order. For example, if both executing units would like to read a variable a, plus it by one, then write result back, the actual execution order could be one executing unit read a's value between the other executing unit's read and write back, thus making the final result equals to a's original value plus 1 rather than 2.
+
+The way to solve race condition is using a lock to provide mutual exclusion when accessing variables shared to multiple execution units, thus making the whole process serial, behaving in a deterministic way and guarantee the correctness. However, here the serial portion will be linear to the number of executing units, which violates the assumption of both Amdahl's law and Gustafson's law.
+
+Barrier is a special format lock for synchronization purpose. Basically synchronization here means two or more executing units join up at a certain point, for example, before print out all the final result. Then a barrier is used to stop the instructions after the join point from executing before every executing units reach this join point.
+
+The third issue is deadlock, appears when multiple locks are involved. For example, if executing unit one locked variable a, and tried to lock variable b, while executing unit two locked variable b, and tried to lock variable a, then both executing units will wait for each other to release the mutual exclusion of the variable it is waiting for. This situation is called deadlock and the program will never finished. Some lock-free and wait-free algorithms can avoid the usage of lock or barrier, but they're more difficult to implement and suitable use cases are limited.
+
+There're still many other issues not mentioned here but also need to take consideration before carrying out parallel computing.
+
+\section{Common Parallel Patterns}
+
+A pattern is a tested solution to a certain kind of problem under some conditions. Here we have summarised several common patterns in parallel computing and listed them below.
+
+\subsection{Embarrassingly Parallel}
+
+Embarrassingly parallel looks more like a problem rather than a pattern. It deals with problems where separating the original problem into smaller ones takes very little or no effort at all. This happens when no communication or dependence exists among separated small problems, for example, if all sub-problems just need to do the same operation and they are independent from each other.
+
+Some problems can be turned into embarrassingly parallel easily. For example, if all sub-problems dependent only on global data structure, then just replicate global data to all sub-problems thus being embarrassingly parallel.
+
+\subsection{Pipeline}
+
+Pipeline is a classic pattern or architecture. We have already introduced hardware pipelines inside processor cores in section 3.1.2, and here we will introduce software pipeline pattern or architecture, for parallel purpose.
+
+Software pipeline is composed of several threads or processes, which depends on implementation. A continuous data stream flows into the first thread or process as input and pass corresponding output as input to next thread or process. It continues so that every thread or process can do certain action on part of data simultaneously.
+
+The most popular software pipeline should be Unix pipeline. It composes Unix commands into a pipeline with simple $\mid$ signs, which makes Unix shell extremely strong and flexible. It is implemented with multiple processes.
+
+\subsection{Master-Slave}
+
+Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task.
+
+Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
+
+Master-Slave pattern is a high-level abstract pattern. There're many specific instances, like fork-join. 
+
+Fork-join maybe the simplest instance of master-slave structure. In this instance the master will start or fork many slaves first, then wait for or join the finish point of all the slaves, with a barrier generally.
+
+Master-Slave structure is so high-level abstract that even the Hadoop map-reduce, which we will introduce in the next section, has a master-slave structured underlay.
+
+\subsection{Map-Reduce}
+
+This pattern has become hot in recent years due to Google's publication followed by Apache's open source implementation named Hadoop. The key idea is to first split original data set into small pieces and perform the same operation called "map" on these data pieces, turning every data piece into key-value pair format. Then perform the same operation called "reduce" on the intermediate key-value pairs and finally combined them together to get final result.
+
+It is much more than a theoretical pattern because of the Hadoop framework. It has covered many parallel implementation details so that programmer can focus on the business logic part, say, "map" operation and "reduce" operation. The only left difficult point for programmers is how to fit original problem into such two steps.
+
+\subsection{Parallel Pattern Conclusion}
+
+Parallel patterns listed above are common and intuitive. They take advantage of data decomposition and functional decomposition, but rely heavily on the natural presentation of original problem and fit problem into suitable patterns.
+
+To expose better parallelism, advanced tricks are involved like Fast Fourier Transform to take advantage of specific domains, which are not that common any more.
+
+Besides, patterns are more art than science. It is not that important whether a pattern is adopted, as long as the problem get solved.
+
 \chapter{Parallel Implementation of Ranking and Selection Procedure}
 
 \chapter{Numerical Result and Analysis}
