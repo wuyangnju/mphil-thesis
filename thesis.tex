@@ -257,7 +257,7 @@ $$ E[\frac{1}{2}\exp(- \frac{a\delta}{n_0 - 1} \Psi)] = 1 - (1 - \alpha)^{\frac{
 where $\Psi$ is a random variable with PDF
 $$ f_{\Psi}(x) = 2 [1 - F_{\chi_{n_0 - 1}^2}(x)] f_{\chi_{n_0 - 1}}^2(x) $$,
 and $F_{\chi_{n_0 - 1}^2}(x)$ and $f_{\chi_{n_0 - 1}}^2(x)$ are the CDF and PDF of $\chi^2$ distribution with $n_0 - 1$ degrees of freedom.
-\item{Initialize: } Let $I = {1, 2,...,k}$ be the set of current surviving alternatives. Again collect $n_0$ independent sample values $X_{ij}$ where $j = 1, 2,...,n_0$ and $i = 1, 2,...,k$ by repeating simulation experiments against corresponding alternatives. Let $r$ be the counter of total number of samples and $n_i(r)$ be the number of samples of alternative $i$. Till now, $r = kn_0$, and $n_1(r) = n_2(r) =···= n_k(r) = n_0$.
+\item{Initialize: } Let $I = {1, 2,...,k}$ be the set of current surviving alternatives. Again collect $n_0$ independent sample values $X_{ij}$ where $j = 1, 2,...,n_0$ and $i = 1, 2,...,k$ by repeating simulation experiments against corresponding alternatives. Let $r$ be the counter of total number of samples and $n_i(r)$ be the number of samples of alternative $i$. Till now, $r = kn_0$, and $n_1(r) = n_2(r) = ... = n_k(r) = n_0$.
 \item{Screening: } For all $i,j \in I$ and $i \neq j$, let 
 $$ \tau_{ij}(r) = [\frac{S_i^2}{n_i(r)} + \frac{S_j^2}{n_j(r)}]^{-1} $$
 and
@@ -471,11 +471,49 @@ Besides, patterns are more art than science. It is not necessary to stick strict
 
 \chapter{Parallel Implementation of Ranking and Selection Procedure}
 
+As can be seen from above, due to the complicated way in which the computing power grows in the age of parallel computing, it is impossible to gain speed-up in problem solving without carefully design a parallelism plan against targeted problem. And we will start this part by analysing the parallelism inside the existing procedures.
+
 \section{Parallelism Analysis of Existing Procedures}
+
+Independent is a frequently appeared modifier in literatures of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesign R\&S into parallel.
+
+However that's only for the simulation, or sampling part. The procedure itself is completely in a serial style, namely one step is often dependent on the one prior to it. Sometimes even loops exist among steps. This serial style composes an implicit dependency chain, and becoming the potential performance bottle-neck for the whole implementation.
+
+Now let's look into the two representative procedures we have reviewed before.
 
 \subsection{Rinott's Procedure}
 
+In the beginning part of Ronott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
+
+Later sampling tasks in the initialize step, or first-stage, can be paralleled due to the independence. However, a hidden lock, or barrier lays here, since we have to wait until all the simulation experiments return its result, or sample value before we move on to the next step. Luckily to archive load balance here is quite easy.
+
+As for the sampling tasks in the stopping step, or second-stage, it is similar to those mentioned above, only differs that the required sample numbers of different alternatives are not the same, which doesn't affect parallelism at all. Again, a implicit barrier is needed before we report the final selection.
+
+Besides, the calculation after each barrier should be considered as the serial part of the whole program.
+
+Anyway, Rinott's procedure is fairly easy getting paralleled.
+
 \subsection{Fully Sequential Procedure}
+
+Although Rinott's procedure can get paralleled with fairly little effort, there is still enough motivation for us to study the parallelism of fully sequential procedures, since such procedure can solve problem with smaller sample size, namely total computing effort in terms of serial computing. Let's still take the one in \cite{ras-seq-jeff} as an example.
+
+In the beginning part of this procedure, it's the same as Ronott's procedure and work here has to be done serially.
+
+In the first-stage, it's exactly the same as Ronott's procedure, say embarrassingly parallel ends with a barrier.
+
+However in the second-stage, things become totally different and much more interesting. Basically, the original idea is to repeat the process of taking a sample value, or running a simulation experiment, against certain alternative, then do some calculation globally to see whether some alternative can get eliminated, until there's only one alternative surviving. Let's dig out the parallelism here bit by bit.
+
+Firstly, we don't need to run simulation experiment only one at a time, why not start as many simulation experiments as we can, as long as we do have so many task-level parallel executing units?
+
+It looks reasonable but at least the corresponding sampling the rule need to be modified to adapt to parallel environment.
+
+Secondly, do we have to carry out the global calculation, or more precisely the comparison, every time after we obtain a sample value?
+
+It should be noticed that, carrying out a global comparison will need mutual exclusive protection, otherwise the appearance of a new sample value during the comparison will make global data inconsistent for this comparative calculation. In other words, a global comparison is expensive in parallel environment.
+
+Solutions based on decreasing comparison time sounds reasonable, but they waste elimination chances in potential. Besides, existing theory does not offer enough support.
+
+All these trouble lays on the point that the original procedure is not designed specifically for parallel environment at all. It's time to redesign R\&S procedures and we will introduce two revised procedures which are more suitable in parallel environment, in the next section.
 
 \section{Revised Procedures for Parallelism}
 
