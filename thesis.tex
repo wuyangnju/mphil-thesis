@@ -3,6 +3,7 @@
 
 \usepackage{amsmath}
 \usepackage{epsfig,amsthm}
+\usepackage{amssymb}
 %\usepackage{epsfig,amstex,amsthm}
 
 \linespread{1.6}
@@ -199,15 +200,104 @@ Section 1.3
 
 \chapter{Ranking and Selection Procedures}
 
-\section{Section 2.1}
+\section{Problem of Selecting the Best}
 
-In this Chapter, we first interpret...!
+Selecting the best alternative from a finite number of alternatives, where the best is defined as the largest or smallest expectation of some index specified on every alternative, is a common problem in operation research, in the sense that many practical problems can be modelled in this way. Here we will briefly describe two examples.
+
+\subsection{(s, S) Inventory Problem}
+
+One is about setting up reordering point in inventory management. A general model with two parameters s and S works in the way that as long as the inventory level goes below s, then an order with the amount S - s will be send out, after which the inventory level will regain to S. This is the (s, S) inventory model. And in order to apply this model, extra effort is needed to specify s and S in each practical case to minimize the reordering cost.
+
+In this example, both s and S will be limited by practical issues, like S must be less than the capacity of inventory store, s must between zero and S, both s and S must be natural numbers, which is   often the case, thus making them in a limited range. In another word, the number of possible or feasible combinations of s and S is finite. The index we set up here is the reordering cost and the best combination of s and S is defined as the one with the smallest expectation of the reordering cost index. In this way, practical inventory management problem can be regarded as the theoretical problem of selecting the best.
+
+\subsection{Three-stage Buffer Allocation Problem}
+
+The other one is about allocating buffer space in a multi-stage manufacturing line. Let's take a three stage manufacturing line as an instance. In this case, there are three manufacturing units, or stages, in a manufacturing line, and each stage has its own capacity for manufacturing items. Between each continues two stages, say first and second stage, or second and third stage, there exists a buffer space, which also has its own capacity for manufacturing items. In this model, there're five parameters representing capacities in five locations including the three manufacturing units and tow buffers. The manufacturing manager needs to specify these five parameters to archive maximum throughput for the whole manufacturing line.
+
+Just the same as the previous example, the total number of manufacturing items inside this manufacturing line, or the summation of these five parameters, is limited by practical issues. What's more, these parameters also need to be natural numbers in most cases, thus limiting the number of feasible combinations of these five parameters into finite again. The index here is the throughput for the whole manufacturing line and the best combination of these five parameters is defined as the one which makes the largest expectation of throughput index. Again in this way, the practical three-stage or multi-stage buffer allocation problem is modelled into the theoretical problem of selecting the best.
+
+\section{Ranking and Selection}
+
+In the above two examples, the expectation of the indexes we set up for different cases can be estimated by customized simulation experiments, and inside each case, the expectation of the index for each individual alternative, which is distinguished from other alternatives by a combination of parameters, or a configuration, can be sampled as the output from a single replication of repeated simulation experiments with corresponding configuration as its input. With selecting the best according to the expectations estimated from replicated simulation experiments, this type of solution is often known as a ranking-and-selection, or R\&S, in simulation area.
+
+During the past, many R\&S solutions, or procedures, have been developed. Typically, they allocate simulation effort to all alternatives, namely, running simulation experiments repeatedly for a specified finite number of times against all the configurations, each of which stands for a distinguished alternative. In this way, certain statistical properties are guaranteed when making selection decision, such as the pre-specified probability of correct selection, or PCS for short.
+
+Although many other types of R\&S procedures exist, in this thesis only several representative ones get involved to illustrate our idea. We only take a frequentist’s view and consider the formulation of indifference-zone, or IZ for short. We will briefly review two classic R\&S procedures later in this section, while introduce two newly developed ones in later part of this thesis.
+
+\subsection{Rinott's Procedure}
+
+Rinott's procedure is a classic R\&S procedure developed in 1978 by Rinott. It guarantees with the confidence level $1 - \alpha$ that the alternative get selected is at least $\delta$ better than the second best one. If alternatives within $\delta$ worse than the best one exist, then Rinott's procedure guarantees to select one of these "good enough" alternatives with the same probability. The $\delta$ here is called indifference-zone. It is set by procedure user to determine the smallest difference that is worth getting noticed. In other word, differences less than this $\delta$ can be ignored from a practical viewpoint.
+
+Suppose there are $k$ systems where $k \geqslant 2$. Let $X_{ij}$ denote the $j$th independent sample value from simulation experiments of alternative $i$. We assume that $X_{ij} \backsim N(\mu_i, \theta_i^2)$, where both $\mu_i$ and $\theta_i^2$ are unknown, and each $X_{ij}$ is independent from each other. Also let $\bar{X_i}(r) = r^{-1}\sum_{j=1}^r$, namely the sample mean of first $r$ sample values of alternative $i$, and let $S_i^2 = \frac{1}{n_0 - 1}\sum_{j=1}{n_0}(X_{ij} - \bar{X_i}(n_0))^2$, the sample variance of first $r$ sample values of alternative $i$.
+
+With these symbols, we organize the Rinott's procedure as following steps:
+
+\begin{enumerate}
+\item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. $n_0$ is the sample size in first stage and $n_0 \geqslant 2$.
+\item{Initialize: } Calculate Rinott's constant $h = h(n_0, k, 1 - \alpha)$ with method mentioned in \cite{rinott-constant}. Collect $n_0$ independent sample values $X_{ij}$, where $j = 1, 2,...,n_0$, for each alternative $i$, by repeatedly running simulation experiments against that alternative, and for $i = 1, 2,...,k$, calculate $S_i^2$. Let 
+$$ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $$ where $N_i$ is the number of sample value that will eventually taken from alternative $i$.
+\item{Stopping Rule: } If $n_0 \geqslant \max N_i$ then stop and select the alternative with the best sample mean, namely the largest or smallest $\bar{X_i(n_0)}$. Else take $\max\{N_i - n_0, 0\}$ extra sample values from each alternative $i$ by continue repeating the simulation experiments, after which select the alternative with largest or smallest $\bar{X_i(N_i)}$ as the best.
+\end{enumerate}
+
+And specifically, if the best alternative is defined as the one with largest expectation, then Rinott's procedure guarantees
+$$ Pr\{\text{select alternative i }|\text{ }\mu_i - \mu_j \geqslant \delta \} \geqslant 1 - \alpha $$
+where $1/k < 1 - \alpha < 1$. Since this thesis focuses on implementation, reader interested in the proof may refer to \cite{ras-recent-advances}. 
+
+One related issue worth mentioning here is that the total sample size required in Rinott's procedure is slightly less that $O(k\log{k})$, which determines the total computing effort.
+
+\subsection{A Fully Sequential Procedure}
+
+While the Rinott's procedure mentioned above is a classic two-staged procedure, the procedure we will review right after this paragraph is a newly developed procedure featured as fully sequential. It first appears in \cite{ras-seq-jeff} by L. J HONG in 2004. This procedure provides good statistical validity while keeps a great opportunity of decreasing total number of sample values, approximately the total computing effort need to spend, at same time. The key point is that if at any time there is enough evidence to prove that some certain alternative is clearly inferior, then this alternative will get eliminated immediately in theoretic like what most fully sequential procedures do.
+
+With the symbols same as those in Rinott's procedure, we organize the this procedure as following steps:
+
+\begin{enumerate}
+\item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. Let $\lambda = \eta / 2$ and $a$ be the solution of the equation below:
+$$ E[\frac{1}{2}\exp(- \frac{a\delta}{n_0 - 1} \Psi)] = 1 - (1 - \alpha)^{\frac{1}{k - 1}} $$,
+where $\Psi$ is a random variable with PDF
+$$ f_{\Psi}(x) = 2 [1 - F_{\chi_{n_0 - 1}^2}(x)] f_{\chi_{n_0 - 1}}^2(x) $$,
+and $F_{\chi_{n_0 - 1}^2}(x)$ and $f_{\chi_{n_0 - 1}}^2(x)$ are the CDF and PDF of $\chi^2$ distribution with $n_0 - 1$ degrees of freedom.
+\item{Initialize: } Let $I = {1, 2,...,k}$ be the set of current surviving alternatives. Again collect $n_0$ independent sample values $X_{ij}$ where $j = 1, 2,...,n_0$ and $i = 1, 2,...,k$ by repeating simulation experiments against corresponding alternatives. Let $r$ be the counter of total number of samples and $n_i(r)$ be the number of samples of alternative $i$. Till now, $r = kn_0$, and $n_1(r) = n_2(r) =···= n_k(r) = n_0$.
+\item{Screening: } For all $i,j \in I$ and $i \neq j$, let 
+$$ \tau_{ij}(r) = [\frac{S_i^2}{n_i(r)} + \frac{S_j^2}{n_j(r)}]^{-1} $$
+and
+$$ Y_{ij}(\tau_{ij}(r)) = \tau_{ij}(r)[\bar{X_i}(n_i(r)) - \bar{X_j}(n_j(r))] $$.
+Let $I^{old} = I$ and 
+$$ I = I^{old}\\\{i \in I^{old}: Y_{ij}(\tau_{ij}(r)) < \min[0, - a + \lambda \tau_{ij}(r)] \text{ for some } j \in I^{old} \text{ and } j \neq i\} $$
+\item{Stopping Rule: } If $|I| = 1$ then stop and select the only alternative in $I$ as the best. Else let $r = r + 1$, take the $r$th sample by running simulation experiment, update $n_i(r)$ for all $i \in I$, and goto \textbf{Screening}.
+\end{enumerate}
+
+A missing specification of the above procedure lays in the part of stopping rule, namely the decision of which alternative is the next sample value from, or in other words, which configuration should be used in next replication of simulation experiment. This decision making rule is called sampling rule.
+
+In \cite{ras-seq-jeff}, such sampling rule is applied: after first stage, run next simulation experiment against the surviving alternative with the lowest $n_i(r)/Si$. If a tie exists, run next simulation against the surviving alternative with lowest $S_i$ among them.
+
+The sample size of such fully sequential procedures is typically smaller than that in Ronott's procedure except for some extreme case. Interested reader may refer to \cite{ras-seq-jeff} for detailed properties as well statistical validity proofs.
+
+\section{Shortcoming of Scalability}
+
+Although existing R\&S procedures have gained great achievement in theoretical areas like statistics, practically these procedures can hardly handle scenarios where the number of alternatives is huge. As pointed out by Kim and Nelson (2006a), the two-stage Rinott’s procedure is typically applied when the number of alternatives is fewer than 20. As for fully sequential procedure KN, the number is considered as no more than 500. Other procedures like NSGS which claims to have been designed specifically to solve large-scale R\&S problems, reported 500 alternatives as the largest test case in their paper. However in practice, it is common to have thousands even tens of thousands of alternatives needed to be considered, which has exposed the shortcoming of scalability in R\&S.
+
+\subsection{A Theoretical Make Up}
+
+Traditionally, the shortcoming of scalability in R\&S are made up through solutions of optimization-via-simulation, or OvS for short. OvS is a kind of solutions, or algorithms, which also aims at the problem of selecting the best. It guarantees global convergence, namely when simulation effort goes to infinity, it can eventually guarantee the correct selection of best.
+
+However, the infinite simulation effort means exactly the R\&S procedures. In most of the cases, OvS algorithms will stop so early at some point that it is still quite far way from infinity, which consequently breaks the statistical guarantee of optimal selection. What is worse, the result give by the OvS algorithm may be significantly inferior to the optimal one, making it useless to the selecting of the best problem. 
+
+Essentially speaking, any OvS algorithm will sacrifice statistical guarantee for time-saving through partially applying R\&S. Therefore, it is only a make up solution with trade-off between statistical guarantee and time cost.
+
+\subsection{A Possible Way Out from Implementation}
+
+Since trading off between statistical guarantee and time cost looks like a zero-sum game, we do hope to find a way that can deal with practical-sized problem of selecting the best, with both fully applying R\&S procedures to archive statistical guarantee, and decreasing the time cost to a reasonable amount so that we can afford to wait. A possible way out is from implementation.
+
+As is pointed out by Moore's law, available computing powerful is becoming more and more sufficient, with a speed of doubling itself every 18 months. But fully taking advantage of the fast-growing computing power nowadays is not as straightforward as it used to be, since the time of serial computing, when the growth of computing power relays on serial execution speed, has already past, and we're in the age of parallel computing.
 
 \chapter{Parallel Computing}
 
-\section{Introduction}
+Parallel computing means executing computational tasks simultaneously. It is useful when a large problem can be divided into smaller ones, and such small problems can be carried out at the same time, thus speeding up the whole process.
 
-Parallel computing means executing computational tasks simultaneously. It is useful when a large problem can be divided into smaller ones, and such small problems can be carried out at the same time, thus speeding up the whole process. In terms of granularity, parallel computing can be divided into three different levels: bit level, instruction level and task level.
+\section{Different Parallelism Levels}
+
+In terms of granularity, parallel computing can be divided into three different levels: bit level, instruction level and task level.
 
 \subsection{Bit-Level Parallelism}
 
@@ -367,7 +457,7 @@ Master-Slave structure is so high-level abstract that even the Hadoop map-reduce
 
 \subsection{Map-Reduce}
 
-This pattern has become hot in recent years due to Google's publication followed by Apache's open source implementation named Hadoop. The key idea is to first split original data set into small pieces and perform the same operation called "map" on these data pieces, turning every data piece into key-value pair format. Then perform the same operation called "reduce" on the intermediate key-value pairs and finally combined them together to get final result.
+This pattern has become hot in recent years due to Google's publication \cite{google-map-reduce} followed by Apache's open source implementation named Hadoop. The key idea is to first split original data set into small pieces and perform the same operation called "map" on these data pieces, turning every data piece into key-value pair format. Then perform the same operation called "reduce" on the intermediate key-value pairs and finally combined them together to get final result.
 
 It is much more than a theoretical pattern because of the Hadoop framework. It has covered many parallel implementation details so that programmer can focus on the business logic part, say, "map" operation and "reduce" operation. The only left difficult point for programmers is how to fit original problem into such two steps.
 
@@ -377,9 +467,15 @@ Parallel patterns listed above are common and intuitive. They take advantage of 
 
 To expose better parallelism, advanced tricks are involved like Fast Fourier Transform to take advantage of specific domains, which are not that common any more.
 
-Besides, patterns are more art than science. It is not that important whether a pattern is adopted, as long as the problem get solved.
+Besides, patterns are more art than science. It is not necessary to stick strictly to some pattern as long as the problem get solved.
 
 \chapter{Parallel Implementation of Ranking and Selection Procedure}
+
+\section{Parallelism Analysis}
+
+\subsection{Vector Filling Procedure}
+
+\subsection{Parallel Sequential Procedure}
 
 \chapter{Numerical Result and Analysis}
 
@@ -406,18 +502,10 @@ Here write down your Appendix ...
 %\bibliography{thesis}
 
 \begin{thebibliography}{99}
-\bibitem{L. Kong} L. Kong, L. Zhuang, S.Y. Chou, IEEE Trans. Magn. 33
-(1997) 3019.
-\bibitem{L. Torres} L. Torres, E. Martinez, L. Lopez-Diaz, J. Iniguez,
-J. Appl. Phys.
-\bibitem{S. Tehrani} S. Tehrani, M. Durlam, P. Naji, J. Slaughter, N.
-Rizzo, B. Engel, G.Grynkowich, M. DeHerrera, J. Magn. Magn. Mat.,
-JEMS'01 Symposia.89 (11) (2001) 7585.
-\bibitem{C. D. Mee} C. D. Mee, The Physics of Magnetic Recording
-(North-Holland, Amsterdam, 1986), p. 150.
-\bibitem{S. Y. Chou} S. Y. Chou, Proc. IEEE 85, 652 (1997).
-\bibitem{M. Johnson} M. Johnson, J. Magn. Magn. Mater. 156, 321(1996); G. Prinz and K.
-Hathaway, Phys. Today 48, 24 (1995).
+\bibitem{google-map-reduce}D. Jeffrey, G. Sanjay. MapReduce: Simplified Data Processing on Large Clusters. Google Inc., 2004.
+\bibitem{rinott-constant}Wilcox, Rand R. A Table for Rinott's Selection Procedure. JOURNAL OF QUALITY TECHNOLOGY, April 1984, pp. 97-100.
+\bibitem{ras-recent-advances}Seong-Hee Kim, Barry L. Nelson. RECENT ADVANCES IN RANKING AND SELECTION. Winter Simulation Conference, 2007.
+\bibitem{ras-seq-jeff}L. J Hong. Fully sequential indifference-zone selection procedures with variance-dependent sampling. Naval Research Logistics, 53:464-476, 2006.
 \end{thebibliography}
 
 
