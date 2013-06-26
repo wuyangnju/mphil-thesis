@@ -262,8 +262,8 @@ and $F_{\chi_{n_0 - 1}^2}(x)$ and $f_{\chi_{n_0 - 1}}^2(x)$ are the CDF and PDF 
 $$ \tau_{ij}(r) = [\frac{S_i^2}{n_i(r)} + \frac{S_j^2}{n_j(r)}]^{-1} $$
 and
 $$ Y_{ij}(\tau_{ij}(r)) = \tau_{ij}(r)[\bar{X_i}(n_i(r)) - \bar{X_j}(n_j(r))] $$.
-Let $I^{old} = I$ and 
-$$ I = I^{old}\\\{i \in I^{old}: Y_{ij}(\tau_{ij}(r)) < \min[0, - a + \lambda \tau_{ij}(r)] \text{ for some } j \in I^{old} \text{ and } j \neq i\} $$
+Let $I^{old} = I$, then
+$$ I = I^{old}\\\{i \in I^{old}: \exists j \in I^{old} \text{s.t. } Y_{ij}(\tau_{ij}(r)) < \min[0, - a + \lambda \tau_{ij}(r)]  \text{ and } j \neq i\} $$
 \item{Stopping Rule: } If $|I| = 1$ then stop and select the only alternative in $I$ as the best. Else let $r = r + 1$, take the $r$th sample by running simulation experiment, update $n_i(r)$ for all $i \in I$, and goto \textbf{Screening}.
 \end{enumerate}
 
@@ -505,7 +505,7 @@ However in the second-stage, things become totally different and much more inter
 
 Firstly, we don't need to run simulation experiment only one at a time, why not start as many simulation experiments as we can, as long as we do have so many task-level parallel executing units?
 
-It looks reasonable but at least the corresponding sampling the rule need to be modified to adapt to parallel environment.
+It looks reasonable but at least the corresponding sampling rule needs to be modified to adapt to parallel environment. Besides, even after the modification of sampling rule, another problem of the reordering of the sample obtaining sequence compared to the specified sampling sequence appears. It is due to the uncertainty of which sub-task would be finished earlier even we start these sub-tasks "at the same time" and all the executing units are "identical". The double quotes here means that it is hardly controlled by us whether these sub-tasks are started exactly at the same time and whether these executing units are exactly identical. It's not a big deal and happens in almost every parallel program, but it does become a critical issue in theoretic since it challenges the original implicit assumptions based on which the essential statistical properties are maintained.
 
 Secondly, do we have to carry out the global calculation, or more precisely the comparison, every time after we obtain a sample value?
 
@@ -513,23 +513,81 @@ It should be noticed that, carrying out a global comparison will need mutual exc
 
 Solutions based on decreasing comparison time sounds reasonable, but they waste elimination chances in potential. Besides, existing theory does not offer enough support.
 
-All these trouble lays on the point that the original procedure is not designed specifically for parallel environment at all. It's time to redesign R\&S procedures and we will introduce two revised procedures which are more suitable in parallel environment, in the next section.
+All these trouble lays on the point that the original typical fully sequential procedures are not designed specifically for parallel environment at all. It's time to revise conventional fully sequential R\&S procedure and we will introduce two revised fully sequential procedures which are more suitable in parallel environment, in the next section.
 
-\section{Revised Procedures for Parallelism}
+\section{Revised Fully Sequential Procedures}
 
 \subsection{Vector Filling Procedure}
 
-\subsection{Parallel Sequential Procedure}
+The basic idea for vector fill procedure, or VF for short, is sticking to perform comparisons based on the originally specified sampling sequence, by using an vector recording the sampling values exactly in the order specified by the sampling rule.
 
-\section{Architecture Overview}
+In this way, the first problem mentioned above get solved with the original statistical validity staying unchanged. However as for the second problem, the VF procedure may not use all obtained sample values at the time of each comparison, although procedure users do have a control on comparison opportunity.
 
-\subsection{Master-Slave Structure}
+From the viewpoint of implementation, the most critical issue is that essentially the VF procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
+
+\subsection{Asymptotic Parallel Sequential Procedure}
+
+VF procedure is conservative in the sense that in order to keep most statistical validity it does not utilize all the obtained sample values, which loses many potential chances to eliminate inferior alternative earlier, thus is not that satisfying in speeding up the whole process.
+
+To over come this weakness of vector filling procedure, asymptotic parallel sequential procedure, or APS for short, is developed to allow unequal sample sizes for all alternatives and make elimination decisions based on all obtained sample values. It has been shown that the asymptotically validity can be guaranteed as the indifference-zone parameter goes to zero. Interested reader may refer to \cite{ras-seq-parallel} for more details.
+
+Since APS procedure can fully utilize all the obtained sample values, it is definitely more efficient in eliminating inferior alternatives than VF. Besides, APS procedure doesn't require recording all the sample values obtained. It only needs some summarising information of obtained sample values like summation, summation of square and so on, which can be updated as new sample value obtained. This feature lowers the storage space demand and in this way the whole data of APS procedure can be easily fit into main memory, which guarantees the order of computing speed.
+
+\section{Architecture Based on Master-Slave}
+
+With the revision of existing fully sequential R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
+
+As is introduced in section 3.5.3, master-slave means a master execution unit dealing with the serial part while several slave execution units share the workload which can be carried out in parallel. In the current scenario, the ranking and selection, including specifying sampling rule and making elimination according to obtained sample values from simulation, should be implemented on master, while the independent simulation experiments should be shared among all the slaves, with scheduling from the master.
+
+In this section we will mainly introduce this architecture inside the scope of a single machine, where the whole program is inside a single process and master or slaves are all threads inside this process. At the end we will take a look at scaling it out to a cluster.
 
 \subsection{Master}
 
+As is mentioned above, master will take charge of essential serial steps in ranking and selection procedures, and one thing that should be noticed here is that the master part is not exactly the main thread for the whole program, since there's more "duty" work left to do in the main or entrance thread like parsing parameters of R\&S procedure, inputting the configurations of every alternative and other program level configurations like number of slave threads or directory for log files. Interested reader should refer to the code directly.
+
+At the end of the main thread, when everything is ready including separated slave threads, the main thread will start the execution of master part and end when the master part is done, at which point the whole program is terminated.
+
+For the universality of this implementation, here the logic of ranking and selection procedure is called through a abstract programming interface. To make this clear, readers should first noticed that our implementation can be divided into two major parts. One part includes the core components, the other consists of implementations of different R\&S procedures and different simulation experiments. Every time user of our implementation should choose one specific implementation of R\&S procedure and one specific implementation of simulation experiments, and start this R\&S program together with all the core components.
+
+In other words, the core components are programmed with only dependent on the abstract function signatures of both R\&S and simulation. This follows an important design rule, say, depend on abstract rather than implementation. In this way, the core component part can stay unchanged against the change of R\&S and simulation.
+
+As for the detailed specifications of R\&S implementation and simulation implementation, we will look into details in later part specifically introducing the extension point for self-customized R\&S procedure. And till now we have finished introducing the very abstract master, which is started from almost the end of the main thread and interacts with specific ranking and selection logic through abstract programming interfaces.
+
 \subsection{Slave}
 
-\subsection{Web Interface}
+Generally speaking, there should be multiple instances of slave within a master-slave structure. Within the single machine scope, a slave instance is a dedicated thread and different slave threads are identical in code while different in the data it is processing and the status it is in.
+
+All the threads except from the main thread are started within the main thread, including the dedicated slave threads here. Advanced thread starting technique like thread pool are involved here to archive better scheduling. Interested reader may refer to the code.
+
+Briefly speaking, there are three steps inside a working cycle of slave thread, they're simulation argument fetching, simulation experiment executing and simulation result submitting. The slave threads will follow this working cycle one round after another until explicitly stopped.
+
+Both argument fetching step and result submitting step involve communication with the master, or ranking and selection logic, which is considered as extra cost introduced by adopting parallel computing. We have used two FIFO queues to buffer the arguments and results to reduce such communication cost. Detailed buffering policy will be illustrated in later section with the name buffered communication.
+
+As for the simulation step, again it is done simply by calling the abstract programming interface of simulation task, thus supporting self-customized simulation experiments. Specification of this programming interface will be described in later section.
+
+\subsection{User Interface}
+
+In order to reduce the study cost of users who adopt our implementation, well designed user interface is necessary part in the whole system. In our implementation, the user interface can be divided into two kinds. One is for users using our implementation directly, the other is for users extending in ranking and selection procedure and simulation experiment.
+
+For the first kind of user interface, we could simply leave a command line interface since it is only an academic purpose software tool. However, since at the end of day we would like it to become a computing service, or more precisely, cloud computing, which distributes computing service to end user via Internet, we developed a web interface for it, as a prototype for that stage. Here is a screenshot of that web page:
+
+\begin{center}
+\includegraphics[width=128mm]{rase_web.png}
+\end{center}
+
+In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
+
+As for the second kind of user interface, we will give a detailed introduction in the section discussing extension points later.
+
+\subsection{Scale Out to Cluster}
+
+With a limited number of slave threads inside a single machine, it is very still far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
+
+However, the maximum number of slave threads is empirically limited by the total number of hardware cores on that machine. We can definitely add more slave threads, but without enough hardware parallel executing units, namely cores, it is concurrency in fact, rather than real parallel. Adding more software threads than hardware executing units will hardly gain extra speed up, but will demand more scheduling effort from operating system.
+
+Buying powerful machine with more hardware cores is an approach, which is named as scale up. However the price of the machine will grow much faster than linear against computing power, since the more the machine scales up, the higher technology it requires for manufacturing, which makes the cost increasing dramatically.
+
+A common solution is to compose a cluster with several machines where each of them are not that powerful in single. This is called scale out. We do have worked out a previous implementation which scales out to a small cluster. However, that version does not include features like supporting self-customized R\&S procedure and simulation experiment, since it involves a fundamental refactoring of design. Till this thesis, our latest trunk version have fully supported all the features mentioned in this thesis inside single machine range. We will take scaling out to cluster within latest trunk version as a future work.
 
 \section{Extension Points for Universality}
 
@@ -557,10 +615,9 @@ This thesis has discussed an appropriate index.....!!
 \appendix
 
 
-\chapter{Appendix chapter}
+\chapter{Rase User Guide}
 
-Here write down your Appendix ...
-
+To develop your own simulation code, the following steps are suggested:
 
 \newpage
 %\nocite{*}
@@ -570,6 +627,7 @@ Here write down your Appendix ...
 %\bibliography{thesis}
 
 \begin{thebibliography}{99}
+\bibitem{ras-seq-parallel}J. LUO, L. Jeff HONG, Barry L. Nelson, Y. WU. Fully Sequential Procedures for Large-Scale Ranking-and-Selection Problems in Parallel Computing Environments. Operation Research, 2013.
 \bibitem{google-map-reduce}D. Jeffrey, G. Sanjay. MapReduce: Simplified Data Processing on Large Clusters. Google Inc., 2004.
 \bibitem{rinott-constant}Wilcox, Rand R. A Table for Rinott's Selection Procedure. JOURNAL OF QUALITY TECHNOLOGY, April 1984, pp. 97-100.
 \bibitem{ras-recent-advances}Seong-Hee Kim, Barry L. Nelson. RECENT ADVANCES IN RANKING AND SELECTION. Winter Simulation Conference, 2007.
