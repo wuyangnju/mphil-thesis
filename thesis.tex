@@ -5,6 +5,7 @@
 \usepackage{epsfig,amsthm}
 \usepackage{amssymb}
 \usepackage{listings}
+\usepackage{hyperref}
 %\usepackage{epsfig,amstex,amsthm}
 
 \linespread{1.6}
@@ -572,9 +573,11 @@ In order to reduce the study cost of users who adopt our implementation, well de
 
 For the first kind of user interface, we could simply leave a command line interface since it is only an academic purpose software tool. However, since at the end of day we would like it to become a computing service, or more precisely, cloud computing, which distributes computing service to end user via Internet, we developed a web interface for it, as a prototype for that stage. Here is a screenshot of that web page:
 
-\begin{center}
-\includegraphics[width=128mm]{rase_web.png}
-\end{center}
+\begin{figure}[ht]\label{web-ui}
+\centering
+\includegraphics[width=120mm]{rase_web.png}
+\caption{web page user interface}
+\end{figure}
 
 In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
 
@@ -825,8 +828,9 @@ This parallel ratio fits the R\&S feature that intuitively most workload can get
 
 \chapter{Conclusions and Future Work}
 
-This thesis has discussed an appropriate index.....!!
+In this thesis we have introduced our parallel implementation of both classic Rinott's procedure and two revised fully sequential procedures. Basically it is master-slave structure in higher level and the core components are extracted out while the procedures are implemented as plug-ins, which makes it open for self-customized procedures. Meanwhile, performance is also considered carefully with suitable data structure like FIFO queue and heap adopted, and numerical experiments also showed that the parallel ratio of the whole program is pretty high which guarantees the scalability.
 
+However, there is still much room left for future improvement. The most exciting possibility is to make it the stand benchmark for all the previous and future R\&S procedures by providing this implement as a service in the form of cloud computing. Before that, some critical issues should be considered carefully, like the scalability after a cluster getting involved, the difficulty for a user developing R\&S procedure as plug-in of our implementation, e.g.
 
 \newpage
 \addcontentsline{toc}{chapter}{Appendix}
@@ -836,6 +840,57 @@ This thesis has discussed an appropriate index.....!!
 \chapter{Rase User Guide}
 
 To develop your own simulation code, the following steps are suggested:
+
+1.	Install eclipse (\url{http://www.eclipse.org});
+
+2.	Inside eclipse, File $>$ New $>$ Java Project and follow the wizard;
+
+3.	Import rase-sim-1.0.jar, which can be found \url{http://143.89.20.47/rase/guide/rase-sim-1.0.jar}.
+
+4.	Write your own simulation code, which needs to implement the Sim interface, like the example \url{http://143.89.20.47/rase/guide/NormalSim.java}. This example just returns a normally distributed sample value.
+
+To implement the Sim interface, you only need to implement one method:
+
+\begin{lstlisting}[language=Java]
+public double[] sim(double[] args, long[] seed)
+\end{lstlisting}
+
+Here args is the arguments that distinguish an alternative, while seed determines the result of this simulation. The output should be an array of double.
+
+5.	Package your project into a jar file. Just right click the project $>$ Export $>$ Java $>$ JAR file, and follow the wizard.
+
+After developing the jar file, please move to \url{http://143.89.20.47/rase/}. If the server is available, you will see a form about ranking and selection configuration, namely the figure in \ref{web-ui}. We will give a detailed description here.
+
+1.	Procedure part:
+
+If you only focus on the simulation part, please just choose build-in procedure and fill in the argument like example.
+
+2.	Alternatives:
+
+You need a plain text file specifying the configuration of each alternative, one line for each alternative. When running simulation for some certain alternative, the corresponding line will be passed as the args to the sim function you have just written. \url{http://143.89.20.47/rase/guide/normal.5.alts} is an example describing five alternatives, related to the simulation example mentioned before.
+
+3.	Simulation
+
+Just choose Jar and upload your jar file, and specifying the class(including package name)
+
+4.	Simulation Threads
+
+Currently e we only support single machine version, which means that you can specify the number of threads on Felab-1. We will support cluster version later.
+
+5.	Repeat Times:
+
+It’s the number of replication.
+
+If you want to develop your own ranking and selection code, the steps are quite similar, except that the jar file that needs to import is \url{http://143.89.20.47/rase/guide/rase-ras-1.0.jar}, and we have these examples, they’re Rinott’s Procedure (\url{http://143.89.20.47/rase/guide/RinottRas.java}), Table Filling Procedure (\url{http://143.89.20.47/rase/guide/TableFillingRas.java}) and Parallel Sequential Procedure (\url{http://143.89.20.47/rase/guide/ParallelSequentialRas.java}).
+
+This time you need to implement Ras interface, which also only contains one function:
+
+\begin{lstlisting}[language=Java]
+public int ras(double[] args, double[][] alts,
+        SimHelper simHelper)
+\end{lstlisting}
+
+Here args is the ones that passed from the webpage, while alts is read in from the file uploaded. To understand the usage of SimHelper, please see the examples above and the corresponding Java doc.
 
 \newpage
 %\nocite{*}
