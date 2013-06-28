@@ -742,7 +742,86 @@ During the whole comparison, time complexity for every possible elimination is $
 
 What's more, if there's no elimination during the comparison, which occurs frequently in experiments, the time complexity will be reduced to $O(1)$, since no adjustment of any data structure is needed. That's why our comparing algorithm performs much better than $O(\log n)$ in average.
 
-\chapter{Numerical Result and Analysis}
+\chapter{Numerical Experiment and Analysis}
+
+In this section we will present the numerical results from the latest version of our implementation. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
+
+\section{Hardware Environment}
+
+Our experiment is done on a Dell PowerEdge R815 rack mount server, with four AMD Opteron 6176 CPUs equipped, namely a multi-processor machine. The total memory size is 64GB which is huge enough to support our experiment, and we will need to discuss the limitation from the number of hardware parallel execution units.
+
+\subsection{Parallel Execution Units}
+
+Each of the four AMD Opteron 6176 CPUs has 12 cores, thus 48 cores in total. Information from /proc/cpuinfo on operating system has also verified this hardware configuration.
+
+Empirically it is possible to start more than 48 tasks at the same time. Besides, it is also quite proper since using up the computing ability of each machine is a way to reduce IT cost. Engineers in IT industry have even tried to study the most aggressive ratio of software parallel tasks over hardware parallel execution units, which highly depends on detailed scenario but is definitely no less than 1.
+
+In our experiment, in order to guarantee an good parallel computing status among all slave threads, we set the number of slaves to 48 in maximum, which is quite conservative.
+
+\section{Software Environment}
+
+Commercial software components like the Windows from Micro Software or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
+
+\subsection{Operating System}
+
+We have installed CentOS 6.2 as the operating system on our server, which is the most popular community supported and server oriented Linux distributions, and the name CentOS itself is short for "Community Enterprise Operating System".
+
+CentOS is extremely stable since it has $100\%$ binary compatibility with its upstream source Red Hat Enterprise Linux, a ceremonially supported and enterprise server level Linux distribution from Red Hat, which is the leading Linux service provider in the world. 
+
+\subsection{Runtime Environment}
+
+We have installed Java Runtime Environment 1.6. We choose Java programming language since it is free compared to Matlab and powerful enough with abundant third-party libraries.
+
+Extra benefit with Java includes but not limited to the natural ability of cross-platform, the robustness in the language itself, e.g..
+
+\section{Numerical Result}
+
+The numerical result is taken from solving a specific instance of the three-stage allocation problem with a fairly large scale. We have repeatedly run the experiments with different number of slave threads against this problem and finally have complete correctness and good parallelism archived.
+
+\subsection{The Problem Scale}
+
+The feasible region of this instance of three-stage allocation problem is defined as $x_1 + x_2 + x_3 \leqslant 20$, $x_4 + x_5 = 20$, $1 \leqslant x_i \leqslant 20$ and all the $x_i$ are natural number, so there are 21660 feasible solutions in total, in other words the $k = 21660$ here.
+
+In previous time this scale size makes it thought as not suitable for solving by R\&S, and often dealt with through methods like OvS. In our experiment it is solved with an affordable time cost, which will be shown later.
+
+\subsection{Correctness}
+
+From the IZ viewpoint introduced before, both the best solutions and the ones which are within $\delta$ difference from the best solutions can be regarded as correct selection.
+
+In this specific problem instance, all the correct selections can be obtained in advance through other methods, which let us to verify the correctness of results obtained from running our own R\&S implementation.
+
+The corresponding log has shown that we archived correct selection every time running our implementation, regardless of different parallel configurations each time. This is also the basic requirement of our work. With the guaranteed correctness, we can focus on the performance data now.
+
+\subsection{Performance}
+
+Here we will report the total number of samples generated during R\&S and the total time spent during the whole program. The total number of samples can be regarded as total simulation workload approximately, which should be carried out by all the slaves in parallel. As for the total time cost, that is the most data we're interested in developing this implementation. Below is the detailed results:
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Num. of Slaves(n): & 1 & 4 & 8 & 16 & 32 & 48 \\
+\hline
+Sample Size($\times 10^5$) & 2.426 & 2.434 & 2.442 & 2.442 & 2.433 & 2.436\\
+\hline
+Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
+\hline
+\end{tabular} \\
+\end{center}
+
+The time cost reported in this time is at least affordable for research purpose now.
+
+\section{Performance Analysis}
+
+We can see from the table above that the sample size varies very little from number of slaves, which implies that the simulation work load is almost fixed. According to Amdahl's law, the speed up ratio can be modelled as $\frac{1}{(1 - p) + \frac{p}{n}}$, where $p$ the parallel proportion of the program, $1 - p$ is the remaining serial proportion, and $n$ is the number of processors. Now we would like to estimate $p$ with model below:
+
+$$ t = a \times (1 - p + \frac{p}{n}) + \epsilon $$
+
+Here $a$ is the factor, $\epsilon$ is the noise, and we can get t and n from the result table above. The model can be turned into: 
+$$ t = (a - ap) + ap \times \frac{1}{n} + \epsilon $$
+
+With linear regression, we can get $a - ap = 40.4$ and $ap = 332.9$ with $R^2 \geqslant 0.994$, so $p$ is 0.892, which means 89.2\% of simulation work is paralleled.
+
+This parallel ratio fits the R\&S feature that intuitively most workload can get executed in parallel, and also get benefited from all the design decisions and programming techniques with the purpose of reducing the serial workload. It can be considered as a good starting point of scaling out to more execution units, where a cluster rather a single machine will be involved.
 
 \chapter{Conclusions and Future Work}
 
