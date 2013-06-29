@@ -164,41 +164,21 @@ In this thesis, we develop an alternative approach to calculate things....!!
 
 \chapter{Introduction}
 
-\section{Introduction}
+Selecting the best is a type of statistic problem where the goal is to decide the best alternative with largest or smallest mean from a limited set of sample values. If these sample values are obtained through repeated simulation experiments, then the solutions of this type of problem is called ranking and selection procedures.
 
-The Hong Kong University of Science and Technology~\cite{C. D. Mee}.
-The aim of the research~\cite{S. Tehrani} is to find out how
-effective.....
+Scalability is one of the most critical issues when applying ranking and selection procedures to practical selecting the best problems, since the problem size that the traditional ranking and selection procedures can handle with is typically smaller than the actual problem size. Theoretic solutions like OvS algorithms are developed to strength the scalability, but sacrificing the statistic validity at the same time.
 
-\section{Section 1.2}
+Parallel computing is a way for improving current computing power. It appears in different levels, namely bit-level, instruction-level and task-level, and relies on both hardware support and software support. The most attractive point in parallel computing is the performance enhancement with the name of speed-up ratio, which represents how faster the parallel implementation is compared with the original serial one.
 
-This study is to find out in Table 1.1.
-\begin{table}[ht]
-\begin{center}
-\begin{tabular}{|l|l||l|l|}
-\hline
-\multicolumn{2}{|c||}{Original order} & \multicolumn{2}{c|}{Correct order} \\ \hline
-1 & test & 3 & exam \\
-2 & test1 & 5 & exam1 \\
-3 & test2 & 9 & exam2 \\
-4 & test3 & 12 & exam3 \\
-5 & test4 & 8 & exam4 \\
-6 & test5 & 10 & exam5 \\
-7 & test6 & 7 & exam6 \\
-8 & test7 & 11 & exam7 \\
-9 & test8 & 1 & exam8 \\
-10 & test9 & 2 & exam9 \\
-11 & test10 & 6 & exam10 \\
-12 & test11 & 4 & exam11 \\ \hline
-\end{tabular}
-\caption{Sequence of words used and their orders}
-\end{center}
-\end{table}
+It is an natural idea to implement current ranking and selection procedures under parallel computing environment to gain speed-up, thus enlarging the problem size suitable for R\&S, while avoiding the statistic validity loss with adopting OvS.
 
-\section{Section 1.3}
+However, not every existing ranking and selection procedure can archive satisfied speed-up in a straightforward implementation way, since the maximum speed-up ratio is far less linear to the parallel computing resource we have put in in general cases. As is pointed out by the Amdahl's Law which is pessimistic, the maximum speed-up ratio is limited by the proportion of the part which has to be carried out in serial. By the way, an optimistic Gustafson's Law says that the amount of work that can be done during a fixed time period has linear growth as more computing resource get involved.
 
-Section 1.3
+In this thesis we have implemented both classic Ronott's procedure and two revised fully sequential procedures with master-slave architecture, which is a common pattern in parallel computing. From the numerical results of a set of experiments against a fairly large-scaled three-stage buffer allocation problem, it has been shown that our implementation is quite efficient with most of the workload get paralleled.
 
+Besides, the whole implementation is designed in a way that any specific ranking and selection procedure is implemented as a plug-in of the whole system, no matter the three procedures already implemented by us, or possible procedures in the future by anyone. This makes our implementation also an framework for developing new ranking and selection procedures.
+
+The remaining part of this thesis is organized as follows: in part 2 we will introduce the problem of selecting the best and two existing ranking and selection procedures, followed by the discussion of scalability. Next we will introduce parallel computing with basic knowledge and commonly used parallel patterns in part 3. Based on the introduction of both part 2 and 3, we will describe our implementation from preliminary work like parallelism analysis and existing procedures' modification to the main part, namely the architecture design, the extension points and some low-level features. Numerical results presented in part 5 has proven the efficiency of our implementation, and we will close this article with conclusions and future work in part 6.
 
 \chapter{Ranking and Selection Procedures}
 
@@ -576,7 +556,7 @@ For the first kind of user interface, we could simply leave a command line inter
 \begin{figure}[ht]\label{web-ui}
 \centering
 \includegraphics[width=120mm]{rase_web.png}
-\caption{web page user interface}
+\caption{Web UI}
 \end{figure}
 
 In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
@@ -799,6 +779,7 @@ The corresponding log has shown that we archived correct selection every time ru
 
 Here we will report the total number of samples generated during R\&S and the total time spent during the whole program. The total number of samples can be regarded as total simulation workload approximately, which should be carried out by all the slaves in parallel. As for the total time cost, that is the most data we're interested in developing this implementation. Below is the detailed results:
 
+\begin{table}[ht]
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
@@ -809,7 +790,9 @@ Sample Size($\times 10^5$) & 2.426 & 2.434 & 2.442 & 2.442 & 2.433 & 2.436\\
 Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \hline
 \end{tabular} \\
+\caption{Performance Data}
 \end{center}
+\end{table}
 
 The time cost reported in this time is at least affordable for research purpose now.
 
