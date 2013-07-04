@@ -425,7 +425,13 @@ The most popular software pipeline should be Unix pipeline. It composes Unix com
 
 \subsection{Master-Slave}
 
-Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task.
+Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task. The figure later in this section is a brief illustration of how master-slave pattern works.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=120mm]{master-slave-brief.png}
+\caption{A brief illustration of master-slave pattern}
+\end{figure}
 
 Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
 
@@ -679,7 +685,13 @@ Direct communication among the master and slaves are quite expensive, in the sen
 
 The FIFO queue is is a abstract data structure that all the elements are keep in order and theoretically only two operations are supported. One is enqueue, which appends one element to the end of queue, the other is dequeue, which extract one element at the beginning of the queue. Both of them have $O(1)$ complexity. In parallel environment, the enqueue operation will stuck there if the queue is full, and it's the same for dequeue operation if the queue is empty.
 
-With FIFO queues, the master could just send out simulation parameters to a queue and obtain simulation results from another, thus won't get stuck in most cases. On the hand, slaves can receive simulation parameters from the first queue and put simulation results to the second one.
+With FIFO queues, the master could just send out simulation parameters to a queue and obtain simulation results from another, thus won't get stuck in most cases. On the hand, slaves can receive simulation parameters from the first queue and put simulation results to the second one. Just like the figure below:
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=120mm]{master-slave-queue.png}
+\caption{master-slave structure with queue}
+\end{figure}
 
 In this way, communication cost inside single machine is dramatically reduced for both master and slaves. And if we regard these queues as buffers for parameters and results, it is also possible to make batched communication after scaling to a cluster, which is critical in network communication since with reliable connection-oriented protocol, establishing new connections frequently is much more costly than stable continues transportation.
 
@@ -688,6 +700,14 @@ Except from the performance benefit it has brought in, adopting FIFO queues also
 \subsection{Comparison with Heaps}
 
 Heap is a widely used data structure in computer science. It is a tree-based data structure, whose node contains a key value for comparing and sorting. For min-heap, the key value of each node is greater than or equal to that of its parent if exists and less than or equal to that of its children also if exists. For max-heap, the situation is just opposite. This is called heap property.
+
+Here we borrowed an example of max-heap from \url{http://en.wikipedia.org/wiki/Heap_(data_structure)}. It can be seen easily that the number in each parent node is greater than or equal to its child nodes if exists.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=64mm]{heap.png}
+\caption{max-heap example borrowed from wikipedia}
+\end{figure}
 
 With such heap property, the root node of heap contains the min(max) key value among the whole tree. Operations defined on heap and corresponding time complexity is listed below:
 
@@ -769,7 +789,27 @@ In previous time this scale size makes it thought as not suitable for solving by
 
 From the IZ viewpoint introduced before, both the best solutions and the ones which are within $\delta$ difference from the best solutions can be regarded as correct selection.
 
-In this specific problem instance, all the correct selections can be obtained in advance through other methods, which let us to verify the correctness of results obtained from running our own R\&S implementation.
+In this specific problem instance, all the correct selections can be obtained in advance through other methods, which let us to verify the correctness of results obtained from running our own R\&S implementation. The correct results are listed below:
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Alternative & Comment \\
+\hline
+(6, 7, 7, 12, 8) & best \\
+(7, 7, 6, 8, 12) & best \\
+(6, 7, 7, 13, 7) & good \\
+(7, 7, 6, 7, 13) & good \\
+(6, 7, 7, 11, 9) & good \\
+(7, 7, 6, 9, 11) & good \\
+\hline
+\end{tabular} \\
+\caption{Results Obtained in Advance}
+\end{center}
+\end{table}
+
+Again noticed that the best answers and the good enough answers are all considered as correct selection.
 
 The corresponding log has shown that we archived correct selection every time running our implementation, regardless of different parallel configurations each time. This is also the basic requirement of our work. With the guaranteed correctness, we can focus on the performance data now.
 
@@ -792,7 +832,7 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \end{center}
 \end{table}
 
-The time cost reported in this time is at least affordable for research purpose now.
+The time cost reported in this time is at least affordable for research purpose now. By the way, we also monitored the program with a more professional tool named visualvm, interested reader may refer to the appendix.
 
 \section{Performance Analysis}
 
@@ -871,6 +911,18 @@ public int ras(double[] args, double[][] alts,
 \end{lstlisting}
 
 Here args is the ones that passed from the webpage, while alts is read in from the file uploaded. To understand the usage of SimHelper, please see the examples above and the corresponding Java doc.
+
+\chapter{Status Monitoring}
+
+We have monitored the execution of our program with visualvm, which is a monitoring tool inside the official Java development kit. Here we put an screenshot when the number of slave is 4.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=128mm]{monitor.png}
+\caption{a monitoring screenshot when the number of slaves is 4}
+\end{figure}
+
+It shows that except from the threads that serve for ranking and selection, there're still other threads running for other purposes.
 
 \newpage
 %\nocite{*}
