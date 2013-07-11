@@ -32,7 +32,7 @@
 \null\vspace{0.5in}
 %\vspace{0.5in}
 \begin{center}
-{\Large\bf Parallel Implementation of Ranking and Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
 \vspace{2.5cm}
 
 {\large by}
@@ -87,7 +87,7 @@ WU Yang \\
 \addcontentsline{toc}{chapter}{Signature Page}
 \null\vspace{1.0cm}
 \begin{center}
-{\Large\bf Parallel Implementation of Ranking and Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
 \vspace{1.5cm}
 
 {\large by}\smallskip
@@ -142,7 +142,7 @@ Finally, I would like to give my best wishes to all the people I meet here. Than
 \newpage
 \addcontentsline{toc}{chapter}{Abstract}
 \begin{center}
-{\Large\bf Parallel Implementation of Ranking and Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
 \vspace{0.5cm}
 
 {\large \bf by WU Yang}\normalsize
@@ -157,28 +157,36 @@ The Hong Kong University of Science and Technology
 \centerline{{\bf \large Abstract}}
 \vspace{1.5cm}
 
-Ranking-and-selection(R\&S) procedures to solve the problem of selecting the best is short of scalability in front of large-scaled problem size. Except from algorithms like OvS which sacrifice statistic validity for scalability, implementing R\&S procedures in parallel environment is an attractive choice. In this thesis we propose our implementation which adopts master-slave architecture in higher level and data structures like queue and heap for efficiency. Numerical results has shown that our implementation is quite scalable since the majority of workload is done in parallel.
+Conventional simulation ranking-and-selection(R\&S) procedures are designed and implemented in serial computing environment. However, it is the trend that the growth of computing power relies more on parallelism rather than faster serial execution. The consequence is that it becomes more and more difficult for those serial simulation R\&S procedures to take advantage of the development of computing technology. In this thesis, we propose our design and implementation of simulation R\&S procedures in parallel computing environment with master-slave structure in higher level. Extensive numerical experiments show that our parallel simulation R\&S procedures is capable of large-scale problems with scalability against the number of available parallel computing units.
 
 \newpage
 \pagenumbering{arabic}
 
 \chapter{Introduction}
 
-Selecting the best is a type of statistic problem where the goal is to decide the best alternative with largest or smallest mean from a limited set of sample values. If these sample values are obtained through repeated simulation experiments, then the solutions of this type of problem is called ranking and selection procedures.
+The problem of selecting the best is to decide the best one within a finite number of alternatives, where the best is defined as the largest or smallest mean, which is inferred from statistical sampling, by real experiments or computer simulations. To solve such kind of problem, the ranking-and-selection(R\&S) procedures are widely adopted. In this thesis, we only focus on the case where the statistical sampling is archived through computer simulations. Consequently, the obtained simulation results are called samples, and the corresponding R\&S procedures are specifically simulation R\&S procedures.
 
-Scalability is one of the most critical issues when applying ranking and selection procedures to practical selecting the best problems, since the problem size that the traditional ranking and selection procedures can handle with is typically smaller than the actual problem size. Theoretic solutions like OvS algorithms are developed to strength the scalability, but sacrificing the statistic validity at the same time. A brief introduction for OvS algorithms can be found in \cite{potwsc09ovs}.
+Not very long ago when serial computing still dominants, simulation R\&S procedures are designed and implemented serially, where the most important performance issue lies on the algorithm complexity, roughly the proportion of the run-time over the problem size. Once the algorithm complexity of the procedure is settled, the time cost will decrease as the serial execution speed increases, without specifically modifying the procedure itself, even the corresponding programming implementation. In this way, a simulation R\&S procedure can easily enjoy the growth of computing power, which relies on faster serial execution speed, as long as the algorithm complexity is satisfying.
 
-Parallel computing is a way for improving current computing power. It appears in different levels, namely bit-level, instruction-level and task-level, and relies on both hardware support and software support. The most attractive point in parallel computing is the performance enhancement with the name of speed-up ratio, which represents how faster the parallel implementation is compared with the original serial one.
+However, as we have already entered the age of parallel computing, the computing environment has significantly changed. Due to some physical limitations, the growth of computing power relies more on parallelism, rather than faster serial execution. In another word, the serial execution speed is not growing as fast as it used to be. If those serial simulation R\&S procedures still remain the same, they can hardly utilize the recent development of computing technology.
 
-It is an natural idea to implement current ranking and selection procedures under parallel computing environment to gain speed-up, thus enlarging the problem size suitable for R\&S, while avoiding the statistic validity loss with adopting OvS.
+On the other hand, the demand raised from the practical applications of simulation R\&S procedures also requires us to enhance existing procedures. As is pointed out by \cite{ehiorams06ras}, the size of the problem that conventional serial simulation R\&S procedures can handle is rather small, about 500 alternatives at most. It's definitely not enough for many practical scenarios where the number of alternatives is thousands even tens of thousands. 
 
-However, not every existing ranking and selection procedure can archive satisfied speed-up in a straightforward implementation way, since the maximum speed-up ratio is far less linear to the parallel computing resource we have put in in general cases. As is pointed out by the Amdahl's Law raised in \cite{amdahl} which is pessimistic, the maximum speed-up ratio is limited by the proportion of the part which has to be carried out in serial. By the way, an optimistic Gustafson's Law raised in \cite{gustafson} says that the amount of work that can be done during a fixed time period has linear growth as more computing resource get involved.
+Traditionally, the conflicts between large-scaled problems and limited capacity of simulation R\&S procedures are solved within serial computing environment by optimization via simulation(OvS) algorithms. A recent review can be found in \cite{potwsc09ovs}. Many OvS algorithms guarantee the global convergence, namely deciding the best after spending enough simulation effort. However in most cases there won't be sufficient computing budget for enough simulation effort and those OvS algorithms will stop much earlier than then ideal point, causing the selected alternative losing statistical validity. In other words, serial OvS algorithms will eventually trade statistical validity for computational practicability, which makes it not a perfect replacement for serial simulation R\&S procedures.
 
-In this thesis we have implemented both classic Ronott's procedure raised in \cite{cistam1978rinott} and two revised fully sequential procedures proposed by \cite{ras-seq-parallel} with master-slave architecture, which is a common pattern in parallel computing. From the numerical results of a set of experiments against a fairly large-scaled three-stage buffer allocation problem, it has been shown that our implementation is quite efficient with most of the workload get paralleled.
+On the contrary, within parallel computing environment, the computational tasks are executed simultaneously. A large problem can be divided into smaller ones, and such small problems can be carried out at the same time, thus speeding up the whole process. In typical R\&S scenarios, all the simulation efforts are naturally suitable for divide-and-conquer, and so as for parallel computing.
 
-Besides, the whole implementation is designed in a way that any specific ranking and selection procedure is implemented as a plug-in of the whole system, no matter the three procedures already implemented by us, or possible procedures in the future by anyone. This makes our implementation also an framework for developing new ranking and selection procedures.
+All the above statement motivates us to re-design and implement simulation R\&S procedures in parallel computing environment, in order to take advantage of recent development of computing technology and gain extra speed-up compared with serial R\&S. At the same time it will also dramatically enlarge the size of the problems that are suitable for applying simulation R\&S procedures, while avoid the statistical validity loss compared with adopting serial OvS.
 
-The remaining part of this thesis is organized as follows: in part 2 we will introduce the problem of selecting the best and two existing ranking and selection procedures, followed by the discussion of scalability. Next we will introduce parallel computing with basic knowledge and commonly used parallel patterns in part 3. Based on the introduction of both part 2 and 3, we will describe our implementation from preliminary work like parallelism analysis and existing procedures' modification to the main part, namely the architecture design, the extension points and some low-level features. Numerical results presented in part 5 has proven the efficiency of our implementation, and we will close this article with conclusions and future work in part 6.
+But migrating serial simulation R\&S procedures into parallel computing environment is not that straightforward at all. Firstly, in parallel computing environment, an earlier started task may finish later, since other tasks are also executing simultaneously. Specifically in R\&S scenario, the order of the starting of a sequence of simulation experiments may differ from that of the finishing of the same sequence of simulation experiments. What is worse, the latter order may be totally random. More discussions about statistical problems caused by this randomness can be found in \cite{ras-seq-parallel}, where two new fully sequential simulation R\&S procedures, vector-filling procedure and asymptotic parallel sequential procedure, are proposed to address these statistical problems.
+
+Secondly, as is pointed out by the Amdahl's Law raised in \cite{amdahl}, once the total workload is fixed, the minimal time cost has a lower bound, which limited by the proportion of the workload which has to be carried out in serial. In general R\&S scenarios, all the workload except from pure repeated simulations are not that easy to get paralleled, which means these workload probably have to be done in serial and may become the bottle neck for the whole simulation R\&S procedure.
+
+Besides, as there exist so many different simulation R\&S procedures, it is necessary to build an uniform platform to compare their performance in parallel computing environment empirically. Although previous work like \cite{ms05ras} has already made an comparative study, they only work on the serial computing environment.
+
+In this thesis we design and implement a general platform for parallel simulation R\&S procedures, with three specific procedures: Rinott's procedure (see \cite{cistam1978rinott}), vector-filling procedure(see \cite{ras-seq-parallel}), asymptotic parallel sequential procedure (see \cite{ras-seq-parallel}), and two specific simulation experiments: $(s, S)$ inventory simulation, three stage buffer allocation simulation(see \cite{smoms93threestage}). At any active time, the whole platform consists of three major components, of which the most essential one is a general framework. This framework contains the fundamental work for the parallelism of simulation R\&S procedures, with master-slave architecture in high level, which is a pretty common pattern in software design. The other two are specific procedure and specific simulation experiment, respectively. These two components are implemented as plug-ins of the whole system, no matter the three procedures and two simulation experiments already implemented by us, or any possible procedures and simulation experiments implemented by anyone in the future.
+
+The remainder of this thesis is organized as follows. Chapter 2 covers the related background information, including recent development of simulation R\&S procedures and basic theories and technologies of parallel computing. We describe our work in a top-down manner in chapter 3, with parallelism of each simulation R\&S procedures analysed and extensive numerical results presented. Comparison acceleration in serial part of R\&S is discussed in chapter 4, followed by conclusions and some future work in chapter 5.
 
 \chapter{Ranking and Selection Procedures}
 
@@ -257,6 +265,8 @@ The sample size of such fully sequential procedures is typically smaller than th
 
 \section{Shortcoming of Scalability}
 
+Scalability is generally hard to define. In the case of simulation R\&S, it can be defined as the ability to handle a growing number of alternatives, with proportional computing resource added.
+
 Although existing R\&S procedures have gained great achievement in theoretical areas like statistics, practically these procedures can hardly handle scenarios where the number of alternatives is huge. As pointed out by Kim and Nelson (2006a), the two-stage Rinott’s procedure is typically applied when the number of alternatives is fewer than 20. As for fully sequential procedure KN, the number is considered as no more than 500. Other procedures like NSGS which claims to have been designed specifically to solve large-scale R\&S problems, reported 500 alternatives as the largest test case in their paper. However in practice, it is common to have thousands even tens of thousands of alternatives needed to be considered, which has exposed the shortcoming of scalability in R\&S.
 
 \subsection{A Theoretical Make Up}
@@ -274,8 +284,6 @@ Since trading off between statistical guarantee and time cost looks like a zero-
 As is pointed out by Moore's law proposed in \cite{moore}, available computing powerful is becoming more and more sufficient, with a speed of doubling itself every 18 months. But fully taking advantage of the fast-growing computing power nowadays is not as straightforward as it used to be, since the time of serial computing, when the growth of computing power relays on serial execution speed, has already past, and we're in the age of parallel computing.
 
 \chapter{Parallel Computing}
-
-Parallel computing means executing computational tasks simultaneously. It is useful when a large problem can be divided into smaller ones, and such small problems can be carried out at the same time, thus speeding up the whole process.
 
 \section{Different Parallelism Levels}
 
