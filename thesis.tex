@@ -32,7 +32,7 @@
 \null\vspace{0.5in}
 %\vspace{0.5in}
 \begin{center}
-{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking and Selection Procedures}
 \vspace{2.5cm}
 
 {\large by}
@@ -87,7 +87,7 @@ WU Yang \\
 \addcontentsline{toc}{chapter}{Signature Page}
 \null\vspace{1.0cm}
 \begin{center}
-{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking and Selection Procedures}
 \vspace{1.5cm}
 
 {\large by}\smallskip
@@ -142,7 +142,7 @@ Finally, I would like to give my best wishes to all the people I meet here. Than
 \newpage
 \addcontentsline{toc}{chapter}{Abstract}
 \begin{center}
-{\Large\bf Design and Implementation of Parallel Simulation Ranking~and~Selection Procedures}
+{\Large\bf Design and Implementation of Parallel Simulation Ranking and Selection Procedures}
 \vspace{0.5cm}
 
 {\large \bf by WU Yang}\normalsize
@@ -184,37 +184,37 @@ Secondly, as is pointed out by the Amdahl's Law raised in \cite{amdahl}, once th
 
 Besides, as there exist so many different simulation R\&S procedures, it is necessary to build an uniform platform to compare their performance in parallel computing environment empirically. Although previous work like \cite{ms05ras} has already made an comparative study, they only work on the serial computing environment.
 
-In this thesis we design and implement a general platform for parallel simulation R\&S procedures, with three specific procedures: Rinott's procedure (see \cite{cistam1978rinott}), vector-filling procedure(see \cite{ras-seq-parallel}), asymptotic parallel sequential procedure (see \cite{ras-seq-parallel}), and two specific simulation experiments: $(s, S)$ inventory simulation, three stage buffer allocation simulation(see \cite{smoms93threestage}). At any active time, the whole platform consists of three major components, of which the most essential one is a general framework. This framework contains the fundamental work for the parallelism of simulation R\&S procedures, with master-slave architecture in high level, which is a pretty common pattern in software design. The other two are specific procedure and specific simulation experiment, respectively. These two components are implemented as plug-ins of the whole system, no matter the three procedures and two simulation experiments already implemented by us, or any possible procedures and simulation experiments implemented by anyone in the future.
+In this thesis we design and implement a general platform for parallel simulation R\&S procedures, with three specific procedures: Rinott's procedure (see \cite{cistam1978rinott}), vector-filling procedure(see \cite{ras-seq-parallel}), asymptotic parallel sequential procedure (see \cite{ras-seq-parallel}), and two specific simulation experiments: $(s, S)$ inventory simulation(see \cite{cissac1985ss}), three stage buffer allocation simulation(see \cite{smoms93threestage}). At any active time, the whole platform consists of three major components, of which the most essential one is a general framework. This framework contains the fundamental work for the parallelism of simulation R\&S procedures, with master-slave architecture in high level, which is a pretty common pattern in software design. The other two are specific procedure and specific simulation experiment, respectively. These two components are implemented as plug-ins of the whole system, no matter the three procedures and two simulation experiments already implemented by us, or any possible procedures and simulation experiments implemented by anyone in the future.
 
 The remainder of this thesis is organized as follows. Chapter 2 covers the related background information, including recent development of simulation R\&S procedures and basic theories and technologies of parallel computing. We describe our work in a top-down manner in chapter 3, with parallelism of each simulation R\&S procedures analysed and extensive numerical results presented. Comparison acceleration in serial part of R\&S is discussed in chapter 4, followed by conclusions and some future work in chapter 5.
 
-\chapter{Ranking and Selection Procedures}
+\chapter{Background}
 
-\section{Problem of Selecting the Best}
+\section{Simulation R\&S Procedure}
 
-Selecting the best alternative from a finite number of alternatives, where the best is defined as the largest or smallest expectation of some index specified on every alternative, is a common problem in operation research, in the sense that many practical problems can be modelled in this way. Here we will briefly describe two examples.
+\subsection{Problem of Selecting the Best}
 
-\subsection{(s, S) Inventory Problem}
+The problem of selecting the best is common in operation research. Here we give two examples, related to safety stock and efficient manufacturing, respectively. Both of them can be carried out by discrete event simulation experiments.
 
-One is about setting up reordering point in inventory management. This problem once appeared in \cite{cissac1985ss}. A general model with two parameters s and S works in the way that as long as the inventory level goes below s, then an order with the amount S - s will be send out, after which the inventory level will regain to S. This is the (s, S) inventory model. And in order to apply this model, extra effort is needed to specify s and S in each practical case to minimize the reordering cost.
+\subsubsection{$(s, S)$ Inventory Model}
 
-In this example, both s and S will be limited by practical issues, like S must be less than the capacity of inventory store, s must between zero and S, both s and S must be natural numbers, which is   often the case, thus making them in a limited range. In another word, the number of possible or feasible combinations of s and S is finite. The index we set up here is the reordering cost and the best combination of s and S is defined as the one with the smallest expectation of the reordering cost index. In this way, practical inventory management problem can be regarded as the theoretical problem of selecting the best.
+This is about setting up reordering point in inventory management and it once appeared in \cite{cissac1985ss}. A general model with two parameters $s$ and $S$ works in the way that as long as the inventory level goes below $s$, then an order with the amount $S - s$ will be send out, after which the inventory level will regain to $S$. This is the $(s, S)$ inventory model. And in order to apply this model, extra effort is needed to specify $s$ and $S$ in each practical case to minimize the reordering cost.
 
-\subsection{Three-stage Buffer Allocation Problem}
+In this example, both $s$ and $S$ are limited in specific problem instances, like $S$ must be less than the capacity of inventory store, $s$ must between $0$ and $S$, both $s$ and $S$ must be natural numbers, which is often the case. Consequently the number of feasible combinations of $s$ and $S$ are limited in finite. The performance we're interested here is the reordering cost, so the best combination of $s$ and $S$ is defined as the one with the smallest expectation of the reordering cost. In this way, a practical inventory management problem can be treated as the problem of selecting the best.
 
-The other one is about allocating buffer space in a multi-stage manufacturing line and it once appeared in \cite{smoms93threestage}. Let's take a three stage manufacturing line as an instance. In this case, there are three manufacturing units, or stages, in a manufacturing line, and each stage has its own capacity for manufacturing items. Between each continues two stages, say first and second stage, or second and third stage, there exists a buffer space, which also has its own capacity for manufacturing items. In this model, there're five parameters representing capacities in five locations including the three manufacturing units and tow buffers. The manufacturing manager needs to specify these five parameters to archive maximum throughput for the whole manufacturing line.
+\subsubsection{Three-stage Buffer Allocation}
 
-Just the same as the previous example, the total number of manufacturing items inside this manufacturing line, or the summation of these five parameters, is limited by practical issues. What's more, these parameters also need to be natural numbers in most cases, thus limiting the number of feasible combinations of these five parameters into finite again. The index here is the throughput for the whole manufacturing line and the best combination of these five parameters is defined as the one which makes the largest expectation of throughput index. Again in this way, the practical three-stage or multi-stage buffer allocation problem is modelled into the theoretical problem of selecting the best.
+This is about allocating buffer space in a multi-stage manufacturing line and it once appeared in \cite{smoms93threestage}. Let's take a three stage manufacturing line as an instance. In this case, there are three manufacturing units, or stages, in a manufacturing line, and each stage has its own capacity for manufacturing items. In front of the second stage and third stage, there exist a buffer space, respectively. which also has its own capacity for manufacturing items. In this model, there're five parameters representing capacities in five locations including the three manufacturing units and two buffers. The manufacturing manager needs to specify these five parameters to archive maximum throughput for the whole manufacturing line.
 
-\section{Ranking and Selection}
+Just the same as the previous example, the total number of manufacturing items inside this manufacturing line, or the summation of these five parameters, is limited in specific problem instances. What's more, these parameters also need to be natural numbers in most cases, thus limiting the number of feasible combinations of these five parameters into finite again. What we're interested in here is the throughput of the whole manufacturing line and the best combination of these five parameters is defined as the one which makes the largest expectation of throughput. Again in this way, the practical three-stage or multi-stage buffer allocation problem can be treated as problem of selecting the best.
 
-In the above two examples, the expectation of the indexes we set up for different cases can be estimated by customized simulation experiments, and inside each case, the expectation of the index for each individual alternative, which is distinguished from other alternatives by a combination of parameters, or a configuration, can be sampled as the output from a single replication of repeated simulation experiments with corresponding configuration as its input. With selecting the best according to the expectations estimated from replicated simulation experiments, this type of solution is often known as a ranking-and-selection, or R\&S, in simulation area.
+\subsection{R\&S Procedures}
 
-During the past, many R\&S solutions, or procedures, have been developed, and so does literature view papers like \cite{ras-recent-advances}, \cite{ehiorams06ras} and \cite{ms05ras}. Typically, they allocate simulation effort to all alternatives, namely, running simulation experiments repeatedly for a specified finite number of times against all the configurations, each of which stands for a distinguished alternative. In this way, certain statistical properties are guaranteed when making selection decision, such as the pre-specified probability of correct selection, or PCS for short.
+During the past, many R\&S procedures have been developed to solve the problem of selecting the best, with literature view papers like \cite{ras-recent-advances}, \cite{ehiorams06ras} and \cite{ms05ras}. Typically, they allocate simulation effort to all alternatives, namely, running simulation experiments repeatedly for a specified finite number of times against all the alternatives. Here each alternative is distinguished by a vector of arguments. The goal is to guarantee certain statistical validity when making selection decision, such as the probability of correct selection, or PCS for short.
 
-Although many other types of R\&S procedures exist, in this thesis only several representative ones get involved to illustrate our idea. We only take a frequentist’s view and consider the formulation of indifference-zone, or IZ for short. IZ is proposed in \cite{toams1954iz} and recent summary can be found in \cite{nyjws95iz}. We will briefly review two classic R\&S procedures later in this section, while introduce two newly developed ones in later part of this thesis.
+Although many other types of R\&S procedures exist, in this thesis only several representative ones get involved to illustrate our idea. We only take a frequentist’s view and consider the formulation of indifference-zone, or IZ for short. IZ is proposed in \cite{toams1954iz} and recent summary can be found in \cite{nyjws95iz}. We will briefly review two classic R\&S procedures later.
 
-\subsection{Rinott's Procedure}
+\subsubsection{Rinott's Procedure}
 
 Rinott's procedure is a classic R\&S procedure developed in 1978 by Rinott in \cite{cistam1978rinott}. It guarantees with the confidence level $1 - \alpha$ that the alternative get selected is at least $\delta$ better than the second best one. If alternatives within $\delta$ worse than the best one exist, then Rinott's procedure guarantees to select one of these "good enough" alternatives with the same probability. The $\delta$ here is called indifference-zone. It is set by procedure user to determine the smallest difference that is worth getting noticed. In other word, differences less than this $\delta$ can be ignored from a practical viewpoint.
 
@@ -235,9 +235,9 @@ where $1/k < 1 - \alpha < 1$. Since this thesis focuses on implementation, reade
 
 One related issue worth mentioning here is that the total sample size required in Rinott's procedure is slightly less that $O(k\log{k})$, which determines the total computing effort.
 
-\subsection{A Fully Sequential Procedure}
+\subsubsection{A Fully Sequential Procedure}
 
-While the Rinott's procedure mentioned above is a classic two-staged procedure, fully sequential is another important type of procedures, with classic examples like KN in \cite{tomacs01kn} and NSGS in \cite{or01nsgs}. However the fully sequential procedure we will review right after this paragraph is a newly developed one also featured as fully sequential. It first appears in \cite{ras-seq-jeff} by L. J HONG in 2004. This procedure provides good statistical validity while keeps a great opportunity of decreasing total number of sample values, approximately the total computing effort need to spend, at same time. The key point is that if at any time there is enough evidence to prove that some certain alternative is clearly inferior, then this alternative will get eliminated immediately in theoretic like what most fully sequential procedures do.
+While the Rinott's procedure mentioned above is a classic two-staged procedure, fully sequential is another important type of procedures, with classic examples like KN in \cite{tomacs01kn} and NSGS in \cite{or01nsgs}. However the procedure we will review right after this paragraph is a newly developed one also featured as fully sequential. It first appears in \cite{ras-seq-jeff} by L. J HONG in 2004. This procedure provides good statistical validity while keeps a great opportunity of decreasing total number of sample values, approximately the total computing effort need to spend, at same time. The key point is that if at any time there is enough evidence to prove that some certain alternative is clearly inferior, then this alternative will get eliminated immediately in theoretic like what most fully sequential procedures do.
 
 With the symbols same as those in Rinott's procedure, we organize the this procedure as following steps:
 
@@ -263,37 +263,17 @@ In \cite{ras-seq-jeff}, such sampling rule is applied: after first stage, run ne
 
 The sample size of such fully sequential procedures is typically smaller than that in Ronott's procedure except for some extreme case. Interested reader may refer to \cite{ras-seq-jeff} for detailed properties as well statistical validity proofs.
 
-\section{Shortcoming of Scalability}
+\section{Parallel Computing}
 
-Scalability is generally hard to define. In the case of simulation R\&S, it can be defined as the ability to handle a growing number of alternatives, with proportional computing resource added.
-
-Although existing R\&S procedures have gained great achievement in theoretical areas like statistics, practically these procedures can hardly handle scenarios where the number of alternatives is huge. As pointed out by Kim and Nelson (2006a), the two-stage Rinott’s procedure is typically applied when the number of alternatives is fewer than 20. As for fully sequential procedure KN, the number is considered as no more than 500. Other procedures like NSGS which claims to have been designed specifically to solve large-scale R\&S problems, reported 500 alternatives as the largest test case in their paper. However in practice, it is common to have thousands even tens of thousands of alternatives needed to be considered, which has exposed the shortcoming of scalability in R\&S.
-
-\subsection{A Theoretical Make Up}
-
-Traditionally, the shortcoming of scalability in R\&S are made up through solutions of optimization-via-simulation, or OvS for short. OvS is a kind of solutions, or algorithms, which also aims at the problem of selecting the best. It guarantees global convergence, namely when simulation effort goes to infinity, it can eventually guarantee the correct selection of best.
-
-However, the infinite simulation effort means exactly the R\&S procedures. In most of the cases, OvS algorithms will stop so early at some point that it is still quite far way from infinity, which consequently breaks the statistical guarantee of optimal selection. What is worse, the result give by the OvS algorithm may be significantly inferior to the optimal one, making it useless to the selecting of the best problem. 
-
-Essentially speaking, any OvS algorithm will sacrifice statistical guarantee for time-saving through partially applying R\&S. Therefore, it is only a make up solution with trade-off between statistical guarantee and time cost.
-
-\subsection{A Possible Way Out from Implementation}
-
-Since trading off between statistical guarantee and time cost looks like a zero-sum game, we do hope to find a way that can deal with practical-sized problem of selecting the best, with both fully applying R\&S procedures to archive statistical guarantee, and decreasing the time cost to a reasonable amount so that we can afford to wait. A possible way out is from implementation.
-
-As is pointed out by Moore's law proposed in \cite{moore}, available computing powerful is becoming more and more sufficient, with a speed of doubling itself every 18 months. But fully taking advantage of the fast-growing computing power nowadays is not as straightforward as it used to be, since the time of serial computing, when the growth of computing power relays on serial execution speed, has already past, and we're in the age of parallel computing.
-
-\chapter{Parallel Computing}
-
-\section{Different Parallelism Levels}
+\subsection{Different Parallelism Levels}
 
 In terms of granularity, parallel computing can be divided into three different levels: bit level, instruction level and task level.
 
-\subsection{Bit-Level Parallelism}
+\subsubsection{Bit-Level Parallelism}
 
 Bit-level parallelism is related to the size of computer word. Inside the processor, several bits are manipulated together, which composes a computer word, and the size of computer word is defined as the number of bits it contains. More hardware details can be found in \cite{pca97} Historically, 4-bit computer word has been replaced by 8-bit, then 16-bit, 32-bit, until today's 64-bit. Although not very close to ordinary people, computer with 128-bit computer word or even larger one has been made.
 
-\subsection{Instruction-Level Parallelism}
+\subsubsection{Instruction-Level Parallelism}
 
 Instruction-level parallelism is a more interesting topic in computer architecture. An instruction is a computer word with special meaning for processors. Any computer program will essentially become a stream of instructions before getting executed, no matter what programming language it is written in. These instructions will get re-ordered and grouped before executing, certainly without changing the result of original instruction stream. Besides, an instruction can be divided into several stages, with each stage corresponding to a certain action, such as instruction fetch, decode, execute, memory access, write back and so on, which enables the instruction pipeline in modern processors. In addition to pipeline, the pipeline units inside some modern processors can even handle more than one action at a time, which is known as super-scalar.
 
@@ -301,7 +281,8 @@ Before instruction-level parallelism is adopted, the instructions inside a strea
 
 However, frequency scaling is limited by many physical constraints, like power consumption, heat generation and so on. Thus instruction-level parallelism has become a way out under current physical constraints, and attracts many researchers in the field of computer architecture.
 
-\subsection{Task-Level Parallelism}
+\subsubsection{Task-Level Parallelism}
+\label{sec:pseudo-multi-tasking}
 
 Task-level parallelism is a higher level parallelism in the sense that it needs support from both hardware and software. In another word, both bit-level parallelism and instruction-level parallelism are implemented inside processors, making them transparent, or invisible to software. Even operating system, the most fundamental software inside computer, do not have control on bit-level and instruction-level parallelism. 
 
@@ -309,13 +290,13 @@ Earlier computers without task-level parallelism can also support multi-tasking,
 
 As for modern computers with task-level parallelism support, like multi-core or multi-processor, which will be introduced later, they do have the ability to make different tasks executing in real parallel, certainly also with the support from software. We will look into the details of how hardware and software support parallel in the next two sections.
 
-\section{Hardware Parallel Support}
+\subsection{Hardware Parallel Support}
 
-\subsection{Multi-core Processor}
+\subsubsection{Multi-core Processor}
 
 Computers with Von Neumann architecture, which is still the dominant computer architecture today, will have at least one processor inside. For a processor, it can contain more than one execution units, or cores, on the same chip. Such processor is known as multi-core processor. Different cores inside the same multi-core processor can handle different instruction streams at the same time, thus achieve the real parallel. By the way, a core can also be super-scalar, thus handles multiple instructions from the same instruction stream. As for Intel's Hyper-Threading technology, which uses the same core to handle a different instruction stream when this core get into idle for some reason, is a form of pseudo multi-core processing.
 
-\subsection{Multi-processor Computer}
+\subsubsection{Multi-processor Computer}
 
 One step further from multi-core processor, a computer can have more than one processors, like SMP, standing for symmetric multi-processor, which is a single computer equipped with multiple identical processors. The existence of multiple processors inside the same computer brings about the issue of accessing memory and communicating with each other.
 
@@ -323,25 +304,25 @@ A computer where every address of memory can be accessed within equal latency an
 
 Communication among processors of the same computer can be implemented in many ways, from a simple shared media like memory or bus to complicated internal network involving topologies like star or ring and routing strategies if some processors are not connected directly.
 
-\subsection{Cluster}
+\subsubsection{Cluster}
 
 A group of standalone computers can be connected via network to compose a cluster. Since these connected computers work together, this cluster can be regarded as one powerful computer. A cluster composed by multiple identical computers connected via TCP/IP Ethernet local area network is called Beowulf cluster, which is the most common type of cluster.
 
 Computers composing a cluster does not have to be identical with each other, which can increase the flexibility, but also increase the difficulty for load balancing. Except from the extra network compared to single computer, other technical issues like configuration, monitoring even fault tolerance also create challenges that can't be ignored.
 
-\subsection{Distributed Computing}
+\subsubsection{Distributed Computing}
 
 In a narrow sense, distributed computing means using computers communicating over the Internet to work together on a certain problem. Comparing with a cluster, communication cost over the Internet is much higher since the throughput is low while the latency may be unstable. So typically such distributed computing only deals with embarrassingly parallel problems in which communications among sub-problems are not that frequent. SETI@home is one of the best-known example of such distributed computing.
 
 In a wider sense, distributed computing means multiple computational entities, or nodes, with their own local memory and communicating by message passing, working together to archive a certain goal. If these nodes are deployed on different physical machines in a cluster, they possess their own local physical memory and pass messages through network protocols. On the contrary, if they're deployed on the same physical machine, then the nodes are degenerated to local processes and possess their own virtual memory only. Processes on the same physical machine can certainly pass messages through network protocols via local loop network as if they're on different physical machines, but they can also choose to communicate through local operating system as a more efficient choice. For the concept of process, we will introduce it in the next paragraph.
 
-\section{Software Parallel Support}
+\subsection{Software Parallel Support}
 
-\subsection{Process upon Operating System}
+\subsubsection{Process upon Operating System}
 
-Process is a fundamental concept in operating system. In section 3.1.3, we introduced how multi-tasking operating system make multiple tasks executed concurrently without hardware task-level parallelism. Here, the tasks should be called processes. Even with the hardware task-level parallelism, modern operating systems also regard different tasks as different processes, and provide basic services like scheduling execution on multiple cores or processors, pass messages if processes need communication, thus taking advantage of the real parallelism ability from corresponding hardware.
+Process is a fundamental concept in operating system. In \ref{sec:pseudo-multi-tasking}, we introduced how multi-tasking operating system make multiple tasks executed concurrently without hardware task-level parallelism. Here, the tasks should be called processes. Even with the hardware task-level parallelism, modern operating systems also regard different tasks as different processes, and provide basic services like scheduling execution on multiple cores or processors, pass messages if processes need communication, thus taking advantage of the real parallelism ability from corresponding hardware.
 
-Formally speaking, process is an executing instance of a computer program. A computer program alone contains only static instructions, while a process also contains current execution status. Of course, multiple processes can be different instances from the same program.
+Formally speaking, process is an executing instance of a computer program. A computer program alone contains only static instructions, while a process also contains current execution status. Off course, multiple processes can be different instances from the same program.
 
 With the help of operating system, processes are isolated from each other, in the sense that processes have no idea whether they're sharing CPU, memory or other computing resources with other processes, as if they occupy the whole computer, although actually the CPU is time division multiplexed while memory is space division multiplexed. Nevertheless, in this way programmers can focus on one program without considering other processes on the same machine.
 
@@ -349,13 +330,13 @@ On the other hand, processes on the same physical machine can communicate with e
 
 Achieving parallelism through multiple processes is based on the underlay distributed memory architecture, even they're on the same physical machine, since the operating system isolated the memories by virtual memory mechanise. Another famous memory architecture is called shared memory architecture, and we will use the concept of thread to illustrate it in the next paragraph.
 
-\subsection{Thread inside Process}
+\subsubsection{Thread inside Process}
 
 Thread is a lighter concept compared with process in the sense that it is always contained inside a process. A process can have multiple threads, but at least have one, the "main" thread. Scheduling and cooperating multiple threads inside the same process involves less about operating system, thus saving computing resources. Besides, the underlay shared memory architecture, covering the memory spaces of containing process, has also provided more convenience and flexibility for programmers.
 
 Except from thread, or precisely the POSIX Thread, OpenMP is another most widely used shared memory API. API is short for Application Programming Interfaces and can be regarded as the conventional way to use libraries installed on or provided by operating system. Both two APIs are supposed to be provided on different operating systems, in another word, cross-platform. However, the API related to process will be different if they're on different kind of operating systems since its highly coupled with underlay operating system and not cross-platform.
 
-\subsection{Communication through Protocol}
+\subsubsection{Communication through Protocol}
 
 The only way for processes deployed on different physical machines to communicate is via network, thus network communication protocols are involved. In other words, network protocols are involved within distributed computing. Network protocol is a set of rules for exchanging messages among computers. No matter whether communicating computers are identical or not, they can communicate with each other as long as they use the same network communication protocol.
 
@@ -365,9 +346,9 @@ For software developers of distributed application, including pure parallel comp
 
 Beyond transport layer, software developers also need to make design decision of application layer, say, to use existing protocols like HTTP or develop application specified protocol. HTTP stands for Hypertext Transfer Protocol and is based on client/server model. It is well supported in most dominant programming languages in format of library thus quite easy to use. Developing application specified protocol based on TCP or UDP may gain extra performance but also cost more effect and taking the risk of non-robustness.
 
-\section{Performance and Scalability}
+\subsection{Performance and Scalability}
 
-\subsection{Speed-up Ratio}
+\subsubsection{Speed-up Ratio}
 
 Speed-up ratio shows how much a parallel program is faster than its corresponding sequential program. It's defined in the following formula:
 
@@ -381,7 +362,7 @@ $$ E_n = \frac{S_n}{n} = \frac{T_1}{nT_n} $$.
 
 It's typically between zero and one, estimating how well the computing power is utilized, or how much cost is brought by communication or other issues. A trivial case is linear speed-up parallel program will always have an efficiency of 1.
 
-\subsection{Amdahl's Law and Gustafson's Law}
+\subsubsection{Amdahl's Law and Gustafson's Law}
 
 Linear speed-up is only an optimally case. Most parallel programs will have a part of the program which is serial, or can not be paralleled at all, and it is this part of serial program will eventually limit the overall speed-up available from parallelism. This is the fact pointed out by Amdahl's law, which defines the speed-up ratio as:
 
@@ -399,11 +380,11 @@ $$ S_n = (1 - p) + n \times p $$
 
 Here $n$ and $p$ is still the same meaning as what they're in Amdahl's Law but the speed-up ratio does not have a upper limit as $n$ goes to infinity any more.
 
-Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practise, and we will give an example later.
+Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practise.
 
-\subsection{More Affecting Issues}
+\subsubsection{More Affecting Issues}
 
-The first issue is dependency, which appears when computing depends upon prior result. These computation must be carried out in order, thus forming a dependence chain and explains how serial portion in a parallel program exists. No program can run more quickly than the longest chain, which is also known as the critical path.
+The first issue is the dependency, which appears when computing depends upon prior result. These computation must be carried out in order, thus forming a dependence chain and explains how serial portion in a parallel program exists. No program can run more quickly than the longest chain, which is also known as the critical path.
 
 The second one is race condition, which appears when two or more executing units update a certain variable at the same time and causing errors. This is because the two instruction streams can cross with each other in any order. For example, if both executing units would like to read a variable a, plus it by one, then write result back, the actual execution order could be one executing unit read a's value between the other executing unit's read and write back, thus making the final result equals to a's original value plus 1 rather than 2.
 
@@ -415,61 +396,33 @@ The third issue is deadlock, appears when multiple locks are involved. For examp
 
 There're still many other issues not mentioned here but also need to take consideration before carrying out parallel computing.
 
-\section{Common Parallel Patterns}
+\chapter{System Construction and Evaluation}
 
-A pattern is a tested solution to a certain kind of problem under some conditions. Here we have summarised several common patterns in parallel computing and listed them below.
+\subsection{Scalability Issues found in Applying R\&S to Selecting the Best}
 
-\subsection{Embarrassingly Parallel}
+Scalability is generally hard to define. In the case of simulation R\&S, it can be defined as the ability to handle a growing number of alternatives, with proportional computing resource added.
 
-Embarrassingly parallel looks more like a problem rather than a pattern. It deals with problems where separating the original problem into smaller ones takes very little or no effort at all. This happens when no communication or dependence exists among separated small problems, for example, if all sub-problems just need to do the same operation and they are independent from each other.
+Although existing R\&S procedures have gained great achievement in theoretical areas like statistics, practically these procedures can hardly handle scenarios where the number of alternatives is huge. As pointed out by Kim and Nelson (2006a), the two-stage Rinott’s procedure is typically applied when the number of alternatives is fewer than 20. As for fully sequential procedure KN, the number is considered as no more than 500. Other procedures like NSGS which claims to have been designed specifically to solve large-scale R\&S problems, reported 500 alternatives as the largest test case in their paper. However in practice, it is common to have thousands even tens of thousands of alternatives needed to be considered, which has exposed the shortcoming of scalability in R\&S.
 
-Some problems can be turned into embarrassingly parallel easily. For example, if all sub-problems dependent only on global data structure, then just replicate global data to all sub-problems thus being embarrassingly parallel.
+\subsubsection{A Theoretical Make Up}
 
-\subsection{Pipeline}
+Traditionally, the shortcoming of scalability in R\&S are made up through solutions of optimization-via-simulation, or OvS for short. OvS is a kind of solutions, or algorithms, which also aims at the problem of selecting the best. It guarantees global convergence, namely when simulation effort goes to infinity, it can eventually guarantee the correct selection of best.
 
-Pipeline is a classic pattern or architecture. We have already introduced hardware pipelines inside processor cores in section 3.1.2, and here we will introduce software pipeline pattern or architecture, for parallel purpose.
+However, the infinite simulation effort means exactly the R\&S procedures. In most of the cases, OvS algorithms will stop so early at some point that it is still quite far way from infinity, which consequently breaks the statistical guarantee of optimal selection. What is worse, the result give by the OvS algorithm may be significantly inferior to the optimal one, making it useless to the selecting of the best problem. 
 
-Software pipeline is composed of several threads or processes, which depends on implementation. A continuous data stream flows into the first thread or process as input and pass corresponding output as input to next thread or process. It continues so that every thread or process can do certain action on part of data simultaneously.
+Essentially speaking, any OvS algorithm will sacrifice statistical guarantee for time-saving through partially applying R\&S. Therefore, it is only a make up solution with trade-off between statistical guarantee and time cost.
 
-The most popular software pipeline should be Unix pipeline. It composes Unix commands into a pipeline with simple $\mid$ signs, which makes Unix shell extremely strong and flexible. It is implemented with multiple processes.
+\subsubsection{A Possible Way Out from Implementation}
 
-\subsection{Master-Slave}
+Since trading off between statistical guarantee and time cost looks like a zero-sum game, we do hope to find a way that can deal with practical-sized problem of selecting the best, with both fully applying R\&S procedures to archive statistical guarantee, and decreasing the time cost to a reasonable amount so that we can afford to wait. A possible way out is from implementation.
 
-Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task. The figure later in this section is a brief illustration of how master-slave pattern works.
+As is pointed out by Moore's law proposed in \cite{moore}, available computing powerful is becoming more and more sufficient, with a speed of doubling itself every 18 months. But fully taking advantage of the fast-growing computing power nowadays is not as straightforward as it used to be, since the time of serial computing, when the growth of computing power relays on serial execution speed, has already past, and we're in the age of parallel computing.
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=120mm]{master-slave-brief.png}
-\caption{A brief illustration of master-slave pattern}
-\end{figure}
-
-Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
-
-Master-Slave pattern is a high-level abstract pattern. There're many specific instances, like fork-join. 
-
-Fork-join maybe the simplest instance of master-slave structure. In this instance the master will start or fork many slaves first, then wait for or join the finish point of all the slaves, with a barrier generally.
-
-Master-Slave structure is so high-level abstract that even the Hadoop map-reduce, which we will introduce in the next section, has a master-slave structured underlay.
-
-\subsection{Map-Reduce}
-
-This pattern has become hot in recent years due to Google's publication \cite{google-map-reduce} followed by Apache's open source implementation named Hadoop. The key idea is to first split original data set into small pieces and perform the same operation called "map" on these data pieces, turning every data piece into key-value pair format. Then perform the same operation called "reduce" on the intermediate key-value pairs and finally combined them together to get final result.
-
-It is much more than a theoretical pattern because of the Hadoop framework. It has covered many parallel implementation details so that programmer can focus on the business logic part, say, "map" operation and "reduce" operation. The only left difficult point for programmers is how to fit original problem into such two steps.
-
-\subsection{Parallel Pattern Conclusion}
-
-Parallel patterns listed above are common and intuitive. They take advantage of data decomposition and functional decomposition, but rely heavily on the natural presentation of original problem and fit problem into suitable patterns.
-
-To expose better parallelism, advanced tricks are involved like Fast Fourier Transform to take advantage of specific domains, which are not that common any more.
-
-Besides, patterns are more art than science. It is not necessary to stick strictly to some pattern as long as the problem get solved.
-
-\chapter{Parallel Implementation of Ranking and Selection Procedure}
+\section{Parallel Implementation of Ranking and Selection Procedure}
 
 As can be seen from above, due to the complicated way in which the computing power grows in the age of parallel computing, it is impossible to gain speed-up in problem solving without carefully design a parallelism plan against targeted problem. There exists previous work that use parallel and distributed computing to deal with single extremely long-running simulation in \cite{potwsc05ras}, with typical examples by Fujimoto in \cite{cotacm90fuji} an \cite{scsmasm10fuji}. However in current R\&S scenario it is the huge number of repeated simulations rather than the time cost of single simulation that matters. Now we will start this part by analysing the parallelism inside the existing procedures.
 
-\section{Parallelism Analysis of Existing Procedures}
+\subsection{Parallelism Analysis of Existing Procedures}
 
 Independent is a frequently appeared modifier in literatures of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesign R\&S into parallel.
 
@@ -477,7 +430,7 @@ However that's only for the simulation, or sampling part. The procedure itself i
 
 Now let's look into the two representative procedures we have reviewed before.
 
-\subsection{Rinott's Procedure}
+\subsubsection{Rinott's Procedure}
 
 In the beginning part of Ronott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
 
@@ -489,7 +442,7 @@ Besides, the calculation after each barrier should be considered as the serial p
 
 Anyway, Rinott's procedure is fairly easy getting paralleled.
 
-\subsection{Fully Sequential Procedure}
+\subsubsection{Fully Sequential Procedure}
 
 Although Rinott's procedure can get paralleled with fairly little effort, there is still enough motivation for us to study the parallelism of fully sequential procedures, since such procedure can solve problem with smaller sample size, namely total computing effort in terms of serial computing. Let's still take the one in \cite{ras-seq-jeff} as an example.
 
@@ -511,9 +464,9 @@ Solutions based on decreasing comparison time sounds reasonable, but they waste 
 
 All these trouble lays on the point that the original typical fully sequential procedures are not designed specifically for parallel environment at all. It's time to revise conventional fully sequential R\&S procedure and we will introduce two revised fully sequential procedures which are more suitable in parallel environment, in the next section.
 
-\section{Revised Fully Sequential Procedures}
+\subsection{Revised Fully Sequential Procedures}
 
-\subsection{Vector Filling Procedure}
+\subsubsection{Vector Filling Procedure}
 
 The basic idea for vector fill procedure, or VF for short, is sticking to perform comparisons based on the originally specified sampling sequence, by using an vector recording the sampling values exactly in the order specified by the sampling rule.
 
@@ -521,7 +474,7 @@ In this way, the first problem mentioned above get solved with the original stat
 
 From the viewpoint of implementation, the most critical issue is that essentially the VF procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
 
-\subsection{Asymptotic Parallel Sequential Procedure}
+\subsubsection{Asymptotic Parallel Sequential Procedure}
 
 VF procedure is conservative in the sense that in order to keep most statistical validity it does not utilize all the obtained sample values, which loses many potential chances to eliminate inferior alternative earlier, thus is not that satisfying in speeding up the whole process.
 
@@ -529,7 +482,7 @@ To over come this weakness of vector filling procedure, asymptotic parallel sequ
 
 Since APS procedure can fully utilize all the obtained sample values, it is definitely more efficient in eliminating inferior alternatives than VF. Besides, APS procedure doesn't require recording all the sample values obtained. It only needs some summarising information of obtained sample values like summation, summation of square and so on, which can be updated as new sample value obtained. This feature lowers the storage space demand and in this way the whole data of APS procedure can be easily fit into main memory, which guarantees the order of computing speed.
 
-\section{Architecture Based on Master-Slave}
+\subsection{Architecture Based on Master-Slave}
 
 With the revision of existing fully sequential R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
 
@@ -537,7 +490,7 @@ As is introduced in section 3.5.3, master-slave means a master execution unit de
 
 In this section we will mainly introduce this architecture inside the scope of a single machine, where the whole program is inside a single process and master or slaves are all threads inside this process. At the end we will take a look at scaling it out to a cluster.
 
-\subsection{Master}
+\subsubsection{Master}
 
 As is mentioned above, master will take charge of essential serial steps in ranking and selection procedures, and one thing that should be noticed here is that the master part is not exactly the main thread for the whole program, since there's more "duty" work left to do in the main or entrance thread like parsing parameters of R\&S procedure, inputting the configurations of every alternative and other program level configurations like number of slave threads or directory for log files. Interested reader should refer to the code directly.
 
@@ -549,7 +502,7 @@ In other words, the core components are programmed with only dependent on the ab
 
 As for the detailed specifications of R\&S implementation and simulation implementation, we will look into details in later part specifically introducing the extension point for self-customized R\&S procedure. And till now we have finished introducing the very abstract master, which is started from almost the end of the main thread and interacts with specific ranking and selection logic through abstract programming interfaces.
 
-\subsection{Slave}
+\subsubsection{Slave}
 
 Generally speaking, there should be multiple instances of slave within a master-slave structure. Within the single machine scope, a slave instance is a dedicated thread and different slave threads are identical in code while different in the data it is processing and the status it is in.
 
@@ -561,7 +514,7 @@ Both argument fetching step and result submitting step involve communication wit
 
 As for the simulation step, again it is done simply by calling the abstract programming interface of simulation task, thus supporting self-customized simulation experiments. Specification of this programming interface will be described in later section.
 
-\subsection{User Interface}
+\subsubsection{User Interface}
 
 In order to reduce the study cost of users who adopt our implementation, well designed user interface is necessary part in the whole system. In our implementation, the user interface can be divided into two kinds. One is for users using our implementation directly, the other is for users extending in ranking and selection procedure and simulation experiment.
 
@@ -577,7 +530,7 @@ In this way it is much more user friendly than command line. Beginning users cou
 
 As for the second kind of user interface, we will give a detailed introduction in the section discussing extension points later.
 
-\subsection{Scale Out to Cluster}
+\subsubsection{Scale Out to Cluster}
 
 With a limited number of slave threads inside a single machine, it is very still far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
 
@@ -587,11 +540,11 @@ Buying powerful machine with more hardware cores is an approach, which is named 
 
 A common solution is to compose a cluster with several machines where each of them are not that powerful in single. This is called scale out. We do have worked out a previous implementation which scales out to a small cluster. However, that version does not include features like supporting self-customized R\&S procedure and simulation experiment, since it involves a fundamental refactoring of design. Till this thesis, our latest trunk version have fully supported all the features mentioned in this thesis inside single machine range. We will take scaling out to cluster within latest trunk version as a future work.
 
-\section{Extension Points for Universality}
+\subsection{Extension Points for Universality}
 
 Since there has already been so many different combinations of R\&S procedures and simulation experiments to solve selecting the best problem, it is necessary to extract the common components and define reasonable extension points for different components, which follows an import design principle saying that "don't repeat your self". And it will also help a lot when facing a new selecting the best problem since researchers can focus on the part that the new problem differs from others, as long as the specific solution for the different part is developed strictly against the specifications of extension points stated in the rest of this section.
 
-\subsection{Specification of Self-customized Procedure}
+\subsubsection{Specification of Self-customized Procedure}
 
 The implementation of self-customized R\&S procedure should follow the specification, or function signature below. By the way, it's in Java.
 
@@ -608,7 +561,7 @@ The third function argument simHelper is a self-defined type, or class in Java, 
 
 Throughout the design of these extension points, we will try our best not to involve programming language dependent grammar or feature in the hope of reducing user's learning effort, just like the arrays here is plain array of double which is similar to most C-style languages, rather than advanced data structure like ArrayList provided by Java standard library.
 
-\subsection{Interfaces for Self-customized Procedure}
+\subsubsection{Interfaces for Self-customized Procedure}
 
 Here comes to the part introducing all the programming interfaces provided for implementing R\&S procedures. Firstly let's look at two plain old java objects, or POJOs for shout, which act like the struct in C-programming language. They are the wrappers for simulation input and output, so we name them as SimInput and SimOutput, respectively. We only list the fields here, and will explain the meaning of each field later during the explanation of programming interfaces.
 
@@ -669,7 +622,7 @@ Here the first parameter n is the number of simulation result demanded by caller
 
 A typical example of using these asynchronized interfaces is the implementation of the revised fully sequentially procedures. After sending out a certain number of simulation experiment requests, calling takeSimOutputs with $n = 1$ and $block = true$ repeatedly, meaning that the fully sequential procedure could do something after each new sample value. The appending simulation requests are also sent out here, archiving customized sampling rule.
 
-\subsection{Specification of Self-customized Simulation}
+\subsubsection{Specification of Self-customized Simulation}
 
 The implementation of self-customized simulation experiment should follow the function signature specified below:
 
@@ -685,11 +638,11 @@ The return value is design as an array to support multiple simulation results.
 
 Generally speaking issues needed consideration in integrating an simulation experiment is much fewer than those in developing a new R\&S procure. The only thing should get attention here is how to use the seeds provided from master reasonably during simulation.
 
-\section{Features for Performance}
+\subsection{Features for Performance}
 
 Till now we have introduced our work in higher level for a efficient and flexible architecture. In this section we will describe two low level designs specifically for better parallel performance. One is to reduce communication cost by buffering the messages with an FIFO queue, the other is to speed up serial comparison by adopting the heap, which is also a common data structure.
 
-\subsection{Communication with FIFO Queues}
+\subsubsection{Communication with FIFO Queues}
 
 Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used an FIFO queue, or a BlockingQueue in Java.
 
@@ -707,7 +660,111 @@ In this way, communication cost inside single machine is dramatically reduced fo
 
 Except from the performance benefit it has brought in, adopting FIFO queues also helps to decouple the master and slaves, which makes the design more clear.
 
-\subsection{Comparison with Heaps}
+\section{Numerical Experiment and Analysis}
+
+In this section we will present the numerical results from the latest version of our implementation. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
+
+\subsection{Hardware Environment}
+
+Our experiment is done on a Dell PowerEdge R815 rack mount server, with four AMD Opteron 6176 CPUs equipped, namely a multi-processor machine. The total memory size is 64GB which is huge enough to support our experiment, and we will need to discuss the limitation from the number of hardware parallel execution units.
+
+\subsubsection{Parallel Execution Units}
+
+Each of the four AMD Opteron 6176 CPUs has 12 cores, thus 48 cores in total. Information from /proc/cpuinfo on operating system has also verified this hardware configuration.
+
+Empirically it is possible to start more than 48 tasks at the same time. Besides, it is also quite proper since using up the computing ability of each machine is a way to reduce IT cost. Engineers in IT industry have even tried to study the most aggressive ratio of software parallel tasks over hardware parallel execution units, which highly depends on detailed scenario but is definitely no less than 1.
+
+In our experiment, in order to guarantee an good parallel computing status among all slave threads, we set the number of slaves to 48 in maximum, which is quite conservative.
+
+\subsection{Software Environment}
+
+Commercial software components like the Windows from Micro Software or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
+
+\subsubsection{Operating System}
+
+We have installed CentOS 6.2 as the operating system on our server, which is the most popular community supported and server oriented Linux distributions, and the name CentOS itself is short for "Community Enterprise Operating System".
+
+CentOS is extremely stable since it has $100\%$ binary compatibility with its upstream source Red Hat Enterprise Linux, a ceremonially supported and enterprise server level Linux distribution from Red Hat, which is the leading Linux service provider in the world. 
+
+\subsubsection{Runtime Environment}
+
+We have installed Java Runtime Environment 1.6. We choose Java programming language since it is free compared to Matlab and powerful enough with abundant third-party libraries.
+
+Extra benefit with Java includes but not limited to the natural ability of cross-platform, the robustness in the language itself, e.g..
+
+\subsection{Numerical Result}
+
+The numerical result is taken from solving a specific instance of the three-stage allocation problem with a fairly large scale. We have repeatedly run the experiments with different number of slave threads against this problem and finally have complete correctness and good parallelism archived.
+
+\subsubsection{The Problem Scale}
+
+The feasible region of this instance of three-stage allocation problem is defined as $x_1 + x_2 + x_3 \leqslant 20$, $x_4 + x_5 = 20$, $1 \leqslant x_i \leqslant 20$ and all the $x_i$ are natural number, so there are 21660 feasible solutions in total, in other words the $k = 21660$ here.
+
+In previous time this scale size makes it thought as not suitable for solving by R\&S, and often dealt with through methods like OvS. In our experiment it is solved with an affordable time cost, which will be shown later.
+
+\subsubsection{Correctness}
+
+From the IZ viewpoint introduced before, both the best solutions and the ones which are within $\delta$ difference from the best solutions can be regarded as correct selection.
+
+In this specific problem instance, all the correct selections can be obtained in advance through other methods, which let us to verify the correctness of results obtained from running our own R\&S implementation. The correct results are listed below:
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Alternative & Comment \\
+\hline
+(6, 7, 7, 12, 8) & best \\
+(7, 7, 6, 8, 12) & best \\
+(6, 7, 7, 13, 7) & good \\
+(7, 7, 6, 7, 13) & good \\
+(6, 7, 7, 11, 9) & good \\
+(7, 7, 6, 9, 11) & good \\
+\hline
+\end{tabular} \\
+\caption{Results Obtained in Advance}
+\end{center}
+\end{table}
+
+Again noticed that the best answers and the good enough answers are all considered as correct selection.
+
+The corresponding log has shown that we archived correct selection every time running our implementation, regardless of different parallel configurations each time. This is also the basic requirement of our work. With the guaranteed correctness, we can focus on the performance data now.
+
+\subsubsection{Performance}
+
+Here we will report the total number of samples generated during R\&S and the total time spent during the whole program. The total number of samples can be regarded as total simulation workload approximately, which should be carried out by all the slaves in parallel. As for the total time cost, that is the most data we're interested in developing this implementation. Below is the detailed results:
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Num. of Slaves(n): & 1 & 4 & 8 & 16 & 32 & 48 \\
+\hline
+Sample Size($\times 10^5$) & 2.426 & 2.434 & 2.442 & 2.442 & 2.433 & 2.436\\
+\hline
+Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
+\hline
+\end{tabular} \\
+\caption{Performance Data}
+\end{center}
+\end{table}
+
+The time cost reported in this time is at least affordable for research purpose now. By the way, we also monitored the program with a more professional tool named visualvm, interested reader may refer to the appendix.
+
+\subsection{Performance Analysis}
+
+We can see from the table above that the sample size varies very little from number of slaves, which implies that the simulation work load is almost fixed. According to Amdahl's law, the speed up ratio can be modelled as $\frac{1}{(1 - p) + \frac{p}{n}}$, where $p$ the parallel proportion of the program, $1 - p$ is the remaining serial proportion, and $n$ is the number of processors. Now we would like to estimate $p$ with model below:
+
+$$ t = a \times (1 - p + \frac{p}{n}) + \epsilon $$
+
+Here $a$ is the factor, $\epsilon$ is the noise, and we can get t and n from the result table above. The model can be turned into: 
+$$ t = (a - ap) + ap \times \frac{1}{n} + \epsilon $$
+
+With linear regression, we can get $a - ap = 40.4$ and $ap = 332.9$ with $R^2 \geqslant 0.994$, so $p$ is 0.892, which means 89.2\% of simulation work is paralleled.
+
+This parallel ratio fits the R\&S feature that intuitively most workload can get executed in parallel, and also get benefited from all the design decisions and programming techniques with the purpose of reducing the serial workload. It can be considered as a good starting point of scaling out to more execution units, where a cluster rather a single machine will be involved.
+
+\chapter{Comparison Acceleration}
 
 Heap is a widely used data structure in computer science. It is a tree-based data structure, whose node contains a key value for comparing and sorting. For min-heap, the key value of each node is greater than or equal to that of its parent if exists and less than or equal to that of its children also if exists. For max-heap, the situation is just opposite. This is called heap property.
 
@@ -753,110 +810,6 @@ During the whole comparison, time complexity for every possible elimination is $
 
 What's more, if there's no elimination during the comparison, which occurs frequently in experiments, the time complexity will be reduced to $O(1)$, since no adjustment of any data structure is needed. That's why our comparing algorithm performs much better than $O(\log n)$ in average.
 
-\chapter{Numerical Experiment and Analysis}
-
-In this section we will present the numerical results from the latest version of our implementation. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
-
-\section{Hardware Environment}
-
-Our experiment is done on a Dell PowerEdge R815 rack mount server, with four AMD Opteron 6176 CPUs equipped, namely a multi-processor machine. The total memory size is 64GB which is huge enough to support our experiment, and we will need to discuss the limitation from the number of hardware parallel execution units.
-
-\subsection{Parallel Execution Units}
-
-Each of the four AMD Opteron 6176 CPUs has 12 cores, thus 48 cores in total. Information from /proc/cpuinfo on operating system has also verified this hardware configuration.
-
-Empirically it is possible to start more than 48 tasks at the same time. Besides, it is also quite proper since using up the computing ability of each machine is a way to reduce IT cost. Engineers in IT industry have even tried to study the most aggressive ratio of software parallel tasks over hardware parallel execution units, which highly depends on detailed scenario but is definitely no less than 1.
-
-In our experiment, in order to guarantee an good parallel computing status among all slave threads, we set the number of slaves to 48 in maximum, which is quite conservative.
-
-\section{Software Environment}
-
-Commercial software components like the Windows from Micro Software or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
-
-\subsection{Operating System}
-
-We have installed CentOS 6.2 as the operating system on our server, which is the most popular community supported and server oriented Linux distributions, and the name CentOS itself is short for "Community Enterprise Operating System".
-
-CentOS is extremely stable since it has $100\%$ binary compatibility with its upstream source Red Hat Enterprise Linux, a ceremonially supported and enterprise server level Linux distribution from Red Hat, which is the leading Linux service provider in the world. 
-
-\subsection{Runtime Environment}
-
-We have installed Java Runtime Environment 1.6. We choose Java programming language since it is free compared to Matlab and powerful enough with abundant third-party libraries.
-
-Extra benefit with Java includes but not limited to the natural ability of cross-platform, the robustness in the language itself, e.g..
-
-\section{Numerical Result}
-
-The numerical result is taken from solving a specific instance of the three-stage allocation problem with a fairly large scale. We have repeatedly run the experiments with different number of slave threads against this problem and finally have complete correctness and good parallelism archived.
-
-\subsection{The Problem Scale}
-
-The feasible region of this instance of three-stage allocation problem is defined as $x_1 + x_2 + x_3 \leqslant 20$, $x_4 + x_5 = 20$, $1 \leqslant x_i \leqslant 20$ and all the $x_i$ are natural number, so there are 21660 feasible solutions in total, in other words the $k = 21660$ here.
-
-In previous time this scale size makes it thought as not suitable for solving by R\&S, and often dealt with through methods like OvS. In our experiment it is solved with an affordable time cost, which will be shown later.
-
-\subsection{Correctness}
-
-From the IZ viewpoint introduced before, both the best solutions and the ones which are within $\delta$ difference from the best solutions can be regarded as correct selection.
-
-In this specific problem instance, all the correct selections can be obtained in advance through other methods, which let us to verify the correctness of results obtained from running our own R\&S implementation. The correct results are listed below:
-
-\begin{table}[ht]
-\begin{center}
-\begin{tabular}{|c|c|}
-\hline
-Alternative & Comment \\
-\hline
-(6, 7, 7, 12, 8) & best \\
-(7, 7, 6, 8, 12) & best \\
-(6, 7, 7, 13, 7) & good \\
-(7, 7, 6, 7, 13) & good \\
-(6, 7, 7, 11, 9) & good \\
-(7, 7, 6, 9, 11) & good \\
-\hline
-\end{tabular} \\
-\caption{Results Obtained in Advance}
-\end{center}
-\end{table}
-
-Again noticed that the best answers and the good enough answers are all considered as correct selection.
-
-The corresponding log has shown that we archived correct selection every time running our implementation, regardless of different parallel configurations each time. This is also the basic requirement of our work. With the guaranteed correctness, we can focus on the performance data now.
-
-\subsection{Performance}
-
-Here we will report the total number of samples generated during R\&S and the total time spent during the whole program. The total number of samples can be regarded as total simulation workload approximately, which should be carried out by all the slaves in parallel. As for the total time cost, that is the most data we're interested in developing this implementation. Below is the detailed results:
-
-\begin{table}[ht]
-\begin{center}
-\begin{tabular}{|c|c|c|c|c|c|c|}
-\hline
-Num. of Slaves(n): & 1 & 4 & 8 & 16 & 32 & 48 \\
-\hline
-Sample Size($\times 10^5$) & 2.426 & 2.434 & 2.442 & 2.442 & 2.433 & 2.436\\
-\hline
-Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
-\hline
-\end{tabular} \\
-\caption{Performance Data}
-\end{center}
-\end{table}
-
-The time cost reported in this time is at least affordable for research purpose now. By the way, we also monitored the program with a more professional tool named visualvm, interested reader may refer to the appendix.
-
-\section{Performance Analysis}
-
-We can see from the table above that the sample size varies very little from number of slaves, which implies that the simulation work load is almost fixed. According to Amdahl's law, the speed up ratio can be modelled as $\frac{1}{(1 - p) + \frac{p}{n}}$, where $p$ the parallel proportion of the program, $1 - p$ is the remaining serial proportion, and $n$ is the number of processors. Now we would like to estimate $p$ with model below:
-
-$$ t = a \times (1 - p + \frac{p}{n}) + \epsilon $$
-
-Here $a$ is the factor, $\epsilon$ is the noise, and we can get t and n from the result table above. The model can be turned into: 
-$$ t = (a - ap) + ap \times \frac{1}{n} + \epsilon $$
-
-With linear regression, we can get $a - ap = 40.4$ and $ap = 332.9$ with $R^2 \geqslant 0.994$, so $p$ is 0.892, which means 89.2\% of simulation work is paralleled.
-
-This parallel ratio fits the R\&S feature that intuitively most workload can get executed in parallel, and also get benefited from all the design decisions and programming techniques with the purpose of reducing the serial workload. It can be considered as a good starting point of scaling out to more execution units, where a cluster rather a single machine will be involved.
-
 \chapter{Conclusions and Future Work}
 
 In this thesis we have introduced our parallel implementation of both classic Rinott's procedure and two revised fully sequential procedures. Basically it is master-slave structure in higher level and the core components are extracted out while the procedures are implemented as plug-ins, which makes it open for self-customized procedures. Meanwhile, performance is also considered carefully with suitable data structure like FIFO queue and heap adopted, and numerical experiments also showed that the parallel ratio of the whole program is pretty high which guarantees the scalability.
@@ -867,7 +820,57 @@ However, there is still much room left for future improvement. The most exciting
 \addcontentsline{toc}{chapter}{Appendix}
 \appendix
 
-\chapter{Rase User Guide}
+\chapter{Common Parallel Patterns}
+
+A pattern is a tested solution to a certain kind of problem under some conditions. Here we have summarised several common patterns in parallel computing and listed them below.
+
+\section{Embarrassingly Parallel}
+
+Embarrassingly parallel looks more like a problem rather than a pattern. It deals with problems where separating the original problem into smaller ones takes very little or no effort at all. This happens when no communication or dependence exists among separated small problems, for example, if all sub-problems just need to do the same operation and they are independent from each other.
+
+Some problems can be turned into embarrassingly parallel easily. For example, if all sub-problems dependent only on global data structure, then just replicate global data to all sub-problems thus being embarrassingly parallel.
+
+\section{Pipeline}
+
+Pipeline is a classic pattern or architecture. We have already introduced hardware pipelines inside processor cores in section 3.1.2, and here we will introduce software pipeline pattern or architecture, for parallel purpose.
+
+Software pipeline is composed of several threads or processes, which depends on implementation. A continuous data stream flows into the first thread or process as input and pass corresponding output as input to next thread or process. It continues so that every thread or process can do certain action on part of data simultaneously.
+
+The most popular software pipeline should be Unix pipeline. It composes Unix commands into a pipeline with simple $\mid$ signs, which makes Unix shell extremely strong and flexible. It is implemented with multiple processes.
+
+\section{Master-Slave}
+
+Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task. The figure later in this section is a brief illustration of how master-slave pattern works.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=120mm]{master-slave-brief.png}
+\caption{A brief illustration of master-slave pattern}
+\end{figure}
+
+Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
+
+Master-Slave pattern is a high-level abstract pattern. There're many specific instances, like fork-join. 
+
+Fork-join maybe the simplest instance of master-slave structure. In this instance the master will start or fork many slaves first, then wait for or join the finish point of all the slaves, with a barrier generally.
+
+Master-Slave structure is so high-level abstract that even the Hadoop map-reduce, which we will introduce in the next section, has a master-slave structured underlay.
+
+\section{Map-Reduce}
+
+This pattern has become hot in recent years due to Google's publication \cite{google-map-reduce} followed by Apache's open source implementation named Hadoop. The key idea is to first split original data set into small pieces and perform the same operation called "map" on these data pieces, turning every data piece into key-value pair format. Then perform the same operation called "reduce" on the intermediate key-value pairs and finally combined them together to get final result.
+
+It is much more than a theoretical pattern because of the Hadoop framework. It has covered many parallel implementation details so that programmer can focus on the business logic part, say, "map" operation and "reduce" operation. The only left difficult point for programmers is how to fit original problem into such two steps.
+
+\section{Parallel Pattern Conclusion}
+
+Parallel patterns listed above are common and intuitive. They take advantage of data decomposition and functional decomposition, but rely heavily on the natural presentation of original problem and fit problem into suitable patterns.
+
+To expose better parallelism, advanced tricks are involved like Fast Fourier Transform to take advantage of specific domains, which are not that common any more.
+
+Besides, patterns are more art than science. It is not necessary to stick strictly to some pattern as long as the problem get solved.
+
+\chapter{User Guide of RASE}
 
 To develop your own simulation code, the following steps are suggested:
 
