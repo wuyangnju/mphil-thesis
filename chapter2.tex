@@ -1,0 +1,205 @@
+\chapter{Background}
+
+\section{Simulation R\&S Procedure}
+
+\subsection{Problem of Selecting the Best}
+
+The problem of selecting the best is common in operation research. Here we give two examples, related to safety stock and efficient manufacturing, respectively. Both of them can be carried out by discrete event simulation experiments.
+
+\subsubsection{$(s, S)$ Inventory Model}
+
+This is about setting up reordering point in inventory management and it once appeared in \cite{cissac1985ss}. A general model with two parameters $s$ and $S$ works in the way that as long as the inventory level goes below $s$, then an order with the amount $S - s$ will be send out, after which the inventory level will regain to $S$. This is the $(s, S)$ inventory model. And in order to apply this model, extra effort is needed to specify $s$ and $S$ in each practical case to minimize the reordering cost.
+
+In this example, both $s$ and $S$ are limited in specific problem instances, like $S$ must be less than the capacity of inventory store, $s$ must between $0$ and $S$, both $s$ and $S$ must be natural numbers, which is often the case. Consequently the number of feasible combinations of $s$ and $S$ are limited in finite. The performance we're interested here is the reordering cost, so the best combination of $s$ and $S$ is defined as the one with the smallest expectation of the reordering cost. In this way, a practical inventory management problem can be treated as the problem of selecting the best.
+
+\subsubsection{Three-stage Buffer Allocation}
+
+This is about allocating buffer space in a multi-stage manufacturing line and it once appeared in \cite{smoms93threestage}. Let's take a three stage manufacturing line as an instance. In this case, there are three manufacturing units, or stages, in a manufacturing line, and each stage has its own capacity for manufacturing items. In front of the second stage and third stage, there exist a buffer space, respectively. which also has its own capacity for manufacturing items. In this model, there're five parameters representing capacities in five locations including the three manufacturing units and two buffers. The manufacturing manager needs to specify these five parameters to archive maximum throughput for the whole manufacturing line.
+
+Just the same as the previous example, the total number of manufacturing items inside this manufacturing line, or the summation of these five parameters, is limited in specific problem instances. What's more, these parameters also need to be natural numbers in most cases, thus limiting the number of feasible combinations of these five parameters into finite again. What we're interested in here is the throughput of the whole manufacturing line and the best combination of these five parameters is defined as the one which makes the largest expectation of throughput. Again in this way, the practical three-stage or multi-stage buffer allocation problem can be treated as problem of selecting the best.
+
+\subsection{R\&S Procedures}
+
+Typically, R\&S Procedures allocate simulation effort to all alternatives, namely, running simulation experiments repeatedly for a specified finite number of times against all the alternatives. Here each alternative is distinguished by a vector of arguments. The goal is to guarantee certain statistical validity when making selection decision, such as the probability of correct selection, or PCS for short. We will review two representative R\&S procedures. One is a typical two-staged procedure, and the other is featured as fully sequential.
+
+\subsubsection{Rinott's Procedure}
+
+Rinott's procedure is a classic two-staged R\&S procedure developed in 1978 by Rinott in \cite{cistam1978rinott}. It guarantees with the confidence level $1 - \alpha$ that the alternative get selected is at least $\delta$ better than the second best one. If alternatives within $\delta$ worse than the best one exist, then Rinott's procedure guarantees to select one of these "good enough" alternatives with the same probability. The $\delta$ here is called indifference-zone. It is set by procedure user to determine the smallest difference that is worth getting noticed. In other word, differences less than this $\delta$ can be ignored from a practical viewpoint.
+
+Suppose there are $k$ systems where $k \geqslant 2$. Let $X_{ij}$ denote the $j$th independent sample value from simulation experiments of alternative $i$. We assume that $X_{ij} \backsim N(\mu_i, \theta_i^2)$, where both $\mu_i$ and $\theta_i^2$ are unknown, and each $X_{ij}$ is independent from each other. Also let $\bar{X_i}(r) = r^{-1}\sum_{j=1}^r$, namely the sample mean of first $r$ sample values of alternative $i$, and let $S_i^2 = \frac{1}{n_0 - 1}\sum_{j=1}{n_0}(X_{ij} - \bar{X_i}(n_0))^2$, the sample variance of first $r$ sample values of alternative $i$.
+
+With these symbols, we organize the Rinott's procedure as following steps:
+
+\begin{enumerate}
+\item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. $n_0$ is the sample size in first stage and $n_0 \geqslant 2$.
+\item{Initialize: } Calculate Rinott's constant $h = h(n_0, k, 1 - \alpha)$ with method mentioned in \cite{rinott-constant}. Collect $n_0$ independent sample values $X_{ij}$, where $j = 1, 2,...,n_0$, for each alternative $i$, by repeatedly running simulation experiments against that alternative, and for $i = 1, 2,...,k$, calculate $S_i^2$. Let 
+$$ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $$ where $N_i$ is the number of sample value that will eventually taken from alternative $i$.
+\item{Stopping Rule: } If $n_0 \geqslant \max N_i$ then stop and select the alternative with the best sample mean, namely the largest or smallest $\bar{X_i(n_0)}$. Else take $\max\{N_i - n_0, 0\}$ extra sample values from each alternative $i$ by continue repeating the simulation experiments, after which select the alternative with largest or smallest $\bar{X_i(N_i)}$ as the best.
+\end{enumerate}
+
+And specifically, if the best alternative is defined as the one with largest expectation, then Rinott's procedure guarantees
+$$ Pr\{\text{select alternative i }|\text{ }\mu_i - \mu_j \geqslant \delta \} \geqslant 1 - \alpha $$
+where $1/k < 1 - \alpha < 1$. Since this thesis focuses on implementation, reader interested in the proof may refer to \cite{ras-recent-advances}. 
+
+One related issue worth mentioning here is that the total sample size required in Rinott's procedure is slightly less that $O(k\log{k})$, which determines the total computing effort.
+
+\subsubsection{A Fully Sequential Procedure}
+
+While the Rinott's procedure mentioned above is a classic two-staged procedure, fully sequential is another important type of procedures, with classic examples like KN in \cite{tomacs01kn} and NSGS in \cite{or01nsgs}. However the procedure we will review right after this paragraph is a newly developed one also featured as fully sequential. It first appears in \cite{ras-seq-jeff} by L. J HONG in 2004. This procedure provides good statistical validity while keeps a great opportunity of decreasing total number of sample values, approximately the total computing effort need to spend, at same time. The key point is that if at any time there is enough evidence to prove that some certain alternative is clearly inferior, then this alternative will get eliminated immediately in theoretic like what most fully sequential procedures do.
+
+With the symbols same as those in Rinott's procedure, we organize the this procedure as following steps:
+
+\begin{enumerate}
+\item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. Let $\lambda = \eta / 2$ and $a$ be the solution of the equation below:
+$$ E[\frac{1}{2}\exp(- \frac{a\delta}{n_0 - 1} \Psi)] = 1 - (1 - \alpha)^{\frac{1}{k - 1}} $$,
+where $\Psi$ is a random variable with PDF
+$$ f_{\Psi}(x) = 2 [1 - F_{\chi_{n_0 - 1}^2}(x)] f_{\chi_{n_0 - 1}}^2(x) $$,
+and $F_{\chi_{n_0 - 1}^2}(x)$ and $f_{\chi_{n_0 - 1}}^2(x)$ are the CDF and PDF of $\chi^2$ distribution with $n_0 - 1$ degrees of freedom.
+\item{Initialize: } Let $I = {1, 2,...,k}$ be the set of current surviving alternatives. Again collect $n_0$ independent sample values $X_{ij}$ where $j = 1, 2,...,n_0$ and $i = 1, 2,...,k$ by repeating simulation experiments against corresponding alternatives. Let $r$ be the counter of total number of samples and $n_i(r)$ be the number of samples of alternative $i$. Till now, $r = kn_0$, and $n_1(r) = n_2(r) = ... = n_k(r) = n_0$.
+\item{Screening: } For all $i,j \in I$ and $i \neq j$, let 
+$$ \tau_{ij}(r) = [\frac{S_i^2}{n_i(r)} + \frac{S_j^2}{n_j(r)}]^{-1} $$
+and
+$$ Y_{ij}(\tau_{ij}(r)) = \tau_{ij}(r)[\bar{X_i}(n_i(r)) - \bar{X_j}(n_j(r))] $$.
+Let $I^{old} = I$, then
+$$ I = I^{old}/\{i \in I^{old}: \exists j \in I^{old} \text{s.t. } Y_{ij}(\tau_{ij}(r)) < \min[0, - a + \lambda \tau_{ij}(r)]  \text{and } j \neq i\} $$
+\item{Stopping Rule: } If $|I| = 1$ then stop and select the only alternative in $I$ as the best. Else let $r = r + 1$, take the $r$th sample by running simulation experiment, update $n_i(r)$ for all $i \in I$, and goto \textbf{Screening}.
+\end{enumerate}
+
+A missing specification of the above procedure lays in the part of stopping rule, namely the decision of which alternative is the next sample value from, or in other words, which configuration should be used in next replication of simulation experiment. This decision making rule is called sampling rule.
+
+In \cite{ras-seq-jeff}, such sampling rule is applied: after first stage, run next simulation experiment against the surviving alternative with the lowest $n_i(r)/Si$. If a tie exists, run next simulation against the surviving alternative with lowest $S_i$ among them.
+
+The sample size of such fully sequential procedures is typically smaller than that in Ronott's procedure except for some extreme case. Interested reader may refer to \cite{ras-seq-jeff} for detailed properties as well statistical validity proofs.
+
+\section{Parallel Computing}
+
+\subsection{Different Parallelism Levels}
+
+In terms of granularity, parallel computing can be divided into three different levels: bit level, instruction level and task level.
+
+\subsubsection{Bit-Level Parallelism}
+
+Bit-level parallelism is related to the size of computer word. Inside the processor, several bits are manipulated together, which composes a computer word, and the size of computer word is defined as the number of bits it contains. More hardware details can be found in \cite{pca97} Historically, 4-bit computer word has been replaced by 8-bit, then 16-bit, 32-bit, until today's 64-bit. Although not very close to ordinary people, computer with 128-bit computer word or even larger one has been made.
+
+\subsubsection{Instruction-Level Parallelism}
+
+Instruction-level parallelism is a more interesting topic in computer architecture. An instruction is a computer word with special meaning for processors. Any computer program will essentially become a stream of instructions before getting executed, no matter what programming language it is written in. These instructions will get re-ordered and grouped before executing, certainly without changing the result of original instruction stream. Besides, an instruction can be divided into several stages, with each stage corresponding to a certain action, such as instruction fetch, decode, execute, memory access, write back and so on, which enables the instruction pipeline in modern processors. In addition to pipeline, the pipeline units inside some modern processors can even handle more than one action at a time, which is known as super-scalar.
+
+Before instruction-level parallelism is adopted, the instructions inside a stream are executed serially. At any time, there is at most one instruction getting executed. The next instruction won't start unless the previous one finishes. Under such circumstances, the execution time is easy to calculate, which equals the average execution time per instruction, multiplied by the number of instructions. Without changing the amount of instructions inside a stream, the only way to decrease the execution time is to increase CPU clock frequency, which is called frequency scaling.
+
+However, frequency scaling is limited by many physical constraints, like power consumption, heat generation and so on. Thus instruction-level parallelism has become a way out under current physical constraints, and attracts many researchers in the field of computer architecture.
+
+\subsubsection{Task-Level Parallelism}
+\label{sec:pseudo-multi-tasking}
+
+Task-level parallelism is a higher level parallelism in the sense that it needs support from both hardware and software. In another word, both bit-level parallelism and instruction-level parallelism are implemented inside processors, making them transparent, or invisible to software. Even operating system, the most fundamental software inside computer, do not have control on bit-level and instruction-level parallelism. 
+
+Earlier computers without task-level parallelism can also support multi-tasking, since multi-tasking operating system takes care of switching different tasks back and force from time to time according to some strategy, including saving and restoring context for each task, and does not have to wait until current task finishes. From the viewpoint of a user, the computer is doing task in parallel, but precisely speaking, such fake parallelism should be called concurrency. 
+
+As for modern computers with task-level parallelism support, like multi-core or multi-processor, which will be introduced later, they do have the ability to make different tasks executing in real parallel, certainly also with the support from software. We will look into the details of how hardware and software support parallel in the next two sections.
+
+\subsection{Hardware Parallel Support}
+
+\subsubsection{Multi-core Processor}
+
+Computers with Von Neumann architecture, which is still the dominant computer architecture today, will have at least one processor inside. For a processor, it can contain more than one execution units, or cores, on the same chip. Such processor is known as multi-core processor. Different cores inside the same multi-core processor can handle different instruction streams at the same time, thus achieve the real parallel. By the way, a core can also be super-scalar, thus handles multiple instructions from the same instruction stream. As for Intel's Hyper-Threading technology, which uses the same core to handle a different instruction stream when this core get into idle for some reason, is a form of pseudo multi-core processing.
+
+\subsubsection{Multi-processor Computer}
+
+One step further from multi-core processor, a computer can have more than one processors, like SMP, standing for symmetric multi-processor, which is a single computer equipped with multiple identical processors. The existence of multiple processors inside the same computer brings about the issue of accessing memory and communicating with each other.
+
+A computer where every address of memory can be accessed within equal latency and bandwidth is recognized as Uniform Memory Access(UMA), otherwise it belongs to Non-Uniform Memory Access (NUMA). SMP is one kind of Uniform Memory Access, while MPP, standing for massively parallel processor, which is a single computer with multiple networked processors, belongs to Non-Uniform Memory Access.
+
+Communication among processors of the same computer can be implemented in many ways, from a simple shared media like memory or bus to complicated internal network involving topologies like star or ring and routing strategies if some processors are not connected directly.
+
+\subsubsection{Cluster}
+
+A group of standalone computers can be connected via network to compose a cluster. Since these connected computers work together, this cluster can be regarded as one powerful computer. A cluster composed by multiple identical computers connected via TCP/IP Ethernet local area network is called Beowulf cluster, which is the most common type of cluster.
+
+Computers composing a cluster does not have to be identical with each other, which can increase the flexibility, but also increase the difficulty for load balancing. Except from the extra network compared to single computer, other technical issues like configuration, monitoring even fault tolerance also create challenges that can't be ignored.
+
+\subsubsection{Distributed Computing}
+
+In a narrow sense, distributed computing means using computers communicating over the Internet to work together on a certain problem. Comparing with a cluster, communication cost over the Internet is much higher since the throughput is low while the latency may be unstable. So typically such distributed computing only deals with embarrassingly parallel problems in which communications among sub-problems are not that frequent. SETI@home is one of the best-known example of such distributed computing.
+
+In a wider sense, distributed computing means multiple computational entities, or nodes, with their own local memory and communicating by message passing, working together to archive a certain goal. If these nodes are deployed on different physical machines in a cluster, they possess their own local physical memory and pass messages through network protocols. On the contrary, if they're deployed on the same physical machine, then the nodes are degenerated to local processes and possess their own virtual memory only. Processes on the same physical machine can certainly pass messages through network protocols via local loop network as if they're on different physical machines, but they can also choose to communicate through local operating system as a more efficient choice. For the concept of process, we will introduce it in the next paragraph.
+
+\subsection{Software Parallel Support}
+
+\subsubsection{Process upon Operating System}
+
+Process is a fundamental concept in operating system. In \ref{sec:pseudo-multi-tasking}, we introduced how multi-tasking operating system make multiple tasks executed concurrently without hardware task-level parallelism. Here, the tasks should be called processes. Even with the hardware task-level parallelism, modern operating systems also regard different tasks as different processes, and provide basic services like scheduling execution on multiple cores or processors, pass messages if processes need communication, thus taking advantage of the real parallelism ability from corresponding hardware.
+
+Formally speaking, process is an executing instance of a computer program. A computer program alone contains only static instructions, while a process also contains current execution status. Off course, multiple processes can be different instances from the same program.
+
+With the help of operating system, processes are isolated from each other, in the sense that processes have no idea whether they're sharing CPU, memory or other computing resources with other processes, as if they occupy the whole computer, although actually the CPU is time division multiplexed while memory is space division multiplexed. Nevertheless, in this way programmers can focus on one program without considering other processes on the same machine.
+
+On the other hand, processes on the same physical machine can communicate with each other through mechanisms provided by operating system, like shared memory, pipeline, where the output of one process get passed to another as input, and so on.
+
+Achieving parallelism through multiple processes is based on the underlay distributed memory architecture, even they're on the same physical machine, since the operating system isolated the memories by virtual memory mechanise. Another famous memory architecture is called shared memory architecture, and we will use the concept of thread to illustrate it in the next paragraph.
+
+\subsubsection{Thread inside Process}
+
+Thread is a lighter concept compared with process in the sense that it is always contained inside a process. A process can have multiple threads, but at least have one, the "main" thread. Scheduling and cooperating multiple threads inside the same process involves less about operating system, thus saving computing resources. Besides, the underlay shared memory architecture, covering the memory spaces of containing process, has also provided more convenience and flexibility for programmers.
+
+Except from thread, or precisely the POSIX Thread, OpenMP is another most widely used shared memory API. API is short for Application Programming Interfaces and can be regarded as the conventional way to use libraries installed on or provided by operating system. Both two APIs are supposed to be provided on different operating systems, in another word, cross-platform. However, the API related to process will be different if they're on different kind of operating systems since its highly coupled with underlay operating system and not cross-platform.
+
+\subsubsection{Communication through Protocol}
+
+The only way for processes deployed on different physical machines to communicate is via network, thus network communication protocols are involved. In other words, network protocols are involved within distributed computing. Network protocol is a set of rules for exchanging messages among computers. No matter whether communicating computers are identical or not, they can communicate with each other as long as they use the same network communication protocol.
+
+Network communication protocol is layered. The theoretical standard is OSI model with seven layers, while the practical standard is TCP/IP model, which only has for broad layers: link layer, Internet layer, transport layer and application layer.
+
+For software developers of distributed application, including pure parallel computing, the design decision starts varying from the Transport layer, with basically two big choices: Transmission Control Protocol(TCP) or User Datagram Protocol(UDP). TCP provides reliable, ordered, error-checked delivery of data, while UDP is connectionless and emphasizes more on lowered overhead and reduced latency. In other words, using UDP brings the chance to speed up communication with the risk of possible invalid transmitted data. Software developers of distributed application can choose to ignore the risk or pay more code on ensuring transmitted data.
+
+Beyond transport layer, software developers also need to make design decision of application layer, say, to use existing protocols like HTTP or develop application specified protocol. HTTP stands for Hypertext Transfer Protocol and is based on client/server model. It is well supported in most dominant programming languages in format of library thus quite easy to use. Developing application specified protocol based on TCP or UDP may gain extra performance but also cost more effect and taking the risk of non-robustness.
+
+\subsection{Performance and Scalability}
+
+\subsubsection{Speed-up Ratio}
+
+Speed-up ratio shows how much a parallel program is faster than its corresponding sequential program. It's defined in the following formula:
+
+$$ S_n = \frac{T_1}{T_n} $$
+
+Here $n$ is the number of parallel execution units, $T_1$ is the execution time of the sequential program and $T_2$ is the execution time of the parallel program with n parallel execution units. Linear speed-up or ideal speed-up is archived when $S_n = n$. 
+
+We also defined efficiency as
+
+$$ E_n = \frac{S_n}{n} = \frac{T_1}{nT_n} $$.
+
+It's typically between zero and one, estimating how well the computing power is utilized, or how much cost is brought by communication or other issues. A trivial case is linear speed-up parallel program will always have an efficiency of 1.
+
+\subsubsection{Amdahl's Law and Gustafson's Law}
+
+Linear speed-up is only an optimally case. Most parallel programs will have a part of the program which is serial, or can not be paralleled at all, and it is this part of serial program will eventually limit the overall speed-up available from parallelism. This is the fact pointed out by Amdahl's law, which defines the speed-up ratio as:
+
+$$ S_n = \frac{1}{(1 - p) + \frac{p}{n}} $$
+
+Here $n$ is the number of parallel execution units, $p$ is the portion of program that can be paralleled, thus $(1-p)$ is the portion of the serial part. As $n$ goes to infinity, we have:
+
+$$ \lim_{n \to +\infty} S_n = \lim_{n \to +\infty} \frac{1}{(1 - p) + \frac{p}{n}} = \frac{1}{1 - p} $$
+
+And this is the maximum speed-up we can archive from parallelism, no matter how well we do in other aspects like scheduling or communication, as long as the portion that can be paralleled is fixed.
+
+Amdahl's Law is pessimistic in the sense that once the computation amount is fixed we can only archive a limited speed-up ratio. However, from another viewpoint of fixing the total execution time instead of total computation amount, we have the optimistic Gustafson's law, which defines the speed-up ratio as:
+
+$$ S_n = (1 - p) + n \times p $$
+
+Here $n$ and $p$ is still the same meaning as what they're in Amdahl's Law but the speed-up ratio does not have a upper limit as $n$ goes to infinity any more.
+
+Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practise.
+
+\subsubsection{More Affecting Issues}
+
+The first issue is the dependency, which appears when computing depends upon prior result. These computation must be carried out in order, thus forming a dependence chain and explains how serial portion in a parallel program exists. No program can run more quickly than the longest chain, which is also known as the critical path.
+
+The second one is race condition, which appears when two or more executing units update a certain variable at the same time and causing errors. This is because the two instruction streams can cross with each other in any order. For example, if both executing units would like to read a variable a, plus it by one, then write result back, the actual execution order could be one executing unit read a's value between the other executing unit's read and write back, thus making the final result equals to a's original value plus 1 rather than 2.
+
+The way to solve race condition is using a lock to provide mutual exclusion when accessing variables shared to multiple execution units, thus making the whole process serial, behaving in a deterministic way and guarantee the correctness. However, here the serial portion will be linear to the number of executing units, which violates the assumption of both Amdahl's law and Gustafson's law.
+
+Barrier is a special format lock for synchronization purpose. Basically synchronization here means two or more executing units join up at a certain point, for example, before print out all the final result. Then a barrier is used to stop the instructions after the join point from executing before every executing units reach this join point.
+
+The third issue is deadlock, appears when multiple locks are involved. For example, if executing unit one locked variable a, and tried to lock variable b, while executing unit two locked variable b, and tried to lock variable a, then both executing units will wait for each other to release the mutual exclusion of the variable it is waiting for. This situation is called deadlock and the program will never finished. Some lock-free and wait-free algorithms can avoid the usage of lock or barrier, but they're more difficult to implement and suitable use cases are limited.
+
+There're still many other issues not mentioned here but also need to take consideration before carrying out parallel computing.

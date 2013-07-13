@@ -1,0 +1,45 @@
+\chapter{Comparison Acceleration}
+
+Heap is a widely used data structure in computer science. It is a tree-based data structure, whose node contains a key value for comparing and sorting. For min-heap, the key value of each node is greater than or equal to that of its parent if exists and less than or equal to that of its children also if exists. For max-heap, the situation is just opposite. This is called heap property.
+
+Here we borrowed an example of max-heap from \url{http://en.wikipedia.org/wiki/Heap_(data_structure)}. It can be seen easily that the number in each parent node is greater than or equal to its child nodes if exists.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=64mm]{heap.png}
+\caption{max-heap example borrowed from wikipedia}
+\end{figure}
+
+With such heap property, the root node of heap contains the min(max) key value among the whole tree. Operations defined on heap and corresponding time complexity is listed below:
+
+\begin{itemize}
+\item insert node with certain key value: $O(\log n)$
+\item find node with min(max) key value: $O(1)$
+\item update key value of certain node after the node is located: $O(\log n)$
+\item remove node with min(max) key value: $O(\log n)$
+\end{itemize}
+
+One more thing to mention here is that the complexity of finding node with certain key value should be $O(n)$ in general, since it requires a full scan of the whole data structure. We played a trick here in this specific scenario, where the node of this heap stands for an alternative with statistic information of its sample values. We used an external array, since the ids of alternatives are natural numbers from $0$ to $k - 1$, to track the internal location of corresponding alternative node inside the heap, namely we have implemented our own heap which differs from the one in Java standard library to support $O(1)$ complexity query from alternative id to corresponding statistic information.
+
+After we have customized the heap to support $O(1)$ query in our scenario, now we can discuss our comparing algorithm, digging into the case where we need to select the alternative with minimum mean, since selecting the maximum is quite similar. In this case, alternative i dominates alternative j is equivalent to:
+
+$$ \bar{X}_j(n_j)-\bar{X}_i(n_i) \ge \max\{0,a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b\} $$
+
+From the coding viewpoint, for any updated alternative, which just received an new sample value in fully sequential case, to check whether it dominates other alternatives or be dominated, we need three steps.
+
+Step one is to consider the extreme scenario, although seldom occurs, where $a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b < 0$. To see whether it really happens, just check from the updated alternative and the alternative whose $\frac{S^2}{n}$ is largest among all the alternative except the updated one. If so, one of the two alternatives will be eliminated immediately. For the elimination of the updated alternative, the whole comparing algorithm is done and we can move on directly to next sample value, while for the the elimination of the other one, this step will be repeated. In this way, maintaining a max-heap of alternatives with their $\frac{S^2}{n}$ as sorting key value will save us from looking for the next alternative whose $\frac{S^2}{n}$ is largest among all the survived alternative except the updated one with O(n) time complexity every time repeating this step.
+
+After consideration of extreme scenario, alternative i dominates alternative j only happens when
+$$ \bar{X}_j(n_j)-\bar{X}_i(n_i) \ge a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b $$
+since for any pair of survived alternatives i and j, $a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b \ge 0$ always holds.
+
+With basic algebra operation, say moving items from one side of equation to the other, the two alternatives can be separated into different sides, e.g.
+$$ \bar{X}_j(n_j) - a \times \frac{S_j^2}{n_j} \ge \bar{X}_i(n_i) + a \times \frac{S_i^2}{n_i} - b $$
+
+Now the whole thing comes to light. To see whether the updated alternative dominates any other surviving alternatives, just check from the alternative with largest $\bar{X}(n) - a \times \frac{S^2}{n}$, repeatedly if any elimination happens. This is step two actually and another max-heap of alternatives with $\bar{X}(n) - a \times \frac{S^2}{n}$ as its sorting key value is maintained, for the possibility of repeated elimination.
+
+The third step is even simpler, just checking the survival of the updated alternative against the alternative with smallest $\bar{X}_i(n_i) + a \times \frac{S_i^2}{n_i}$ and no iteration is needed here.
+
+During the comparison, time complexity for each possible elimination is $O(\log n)$ , under the condition that locating any certain alternative inside a heap costs less than, at most equal to $O(\log n)$. This is satisfied by the customization we have made on standard heap.
+
+What's more, if there's no elimination during the comparison, which occurs frequently in experiments, the time complexity will be reduced to $O(1)$, since no adjustment of any data structure is needed. That's why our comparing algorithm performs much better than $O(\log n)$ in average.

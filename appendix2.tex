@@ -1,86 +1,54 @@
-\chapter{Proofs for Chapter 3}\label{c3:appendix}
+\chapter{User Guide of RASE}
 
+To develop your own simulation code, the following steps are suggested:
 
+1.	Install eclipse (\url{http://www.eclipse.org});
 
-\section{Proof of Corollary \ref{cor:inner}}
+2.	Inside eclipse, File $>$ New $>$ Java Project and follow the wizard;
 
-\begin{proof}
-First we have
-\[\mbox{CVaR}_{1-\alpha}(c(y,\xi))-\frac{1}{\alpha}\mbox{L}(y,y)=\mbox{CVaR}_{1-\alpha}
-(c(y,\xi))-\frac{1}{\alpha}\E\left[[c(y,\xi)]^+\right]\le0.\]
-Therefore $y\in\mathcal {D}_y$. Consider now $x\in \mathcal {D}_y$
-and $x\not=y$. From Theorem \ref{thm:CVaRlike} we have
-$p(x)\le \alpha$.  %Let $t^*=\mbox{VaR}_{1-\alpha}(c(x,\xi))$. Then we
-%have $t^*\le0$.
-Now we only need to exclude the case where $p(x)=\alpha$. Suppose
-$p(x)=\alpha$. We define $A(y)=\left\{\xi\in\Xi:
-c(y,\xi)\geq0\right\}$ and $A(x)=\left\{\xi\in\Xi:
-c(x,\xi)>0\right\}$. Then we have $\Pr\{A(y)\}=p(y)<\alpha$ and
-$\Pr\{A(x)\}=p(x)=\alpha$. Define
-\[A(x)\setminus A(y)=\left\{\xi\in \Xi: \xi\in A(x),\xi\not\in
-A(y)\right\}.\] Then we have $\Pr\{A(x)\setminus A(y)\}>0$. For any
-$\xi\in A(x)\setminus A(y)$,
-\[\left[c(x,\xi)\right]^+>0=\left[c(y,\xi)\right]^+
-+\left[\nabla_x\left[c(y,\xi)\right]^+\right]^{\rm
-T}\left(x-y\right)\] and for any $\xi\not\in A(x)\setminus A(y)$,
-noting the convexity of $c(x,\xi)$, we have
-\[\left[c(x,\xi)\right]^+\geq\left[c(y,\xi)\right]^+
-+\left[\nabla_x\left[c(y,\xi)\right]^+\right]^{\rm
-T}\left(x-y\right).\] It follows that
-$\E\left[\left[c(x,\xi)\right]^+\right]>\mbox{L}(x,y)$ and therefore
-$x\not\in \mathcal {D}_y$. We obtain a contradiction. This finishes
-the proof of the corollary.
-\end{proof}
+3.	Import rase-sim-1.0.jar, which can be found \url{http://143.89.20.47/rase/guide/rase-sim-1.0.jar}.
 
+4.	Write your own simulation code, which needs to implement the Sim interface, like the example \url{http://143.89.20.47/rase/guide/NormalSim.java}. This example just returns a normally distributed sample value.
 
+To implement the Sim interface, you only need to implement one method:
 
-\section{Proof of Theorem \ref{property-nKKT}}
+\begin{lstlisting}[language=Java]
+public double[] sim(double[] args, long[] seed)
+\end{lstlisting}
 
-\begin{proof} We prove the four properties one by one.
+Here args is the arguments that distinguish an alternative, while seed determines the result of this simulation. The output should be an array of double.
 
-1. This can be proved by induction. Note that from Assumption
-\ref{assu:dominate} we have $c(x,\xi)$ is a continuous random
-variable. Since $x_0$ is an optimal solution of Problem
-(\ref{cvarprogram}), we have $p(x_0)<\alpha$. Now suppose $x_k$
-satisfies $p(x_k)<\alpha$. Since $x_{k+1}$ is an optimal solution of
-Problem \mbox{$ ({\rm C_k})$}, we have $x_{k+1}\in \Omega_{x_k}$. It
-follows from Corollary \ref{cor:inner} that $p(x_{k+1})<\alpha$.
-Then by induction we have $x_k$ is always a strictly feasible
-solution of Problem (\ref{eq:ccp2}), i.e., $p(x_k)<\alpha$. Again,
-using the continuity of the distribution of $c(x_k,\xi)$ at $0$, we
-have
-\[\mbox{CVaR}_{1-\alpha}(c(x_k,\xi))-\frac{1}{\alpha}\mbox{L}(x_k,x_k)=
-\mbox{CVaR}_{1-\alpha}(c(x_k,\xi))-\frac{1}{\alpha}
-\E\left[[c(x_k,\xi)]^+\right]<0.\]
+5.	Package your project into a jar file. Just right click the project $>$ Export $>$ Java $>$ JAR file, and follow the wizard.
 
-2. Since $x_k$ is always a feasible solution of Problem \mbox{$
-({\rm C_k})$} and $x_{k+1}$ is an optimal solution of Problem
-\mbox{$ ({\rm C_k})$}, we have $h(x_{k+1})\le h(x_k)$. Therefore
-$\{h(x_k),k=1,2,\cdots\}$ is a non-increasing sequence. Note that
-$\{h(x_k),k=1,2,\cdots\}$ is also bounded. Then we have
-$\{h(x_k),k=1,2,\cdots\}$ is convergent. Moreover, if at some
-iteration $k$, $h(x_{k+1})= h(x_k)$, then $x_k$ is also an optimal
-solution of Problem \mbox{$ ({\rm C_k})$}. We now argue by a
-contradiction. Suppose $x_k$ is not a global optimal solution of
-Problem (\ref{eq:ccp2}). Since Problem (\ref{eq:ccp2}) is a convex
-optimization problem. we have $x_k$ is not a stationary point of
-Problem (\ref{eq:ccp2}). It follows that we can find a sequence
-$\left\{x_k^j, j=1,2,\cdots\right\}\subset X$ such that $x_k^j\to
-x_k$ as $j\to \infty$ and $h(x_k^j)<h(x_k)$ for all $j=1,2,\cdots$.
-From the first property, we have
-$\mbox{CVaR}_{1-\alpha}(c(x_k,\xi))-\frac{1}{\alpha}\mbox{L}(x_k,x_k)<0$.
-By continuity we can find some $x_k^{j^*}$ such that
-$\mbox{CVaR}_{1-\alpha}(c(x_k^{j^*},\xi))-
-\frac{1}{\alpha}\mbox{L}(x_k^{j^*},x_k)<0$. This means $x_k^{j^*}$
-is also a feasible solution of Problem \mbox{$ ({\rm C_k})$}. This
-contradicts with the fact that $x_k$ is an optimal solution of
-Problem \mbox{$ ({\rm C_k})$}. Therefore $x_k$ must be a global
-optimal solution of Problem (\ref{eq:ccp2}).
-%3. All cluster points of $\{x_k,k=1,2,\cdots\}$ satisfy the KKT
-%conditions of Problem (\ref{eq:ccp2}). How to prove it?
-%4. If Problem (\ref{eq:ccp2}) has finite number of cluster points,
-%then the sequence $\{x_k,k=1,2,\cdots\}$ converges to some point
-%$x^*$ which satisfies the KKT conditions of Problem (\ref{eq:ccp2}).
-%We finished the proof of Theorem \ref{property-nKKT}. How to prove
-%it?
-\end{proof}
+After developing the jar file, please move to \url{http://143.89.20.47/rase/}. If the server is available, you will see a form about ranking and selection configuration, namely the figure in \ref{web-ui}. We will give a detailed description here.
+
+1.	Procedure part:
+
+If you only focus on the simulation part, please just choose build-in procedure and fill in the argument like example.
+
+2.	Alternatives:
+
+You need a plain text file specifying the configuration of each alternative, one line for each alternative. When running simulation for some certain alternative, the corresponding line will be passed as the args to the sim function you have just written. \url{http://143.89.20.47/rase/guide/normal.5.alts} is an example describing five alternatives, related to the simulation example mentioned before.
+
+3.	Simulation
+
+Just choose Jar and upload your jar file, and specifying the class(including package name)
+
+4.	Simulation Threads
+
+Currently e we only support single machine version, which means that you can specify the number of threads on Felab-1. We will support cluster version later.
+
+5.	Repeat Times:
+
+It’s the number of replication.
+
+If you want to develop your own ranking and selection code, the steps are quite similar, except that the jar file that needs to import is \url{http://143.89.20.47/rase/guide/rase-ras-1.0.jar}, and we have these examples, they’re Rinott’s Procedure (\url{http://143.89.20.47/rase/guide/RinottRas.java}), Table Filling Procedure (\url{http://143.89.20.47/rase/guide/TableFillingRas.java}) and Parallel Sequential Procedure (\url{http://143.89.20.47/rase/guide/ParallelSequentialRas.java}).
+
+This time you need to implement Ras interface, which also only contains one function:
+
+\begin{lstlisting}[language=Java]
+public int ras(double[] args, double[][] alts,
+        SimHelper simHelper)
+\end{lstlisting}
+
+Here args is the ones that passed from the webpage, while alts is read in from the file uploaded. To understand the usage of SimHelper, please see the examples above and the corresponding Java doc.

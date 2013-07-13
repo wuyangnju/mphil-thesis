@@ -1,0 +1,7 @@
+\chapter{Conclusions and Future Work}
+
+In this thesis we have introduced our parallel implementation of both classic Rinott's procedure and two revised fully sequential procedures. Basically it is master-slave structure in higher level and the core components are extracted out while the procedures are implemented as plug-ins, which makes it open for self-customized procedures. Meanwhile, performance is also considered carefully with suitable data structure like FIFO queue and heap adopted, and numerical experiments also showed that the parallel ratio of the whole program is pretty high which guarantees the scalability.
+
+However, there is still much room left for future improvement. The most exciting possibility is to make it the stand benchmark for all the previous and future R\&S procedures by providing this implement as a service in the form of cloud computing. Before that, some critical issues should be considered carefully, like the scalability after a cluster getting involved, the difficulty for a user developing R\&S procedure as plug-in of our implementation, e.g.
+
+Besides, as there exist so many different simulation R\&S procedures, it is necessary to build an uniform platform to compare their performance in parallel computing environment empirically. Although previous work like \cite{ms05ras} has already made an comparative study, they only work on the serial computing environment.
