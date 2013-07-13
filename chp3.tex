@@ -1,0 +1,1396 @@
+\chapter{Log-Linear Directional Chart}\label{chp3}
+
+\section{Introduction}\label{sec3.1}
+
+The LMC chart presented in Chapter 2 is a general and robust tool for detecting
+various changes in multivariate categorical processes. However, it fails to consider
+some practical information in real applications and therefore may be not so powerful
+for detecting changes with certain patterns. This chapter illustrates a systematic
+directional monitoring mechanism and a diagnostic scheme for multivariate
+categorical processes. We have known that there is a one-to-one correspondence
+between factor effects and coefficient subvectors in a log-linear model. Therefore,
+potential shifts to OC states in factor effects appear in their corresponding
+coefficient subvectors, which provides prior information on some potential shift
+directions. To monitor a process as efficiently as possible, such practical
+information should be exploited. For these purposes, still based on the
+log-likelihood function of a log-linear model and the EWMA scheme, we propose the
+log-linear directional (LLD) control chart, which considers directional shift
+information. This chart also applies to the unified framework of
+univariate/multivariate binomial/multinoial processes and has the superiority in
+detecting one-coefficient shifts and high-order interaction shifts. Furthermore, we
+present a diagnostic scheme to identify the shift direction following an OC signal.
+Some implementation guidelines are also provided and illustrated using the AEC
+example. Monte Carlo simulations demonstrate the effectiveness of the LLD chart and
+the diagnostic approach.
+
+
+
+\section{Log-Linear Models Revisited}\label{sec3.2}
+
+The LLD chart is still based on log-linear models. The log-linear model (\ref{F2.2})
+is at the effect level, but it can be rewritten equivalently at the coefficient
+level as
+\begin{equation}
+\ln {\bf p}=\bm{1}\beta_0+{\bf X}\bm\beta=\bm{1}\beta_0+\sum_{i=1}^{h-1}{\bf
+x}_i\beta_i,\label{F3.1}
+\end{equation}
+where ${\bf x}_i$ is the $i$th column vector of the matrix ${\bf X}$, and the scalar
+$\beta_i$ is its corresponding coefficient (i.e., the $i$th element of $\bm\beta$).
+For instance, in the three-way contingency table of size $2\times 3\times 3$
+mentioned in Chapter 2, $\beta_1=\beta_{(1)}$, $\beta_{9}=\beta_{(1,3_2)}$, and
+$\beta_{17}=\beta_{(1,2_2,3_2)}$. We see ${\bf X}=[{\bf X}_1,\ldots,{\bf
+X}_{2^p-1}]=[{\bf x}_1,{\bf x}_2,\ldots,{\bf x}_{h-1}]$ and
+$\bm\beta=[\bm{\beta}_1^T,\ldots,\bm{\beta}_{2^p-1}^T]^T=
+[\beta_1,\ldots,\beta_{h-1}]^T$. There is also a correspondence between the $i$th
+column ${\bf x}_i$ of ${\bf X}$ and the $i$th coefficient $\beta_i$
+($i=1,\ldots,h-1$). By analogy with a linear regression model, the log-linear model
+is also essentially a regression model with the probabilities as the responses, the
+coefficients as the regressors, and the column vectors composing the design matrix.
+
+The construction of the LLD chart requires the column vectors ${\bf x}_i$
+($i=1,\ldots,h-1$), or equivalently we need to derive the design matrix $\bf X$.
+This is simple for a multivariate binomial process, where factors all have two
+levels. For a general multivariate categorical process, this may be a little
+complex. Refer to the additional File 1 in Dahinden et al. (2007) for the general
+result of deriving $\widetilde{{\bf X}}=[\bm1,{\bf X}]$. Here, we take four factors
+$C_1$, $C_2$, $C_3$, and $C_4$ with 2, 2, 3 and 3 levels, respectively, for
+illustration. Let
+\[
+\mathbf{1}_2=\left[\begin{array}{r}1\\1\end{array}\right],\quad
+\mathbf{1}_3=\left[\begin{array}{r}1\\1\\1\end{array}\right],\quad {\bf
+J}_2=\left[\begin{array}{r}1\\-1\end{array}\right],\quad {\bf
+J}_3=\left[\begin{array}{rr}1&0\\0&1\\-1&-1\end{array}\right]
+=\left[\begin{array}{c}{\bf I}_2\\-\mathbf{1}_2^T\end{array}\right].
+\]
+Note that the column sums of matrixes ${\bf J}_2$ and ${\bf J}_3$ are all zeros,
+which assures identifiability. For instance, the design submatrix corresponding to
+the main effect of $C_3$ is $\mathbf{1}_2\otimes\mathbf{1}_2\otimes{\bf
+J}_3\otimes\mathbf{1}_3$, where $\otimes$ is Kronecker product operator. The design
+submatrix corresponding to the two-factor interaction effect of $C_2C_4$ is
+$\mathbf{1}_2\otimes{\bf J}_2\otimes\mathbf{1}_3\otimes{\bf J}_3$, and the design
+submatrix corresponding to the three-factor interaction effect of $C_1C_3C_4$ is
+${\bf J}_2\otimes\mathbf{1}_2\otimes{\bf J}_3\otimes{\bf J}_3$. All the other design
+submatrixes can be constructed similarly. In a word, given
+$\mathbf{1}_2\otimes\mathbf{1}_2\otimes\bm{1}_3\otimes\mathbf{1}_3$, the design
+submatrix corresponding to an effect is obtained by replacing $\bm{1}$ with ${\bf
+J}$ at all the positions where the factors are contained in this effect.
+
+%Phase II control charts require that the IC process parameters be known, which needs
+%estimating the coefficient vector $\widetilde{\bm{\beta}}$ in the log-linear model
+%(\ref{F2.2}) or (\ref{F3.1}) from an IC dataset. But as will be seen next, some
+%simple approximations allow using only the probability vector ${\bf p}^{(0)}$ in the
+%IC state, skipping the estimation of the coefficient vector
+%$\widetilde{\bm{\beta}}^{(0)}$.
+
+
+
+\section{Log-Linear Directional Monitoring}\label{sec3.3}
+
+In a log-linear model, the marginal distribution of one factor is mainly determined
+by its main effect, whereas the dependence among multiple factors is represented by
+their interaction effect. This provides a means of interpreting shifts in
+multivariate categorical processes. According to the one-to-one correspondence
+between factor effects and coefficient subvectors in a log-linear model, shifts in
+the marginal distribution of one factor lead to deviations of the coefficient
+subvector corresponding to its main effect, and shifts in the dependence among
+multiple factors result in deviations of the coefficient subvector reflecting their
+interaction effect.
+
+The pre-specified log-linear model $F\big({\bf X}; \bm\beta\big)$ is summarized in
+Equation (\ref{F2.3}) as
+\[
+\ln{\bf p}=\widetilde{{\bf X}}\widetilde{\bm{\beta}}=\bm 1\beta_0+{\bf
+X}\bm\beta\quad \mathrm{and}\quad\bm1^T{\bf p}=1.
+\]
+We still assume that the $j$th online multivariate sampling observation vector ${\bf
+n}_j$, of size $h\times 1$, follows a multinomial distribution with a total size $N$
+and behaves over time according to the change-point model (\ref{F2.4})
+\begin{align*}
+{\bf n}_j\ {\mathop{\sim}\limits^{\mbox{i.i.d.}}}\left\{\hspace{-0.1cm}
+\begin{array}{ll} F\big({\bf X};\bm{\beta}^{(0)}\big), &
+{\mathrm{for\ }} \quad j=1,\ldots,\tau,\\[0.1cm]
+F\big({\bf X};\bm\beta^{(1)}\big), & {\mathrm {for\ }} \quad j=\tau+1,\ldots,
+\end{array}\right.
+%\label{F3.4}
+\end{align*}
+where $\tau$ is the unknown change point, and $\bm\beta^{(0)} \neq \bm\beta^{(1)}$
+are the known IC and unknown OC process coefficient vectors, respectively.
+
+Since $\beta_0$ can be determined from $\bm{\beta}=[\beta_1,\ldots, \beta_{h-1}]^T$,
+the monitoring problem can be formulated as a hypothesis testing problem:
+\begin{align}\label{F3.2}
+H_0:\;\bm{\beta}=\bm{\beta}^{(0)}\ \ \mbox{versus}\ \
+H_1:\;\bm{\beta}\ne\bm{\beta}^{(0)}.
+\end{align}
+A natural test for hypothesis (\ref{F3.2}) can be constructed by using the idea of a
+generalized likelihood ratio test (GLRT; Anderson (2003)), which incorporates all
+possible shifts in $\bm{\beta}^{(0)}$, and therefore is quite general. In fact, this
+idea leads to the LMC chart proposed in Chapter 2.
+
+There is a correspondence between the $i$th main or interaction effect and the
+coefficient subvector $\bm{\beta}_i$. According to the effect sparsity principle (Wu
+and Hamada (2000)), which states that the number of relatively important effects is
+small in DOE, it is reasonable to assume that in practical applications any changes
+involve only a few coefficient subvectors or only a few coefficients in the
+appropriate model. Suppose that we have some {\it a priori} knowledge that in the OC
+state only one coefficient $\beta_i$ ($1\leq i\leq h-1$) is incremented by an
+unknown constant $\delta_i$. The hypothesis then becomes
+\begin{align*}
+H_0:\;\bm{\beta}=\bm{\beta}^{(0)}\ \ \mbox{versus}\ \
+H_1:\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_i\delta_i,
+\end{align*}
+where ${\bf d}_i$ is the direction vector of size $(h-1)\times 1$ with a 1 as its
+$i$th component and 0s elsewhere.
+
+Next consider the more practical case that in the OC state only one coefficient
+changes, but its location is unknown. The alternative in hypothesis (\ref{F3.2})
+reduces to
+\begin{align}
+H_1:\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_1\delta_1
+\;\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_2\delta_2\ldots\;
+\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_{h-1}\delta_{h-1},\label{F3.3}
+\end{align}
+where $\delta_i$ ($i=1,2,\ldots,h-1$) are the unknown shift magnitudes, and the
+possible shift directions ${\bf d}_1$, ${\bf d}_2$, \ldots, ${\bf d}_{h-1}$ are
+defined in a similar way, applying to $\beta_1$, $\beta_2$, \ldots, $\beta_{h-1}$,
+respectively. The GLRT derived from hypothesis (\ref{F3.3}) should be better than
+that from hypothesis (\ref{F3.2}) because it makes full use of more constructive
+information about potential shift directions. In fact, a GLRT based on hypothesis
+(\ref{F3.3}) that incorporates directional knowledge about potential changes is very
+much like the GLRTs used in multistage process monitoring and diagnosis which
+exploit the information of shift directions from the first stage to the last one
+(see Zou and Tsung (2008) and Zou et al. (2008)).
+
+Hypothesis (\ref{F3.3}) may be further generalized. There is also the hierarchical
+ordering principle in DOE (see Wu and Hamada (2000)), which states that lower order
+effects are more likely to be important than higher order ones and that effects of
+the same order are equally likely to be important. So deviations involving fewer
+factors may appear more frequently, and it is reasonable to believe that in
+applications most shifts involve lower-order effects rather than higher-order ones.
+Unlike hypothesis (\ref{F3.3}), which considers all one-coefficient shifts from the
+main factor effects up to the highest $p$-factor interaction effect, instead we may
+focus on effects involving the first few, say $q$, orders. Denote the set of
+coefficient indexes among the effects of the first $q$ orders by $\mathbb{I}_q$
+($1\leq q\leq p$). Then, hypothesis (\ref{F3.3}) includes all the coefficients
+indexed by $\mathbb{I}_p$. Then hypothesis (\ref{F3.3}) can be further extended as
+\begin{align}
+H_0:\;\bm{\beta}=\bm{\beta}^{(0)}\ \ \mbox{versus}\ \
+H_1:\;\bigcup_{i\in\mathbb{I}_q}\Big(\bm{\beta}=\bm{\beta}^{(0)}+{\bf
+d}_i\delta_i\Big),\quad 1\leq q\leq p.\label{F3.4}
+\end{align}
+With $q=p$, hypothesis (\ref{F3.4}) becomes hypothesis (\ref{F3.3}). Consider the
+case that all $p$ factors have two levels to illustrate the advantage of considering
+$\mathbb{I}_2$ instead of $\mathbb{I}_p$. With the first two orders, only
+$\mathrm{C}_p^1+\mathrm{C}_p^2=p(p+1)/2$ one-coefficient shifts are taken into
+account. However, this number becomes $2^p-1$ for $\mathbb{I}_p$, increasing
+exponentially with $p$. Since shifts to OC states usually involve low-order effects,
+the larger $q$ is, the less powerful the GLRT will be. If the real shift indeed
+arises from the effects of the first $q$ orders, the GLRT based on hypothesis
+(\ref{F3.4}) will certainly be more powerful. Even if a shift occurs in an effect of
+an order higher than $q$, however, this change may be reflected to a large extent in
+the charting statistic indexed by $\mathbb{I}_q$. So a GLRT derived from hypothesis
+(\ref{F3.4}) may still be powerful, as we will show later.
+
+Now we give the GLRT statistic for testing hypothesis (\ref{F3.4}). With the Phase
+II sample size $N$ and the observation vector ${\bf n}$ of size $h\times 1$
+satisfying $\bm1^T{\bf n}=N$, the $-2$LRT (log-likelihood ratio test) statistic for
+testing hypothesis (\ref{F3.4}) is
+\begin{equation}
+Q=\max_{i\in\mathbb{I}_q}\Big(\frac{1}{N}\big({\bf n}-N{\bf p}^{(0)}\big)^T{\bf
+x}_i\big({\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf
+n}-N{\bf p}^{(0)}\big)\Big).\label{F3.5}
+\end{equation}
+Its derivation is placed in Section 3.8.1, the appendix in this chapter. Here ${\bf
+p}^{(0)}$ is the known IC cell probability vector, and
+$\bm{\Sigma}^{(0)}=\di\big({\bf p}^{(0)}\big)-{\bf p}^{(0)}({\bf p}^{(0)})^T$ is the
+IC covariance matrix (see Agresti (2002)), where $\di({\bf a})$ is the diagonal
+square matrix with its diagonal elements equal to the elements of the column vector
+${\bf a}$. The test will reject the null hypothesis if $Q$ is larger than some
+specified threshold.
+
+The test statistic $Q$ in Equation (\ref{F3.5}) can be used to construct a
+Shewhart-type control chart for online monitoring. However, this method merely
+utilizes the information in the current sample, and it will be very inefficient for
+moderate and small changes. To be more efficient, we combine hypothesis (\ref{F3.4})
+with an EWMA scheme to properly exploit the information in past and current samples.
+Denote the observation vector of the $j$th sample of size $N$ in Phase II by ${\bf
+n}_j$. For any time point $k$, consider the following exponentially weighted sum of
+the previous and current observation vectors ${\bf n}_j$ ($j=1,\ldots,k$)
+\[
+{\bf z}_k=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}{\bf n}_j,
+\]
+which is the same as in Equation (\ref{F2.7}). Thus the EWMA counterpart of the GLRT
+statistic $Q$ is
+\begin{align}
+V_k=\max_{i\in\mathbb{I}_q}\Big(\frac{1}{N}\big({\bf z}^{(k)}-N{\bf
+p}^{(0)}\big)^T{\bf x}_i\big({\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i\big)^{-1}{\bf
+x}_i^T\big({\bf z}^{(k)}-N{\bf p}^{(0)}\big)\Big).\label{F3.6}
+\end{align}
+
+Here $V_k$ can be regarded as the maximum of a series of quadratic forms indexed by
+$\mathbb{I}_q$, and it takes into account all the combined directions of potential
+shifts as well as the exponentially weighted past and current online samples.
+Analogous to $Q$, a large value of $V_k$ will reject the null hypothesis in
+(\ref{F3.4}). Therefore, we take $V_k$ to be the charting statistic for a control
+chart, which will trigger an OC signal at time $k$ if $V_k>L$, where $L>0$ is a
+control limit chosen to attain a specific IC ARL. Note that the steady-state
+covariance of ${\bf z}_k$ is $\frac{\mu}{2-\mu}\bm\Sigma^{(0)}$, but the constant
+$\frac{\mu}{2-\mu}$ is implicitly absorbed into the control limit $L$ (which will be
+determined via simulation).
+
+Since such a chart combines the one-coefficient shifts, it represents the
+directional changes of multivariate categorical processes, and we call it the
+log-linear directional (LLD) control chart. From the derivation of the charting
+statistic $V_k$, we see that it can also be modified as a robust one for detecting
+other types of shifts, such as general shifts arising in all coefficients in a
+log-linear model.
+
+
+
+\section{Diagnostic Schemes}\label{sec3.4}
+
+Assume that at most one coefficient $\beta_i^{(0)}$ in $\bm{\beta}^{(0)}$ will
+change. This can be detected efficiently by the proposed LLD chart. Once the LLD
+chart triggers an OC alarm, the question naturally arises which coefficient shift is
+responsible for this signal. This diagnosis is especially important for multivariate
+categorical processes, identifying the shift direction quickly and accurately.
+
+Diagnosis is required only when there is an OC indication. Here the null hypothesis
+in (\ref{F3.4}) has been rejected, and the diagnosis is based on the alternative
+hypothesis. This alternative hypothesis considers the one-coefficient shifts of the
+first $q$ orders ($1\leq q\leq p$), and the LLD chart monitors the process by
+checking the charting statistic (\ref{F3.6}) indexed by $\mathbb{I}_q$, but it is
+still possible that the real shift occurs in an effect of an order higher than $q$.
+In other words, a coefficient $\beta_j^{(0)}$ ($j\notin\mathbb{I}_q$) may deviate.
+In diagnosis, therefore, it is necessary to choose a candidate set of diagnostic
+shift direction indexes larger than what we used in monitoring, lest the real shift
+direction is left out. Thus, we consider one-coefficient shifts in effects of the
+first $q^{\prime}$ orders ($1\leq q\leq q^{\prime}\leq p$) for identifying the shift
+direction. As with $q$, the choice of $q^{\prime}$ will be discussed later.
+
+Note that in OC states, the true probability vector and the corresponding covariance
+matrix are no longer ${\bf p}^{(0)}$ and $\bm{\Sigma}^{(0)}$. Suppose that it is
+only the deviation of the coefficient $\beta_i^{(0)}$ in $\bm{\beta}^{(0)}$ that
+brings the process OC. Since the alternative hypothesis in (\ref{F3.4}) is assumed
+to represent the OC state, the OC samples are therefore generated from $F\big({\bf
+X};\bm\beta^{(1,i)}\big)$, where $\bm\beta^{(1,i)}$ is the OC coefficient vector
+that deviates from the IC coefficient vector $\bm\beta^{(0)}$ only in $\beta_i$.
+This OC model is indexed by $i\in\mathbb{I}_{q^{\prime}}$. Denote also the OC
+probability vector by ${\bf p}^{(1,i)}$ and the corresponding OC covariance matrix
+by $\bm{\Sigma}^{(1,i)}=\di\big({\bf p}^{(1,i)}\big)-{\bf p}^{(1,i)}\big({\bf
+p}^{(1,i)}\big)^T$.
+
+To determine the shift direction, one intuition is that some quadratic forms similar
+to Equation (\ref{F3.6}) indexed by the set $\mathbb{I}_{q^{\prime}}$ instead of
+$\mathbb{I}_q$ may help with identification. Since diagnosis is performed in the OC
+state, the covariance matrix term contained in these quadratic forms should be
+$\bm{\Sigma}^{(1,i)}$ instead of $\bm{\Sigma}^{(0)}$. If the $i$th quadratic form
+has some kind of property that a one-to-one correspondence exists between it and the
+current $i$-indexed OC state model $F\big({\bf X};\bm\beta^{(1,i)}\big)$, the
+diagnosis can then exploit this relationship. Suppose that ${\bf n}$ is an
+observation vector of size $N$ collected from $F\big({\bf X};\bm\beta^{(1,i)}\big)$.
+Define
+\begin{equation}
+S_j=\frac{1}{N}\big({\bf n}-N{\bf p}^{(0)}\big)^T{\bf x}_j\big({\bf
+x}_j^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)^{-1}{\bf x}_j^T\big({\bf n}-N{\bf
+p}^{(0)}\big).\label{F3.7}
+\end{equation}
+It is shown in the appendix in this chapter (Section 3.8.2) that
+$\arg\max_{j\in\mathbb{I}_{q^{\prime}}}S_j$ is consistent with the real shift
+direction index $i$. So there is indeed a probable correspondence between the
+largest quadratic form $S_i$ ($i\in\mathbb{I}_{q^{\prime}}$) and the real shift
+direction ${\bf d}_i$, and this provides some guidelines for diagnosis.
+
+In applications, the OC probability vector ${\bf p}^{(1,i)}$ and the covariance
+matrix $\bm{\Sigma}^{(1,i)}$ are unknown and need to be estimated. Suppose that the
+LLD chart triggers an alarm at time $\eta$. Between the change point $\tau$ (but not
+including $\tau$) and the signal point $\eta$, there have already been observation
+vectors collected from $F\big({\bf X};\bm\beta^{(1,i)}\big)$. The best estimation of
+${\bf p}^{(1,i)}$ seems to be the average of these observation vectors divided by
+the sample size $N$. This, however, relates to estimating the change point $\tau$,
+which will not be discussed here. Therefore, the exponentially weighted sum of
+observation vectors ${\bf z}_{\eta}$ at $\eta$, which efficiently exploits the
+information in the OC state, seems to be a reasonable choice for estimating ${\bf
+p}^{(1,i)}$. To this end, the diagnostic procedures can be finalized as
+\begin{description}
+\item[Step 1] Define
+$\widehat{{\bf p}}={\bf z}_{\eta}/N$ and
+$\widehat{\bm{\Sigma}}=\di\big(\widehat{{\bf p}}\big)-\widehat{{\bf p}}\widehat{{\bf
+p}}^T$ as the estimates of ${\bf p}^{(1,i)}$ and $\bm{\Sigma}^{(1,i)}$,
+respectively.
+\item[Step 2] Replace $\bm{\Sigma}^{(1,i)}$ with $\widehat{\bm{\Sigma}}$ and ${\bf n}$
+with ${\bf z}_{\eta}$ in $S_j$ ($j\in\mathbb{I}_{q^{\prime}}$) in Equation
+(\ref{F3.7}), calculate their values, and denote them by $s_j$
+($j\in\mathbb{I}_{q^{\prime}}$).
+\item[Step 3] Find the maximum among these $s_j$, and its index is taken to be the
+direction index $\zeta$.
+\end{description}
+
+
+
+\section{Practical Implementation and Application}\label{sec3.5}
+
+\subsection{Design Parameter Settings}
+
+\noindent{\it On the parameters $q$ and $q^{\prime}$}: The most likely shift
+directions are confined to the effects of the first $q$ orders ($1\leq q\leq p$)
+when there are $p$ factors. The GLRT (\ref{F3.4}) will be less powerful if more
+shift directions are included when in actuality most shifts occur in lower-order
+effects. If $q$ is selected as 1, however, only main effect deviations are
+considered, ignoring correlations between factors, which is obviously inappropriate.
+In most real applications, one cares about only means and variances, i.e., moments
+of the first two orders. Furthermore, the monitoring task is to only answer ``yes''
+or ``no'' about whether the process is IC, rather than specifying shifted effects.
+Here we should pay attention only to main effects and two-factor interactions and
+choose $q$ as 2, focusing on coefficients corresponding to effects of the first two
+orders. If the shift indeed arises in a main or two-factor interaction effect, the
+GLRT (\ref{F3.4}) with $q=2$ should be powerful. Even if a shift arises in a
+three-factor or higher-order interaction effect, the effects of the first two orders
+will be influenced to a fairly large extent, so the OC condition may still be
+detected quickly by the LLD chart.
+
+The choice of the diagnostic parameter $q^{\prime}$ should be considered in
+combination with the monitoring parameter $q$. As has been indicated earlier,
+$q^{\prime}$ should be at least as large as $q$ with $q^{\prime}\geq q$, to help
+prevent important shift directions from being missed. Since $q=2$ has been
+recommended, $q^{\prime}$ should be at least 3, confining the candidate subset of
+diagnostic shift directions to effects in the first three orders. This will still be
+safe in case a shift appears in a three-factor interaction effect, and it is
+believed that shifts in four-factor or even higher-order interaction effects are
+rare. As in monitoring, as $q^{\prime}$ increases, the diagnostic accuracy will
+decrease. Therefore, $q^{\prime}=3$ is recommended.
+
+In fact, going a step further, we can choose these index sets for monitoring and
+diagnosis to contain only the factor effects or coefficients in which we are
+interested. Generally, any subset of the index set $\{1,\ldots,h\}$ can be
+introduced, with its elements corresponding to the coefficients associated with the
+most likely shifts. One should keep in mind that the index set for diagnosis must be
+at least as large as the one for monitoring.
+
+\noindent{\it On the smoothing parameter $\mu$}: Generally, a smaller $\mu$ assists
+in detecting smaller shifts more quickly, while a larger $\mu$ leads to quicker
+detection of larger shifts (see Lucas and Saccucci (1990) and Lowry et al. (1992)).
+This still applies to LLD charts, as will be confirmed by Figure 3.2 in the next
+section. In diagnosis, a smaller $\mu$ results in better diagnostic consistency for
+smaller shifts, while a larger $\mu$ helps in identifying the locations of larger
+shifts. This will also be illustrated in Figure 3.3 below. Empirical results show
+that $\mu$ between 0.05 and 0.2 may be a reasonable choice.
+
+\noindent{\it On the sample size $N$}: With a small sample size $N$, to achieve a
+small OC ARL, a very large magnitude $\delta$ is required. On the other hand, a
+large sample size contains more information about observation vectors such as ${\bf
+n}_k$. To detect a small shift as quickly as possible, a very large sample size is
+needed. Therefore, based on permissible costs or other considerations, we should
+select a sample size $N$ as large as possible.
+
+In fact, the sample size for multivariate categorical processes cannot be compared
+with that of multivariate continuous processes, which is relatively small, say, only
+several or tens. This follows because the data in multivariate categorical processes
+are actually the proportions in each cell of a multi-way contingency table, which
+are acquired by aggregating multivariate categorical observations. Therefore,
+multivariate categorical processes are different in nature from multivariate
+continuous ones. Since there is no need of accurate measurements for collecting
+categorical data, it usually does not cost as much. So a relatively large sample
+size in multivariate categorical processes is acceptable.
+
+In this paper, for simplicity we assume that the sample size $N$ is fixed. For
+time-varying sample sizes, in short, if the distribution of sample sizes can be
+specified or their trend can be predicted, we can calculate the control limit by
+simulation before monitoring. Otherwise, it seems that a time-varying control limit
+that depends on the online sample size $N_k$ is required. We can determine the
+control limit for each sample point $k$ with Monte Carlo simulation by drawing large
+samples from the multinomial distribution $\mbox{MN}(N_k;{\bf n}_k/N_k)$, making the
+conditional probability (given there is no alarm up to time point $k-1$) attain
+$1/{\rm ARL}_0$. However, we do not investigate the time-varying sample size case
+here, and we leave it for future work.
+
+\noindent{\it On computation}: Once the IC probability vector ${\bf p}^{(0)}$ has
+been given, the charting statistic $V_k$ of the LLD chart is relatively simple to
+compute. Finding the control limit $L$ for a given IC ARL (denoted ARL$_0$) is
+straightforward. Using a Pentium 3.0GHz CPU the search procedure based on 10,000
+replicated simulations takes only a few minutes using bisection search when
+ARL$_0=370$, $h=32$, $\mu=0.1$, and $N=1,000$.
+
+\subsection{Implementation --- a Practical Example}
+
+Implementation of the proposed methodology is demonstrated in this subsection by
+revisiting the AEC manufacturing process presented in Section 1.1.2. This is a
+multivariate binomial process with three factors LC, DF and CAP, each with two
+levels. A three-way contingency table can represent the cross-classifications of the
+three factors in eight cells. The relationship between the cell counts and the
+factor level combinations can be well characterized by a log-linear model. An LLD
+chart can be used to monitor the three quality characteristics simultaneously, and
+the suggested diagnostic method can identify the fault location whenever there is an
+OC alarm.
+
+\noindent{\bf Step 1}: {\it Define the multivariate categorical process and derive
+the design matrix $\widetilde{{\bf X}}$}. This AEC manufacturing process has $p=3$
+factors each with 2 levels. Denote the three factors LC, DF, and CAP as $C_1$,
+$C_2$, and $C_3$, respectively. The matrix $\widetilde{{\bf X}}$ can be formulated
+in the manner of performing a $2^3$ full factorial experiment, and then arranged in
+the sequence of 1, $C_1$, $C_2$, $C_3$, $C_1C_2$, $\ldots$, $C_1C_2C_3$.
+
+\noindent{\bf Step 2}: {\it Obtain the Phase I IC probability vector ${\bf
+p}^{(0)}$}. Every day thousands of AECs pass through each workbench in the aging
+stage, and their LC, DF, and CAP are inspected and classified as conforming or
+nonconforming. The IC cell probability vector ${\bf p}^{(0)}$ is estimated by
+variable selection and parameter estimation from an IC dataset consisting of about
+sixty thousand observations, which is
+%where the eight level combination
+%counts are summarized as [9, 6, 65, 43, 8, 259, 1830, 61038].
+\[
+{\bf p}^{(0)}=[1.423, 0.9485, 10.28, 6.798, 1.265, 40.94, 289.3, 9649]^T\times
+10^{-4}.
+\]
+The IC covariance matrix is then $\bm{\Sigma}^{(0)}=\di\big({\bf p}^{(0)}\big)-{\bf
+p}^{(0)}({\bf p}^{(0)})^T$.
+
+\noindent{\bf Step 3}: {\it Find the control limit $L$ for a given} ARL$_0$.
+Usually, an ARL$_0$ of 370 is used in the AEC process. The LLD chart monitors the
+process by focusing on shifts in main effects and two-factor interaction effects
+with $q=2$. An EWMA smoothing parameter $\mu=0.1$ and a Phase II sample size $N=500$
+are considered appropriate. The control limit $L$ is set to be 0.56 through a
+bisection search based on 10,000 simulations, achieving ARL$_0=370$.
+
+\noindent{\bf Step 4}: {\it Phase II monitoring}. The cell counts of the eight level
+combinations are tabulated for each sample of 500. For the $k$th sample, the eight
+cell counts are recorded in the observation vector ${\bf n}_k$, and based on the
+observation vectors up to time $k$, the exponentially weighted sum ${\bf z}_k$ is
+calculated with the smoothing parameter 0.1 using Equation (\ref{F2.7}). The
+charting statistic $V_k$ is then calculated using Equation (\ref{F3.6}). As the
+process proceeds, the charting statistics $V_k$ ($k=1,2,\ldots$) are plotted in a
+control chart and compared with the control limit $L$. A typical plot is shown in
+Figure 3.1. In the example the chart signals OC at the 35th sample and remains above
+the control limit for the remainder of the sequence.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=16.0cm,height=9.0cm]{fig3-1.eps}
+\vspace{-0.7cm} \caption{An LLD control chart for monitoring the AEC
+process}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+\noindent{\bf Step 5}: {\it Identify the shift direction once an OC signal is
+triggered}. We follow the three diagnostic steps stated previously. Based on ${\bf
+z}_{35}$, the OC probability vector is estimated as
+\[
+\widehat{{\bf p}}=\frac{{\bf z}_{35}}{N}=[4.970, 0.1833, 12.37, 5.208, 3.011, 41.23,
+342.1, 9591]^T\times 10^{-4},
+\]
+so the OC covariance matrix may be estimated as
+$\widehat{\bm{\Sigma}}=\di\big(\widehat{{\bf p}}\big)-\widehat{{\bf p}}\widehat{{\bf
+p}}^T$. As recommended before, the candidate subset of the fault directions is
+selected as coefficients in the effects of the first three orders with
+$q^{\prime}=3$. The direction estimator chooses the maximum among the values of the
+seven quadratic forms $s_j$ ($j=1,\ldots,7$), which are 0.02, 0.02, 0.52, 0.01,
+0.40, 0.39, and 0.40 corresponding to the seven coefficients $\beta_{(1)}$,
+$\beta_{(2)}$, $\beta_{(3)}$, $\beta_{(1,2)}$, $\beta_{(1,3)}$, $\beta_{(2,3)}$, and
+$\beta_{(1,2,3)}$, respectively. Thus, there may have been a shift associated with
+the coefficient $\beta_{(3)}$, namely in the main effect of factor $C_3$, i.e., the
+main effect of CAP.
+
+
+
+\section{Performance Comparison and Assessment}\label{sec3.6}
+
+We now test the performance of the proposed LLD chart and the diagnostic approach
+through Monte Carlo simulations. Both multivariate binomial processes and
+multivariate multinomial processes are simulated and the performance of the LLD
+chart is compared with competing techniques. Throughout the simulations, ARL$_0$ is
+fixed at 370, and all ARL values are averages over 10,000 replicated simulations.
+
+\subsection{Monitoring a Multivariate Binomial Process}
+
+With a multivariate binomial process, the LLD chart can be compared with the
+multivariate binomial EWMA (MBE) control chart as presented in Section 2.4.1, which
+is the EWMA version of the $\chi^2$-chart proposed by Patel (1973). Assume that
+during a production process five quality characteristics are each assessed as
+conforming or nonconforming, yielding a multivariate binomial process, which can be
+arranged into a five-way contingency table with two levels for each factor. The IC
+log-linear model has the coefficient vector
+\begin{eqnarray}
+\begin{array}{rrrrrrrrrrrl}
+\widetilde{\bm{\beta}}^{(0)} & = & [ & \beta_0 & 0.72 & 0.93
+& 0.49 & 0.25 & 0.47 & -0.57 & 0.22 & \\
+& & & 0.11 & -0.14 & 0.15 & -0.16 & 0.41 & 0.16 & -0.19 & 0.33 & \\
+& & & 0.39 & 0.10 & 0.07 & -0.05 & 0.21 & -0.02 & 0.45 & 0.33 & \\
+& & & 0.08 & 0.27 & 0.04 & -0.13 & 0.07 & -0.07 & 0.03 & 0 & ]^T,
+\end{array}
+\nonumber
+\end{eqnarray}
+where $\beta_0$ is the intercept accommodating the constraint $\bm1^T{\bf p}=1$.
+Based on $\widetilde{\bm{\beta}}^{(0)}$, the IC probability vector ${\bf p}^{(0)}$
+can be further calculated. It is believed that possible OC shifts appear in factor
+effects, and correspondingly in coefficients of the log-linear model. According to
+our design recommendation, we construct the LLD chart with $q=2$ in its charting
+statistic (\ref{F3.6}), again assuming that most shifts will arise in main effects
+or two-factor interaction effects.
+
+%Table 1
+\begin{table}[!ht]
+\tabcolsep 4.5pt \vspace{-0.1cm} \centering \caption{OC ARL comparison between the
+LLD and MBE charts for one-coefficient shifts of the first two orders}
+\vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MBE} &
+\multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MBE} & \multicolumn{2}{c}{LLD} &
+\multicolumn{2}{c}{MBE}
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(3)}$} & \multicolumn{4}{c|}{$\beta_{(5)}$} &
+\multicolumn{4}{c}{$\beta_{(1,4)}$}
+\\\hline
+0.01 & 201 & (1.99) & 199 & (1.90) & 241 & (2.37) & 222 & (2.16) & 176 & (1.67) &
+249 & (2.48)
+\\
+0.02 & 71.6 & (0.63) & 70.5 & (0.61) & 95.9 & (0.86) & 86.1 & (0.77) & 53.0 & (0.43)
+& 117 & (1.07)
+\\
+0.05 & 13.2 & (0.07) & 13.6 & (0.07) & 16.3 & (0.09) & 16.5 & (0.09) & 10.3 & (0.05)
+& 21.6 & (0.13)
+\\
+0.20 & 2.82 & (0.01) & 2.90 & (0.01) & 3.22 & (0.01) & 3.25 & (0.01) & 2.39 & (0.01)
+& 3.79 & (0.01)
+\\
+$-0.01$ & 172 & (1.69) & 176 & (1.69) & 200 & (1.94) & 193 & (1.88) & 155 & (1.50) &
+230 & (2.24)
+\\
+$-0.02$ & 60.5 & (0.51) & 61.5 & (0.52) & 79.0 & (0.70) & 74.3 & (0.66) & 46.8 &
+(0.38) & 101 & (0.93)
+\\
+$-0.05$ & 11.6 & (0.06) & 12.0 & (0.06) & 14.1 & (0.07) & 14.2 & (0.08) & 9.35 &
+(0.04) & 18.9 & (0.11)
+\\
+$-0.20$ & 2.18 & (0.01) & 2.23 & (0.01) & 2.40 & (0.01) & 2.42 & (0.01) & 1.96 &
+(0.01) & 2.96 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(2,3)}$} & \multicolumn{4}{c|}{$\beta_{(2,5)}$} &
+\multicolumn{4}{c}{$\beta_{(3,4)}$}
+\\\hline
+0.01 & 193 & (1.87) & 247 & (2.44) & 262 & (2.55) & 318 & (3.15) & 216 & (2.07) &
+290 & (2.85)
+\\
+0.02 & 66.0 & (0.56) & 108 & (1.00) & 110 & (1.00) & 201 & (1.90) & 77.0 & (0.67) &
+158 & (1.50)
+\\
+0.05 & 12.7 & (0.06) & 20.2 & (0.12) & 18.0 & (0.10) & 47.3 & (0.38) & 13.8 & (0.07)
+& 32.2 & (0.23)
+\\
+0.20 & 2.76 & (0.01) & 3.69 & (0.01) & 3.39 & (0.01) & 6.14 & (0.02) & 2.90 & (0.01)
+& 4.79 & (0.02)
+\\
+$-0.01$ & 167 & (1.60) & 210 & (2.03) & 219 & (2.15) & 279 & (2.77) & 183 & (1.77) &
+249 & (2.44)
+\\
+$-0.02$ & 58.0 & (0.50) & 93.3 & (0.86) & 90.1 & (0.82) & 165 & (1.59) & 66.0 &
+(0.57) & 129 & (1.22)
+\\
+$-0.05$ & 11.3 & (0.06) & 17.2 & (0.10) & 15.2 & (0.08) & 36.4 & (0.28) & 12.0 &
+(0.06) & 25.9 & (0.18)
+\\
+$-0.20$ & 2.15 & (0.01) & 2.75 & (0.01) & 2.50 & (0.01) & 4.16 & (0.01) & 2.22 &
+(0.01) & 3.48 & (0.01)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses. $\mu=0.1$. $N=1,000$.}
+\end{tabular}
+\end{table}
+
+The OC ARLs of the LLD and MBE charts for various shifts of magnitude $\delta$ are
+summarized in Table 3.1 when the EWMA smoothing parameter $\mu=0.1$ and the Phase II
+sample size $N=1,000$. Due to space limitations, only some representative results
+are tabulated. Table 3.1 shows that the MBE chart outperforms the LLD chart only for
+small shifts in the main effects such as $\beta_{(3)}$ and $\beta_{(5)}$, which
+represent the main effects of factors $C_3$ and $C_5$, respectively. This is partly
+because the MBE chart is based on collecting one-way marginal sums for each factor,
+whose changes are directly echoed by shifts in main effects or coefficients of the
+first order. The LLD chart is developed especially for detecting one-coefficient
+shifts, so this superiority of the MBE chart over the LLD chart is not very
+significant. For shifts in the main effects, as the magnitudes increase, the
+situation is reversed, and the LLD chart triggers an OC indication faster than the
+MBE chart for larger shifts. If we select $q=1$, the LLD chart is indeed uniformly
+superior over the MBE chart in detecting one-coefficient shifts in main effects.
+
+When it comes to shifts in the two-factor interaction effects, including
+$\beta_{(1,4)}$ representing the interaction effect of factors $C_1$ and $C_4$,
+$\beta_{(2,3)}$, $\beta_{(2,5)}$, and $\beta_{(3,4)}$, the LLD chart performs
+consistently better than the MBE chart. Additionally, in most situations this
+advantage is quite substantial. The changes in high-order interaction effects
+reflect smaller shifts of the one-way marginal sums, which are usually neglected by
+the MBE chart. However, the LLD chart is still able to detect possible changes
+attributable to higher-order interactions effectively.
+
+With $\mu$ fixed, for the same shifts, both charts have greater power when the
+sample size $N$ increases. This could be expected. For a fixed sample size $N$ and
+the same coefficients, LLD charts with a smaller $\mu$ signal faster for smaller
+shifts, and those with a larger $\mu$ signal faster for larger shifts. This mimics
+the properties of the conventional EWMA chart (see Lucas and Saccucci (1990) and
+Lowry et al. (1992)). Figures 2-(a) and -(b) confirm this further. They show the OC
+ARL curves of the LLD chart for $\mu$ values of 0.05, 0.1, 0.2, and 0.5 with
+$N=1,000$ when there are shifts in $\beta_{(5)}$ and $\beta_{(3,4)}$, respectively.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=16.0cm,height=8.0cm]{fig3-2.eps}
+\vspace{-0.5cm} \caption{\small OC ARL curves for the LLD chart for various values
+of $\mu$ when there are shifts in: (a) $\beta_{(5)}$; (b)
+$\beta_{(3,4)}$}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+The LLD chart is constructed by checking the GLRT statistic in Equation (\ref{F3.6})
+indexed by $q=2$. However, as indicated earlier, shifts may indeed occur in effects
+of the third or even higher order. Although such cases should be infrequent, they
+are considered in Table 3.2 to test robustness. The OC ARLs of LLD and MBE charts
+are compared for one-coefficient shifts in the three-factor interactions
+$\beta_{(1,2,4)}$, $\beta_{(2,3,4)}$, and $\beta_{(3,4,5)}$ when $\mu=0.1$ and
+$N=1,000$. Apparently, the advantage of the LLD chart over the MBE chart is
+maintained, implying that the LLD chart can still deal with higher-order
+interactions well.
+
+As implied earlier, besides considering cross-classifications among factors, another
+noteworthy characteristic of the LLD chart is power in discovering one-coefficient
+shifts, which may cause one to suspect that it is not robust when dealing with
+general changes. Therefore, some representative two-coefficient shift cases are
+summarized in Table 3.3, which show that the LLD chart is still powerful in this
+situation. Table 3.3 with $\mu=0.1$ and $N=1,000$ contains shifts in two
+coefficients of the first or second orders, adding magnitudes $\delta_1$ and
+$\delta_2$. According to Table 3.3, if the two shifts both appear in main effects of
+the first order, such as $(\beta_{(1)}, \beta_{(5)})$, the MBE chart performs better
+than the LLD chart. However, as the two shifts begin to include more effects of the
+second order, the LLD chart outperforms the MBE chart.
+
+%Table 2
+\begin{table}[!ht]
+\tabcolsep 4.5pt \vspace{-0.1cm} \centering \caption{OC ARL comparison between the
+LLD and MBE charts for one-coefficient shifts of the third order} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MBE} &
+\multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MBE} & \multicolumn{2}{c}{LLD} &
+\multicolumn{2}{c}{MBE}
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,2,4)}$} & \multicolumn{4}{c|}{$\beta_{(2,3,4)}$} &
+\multicolumn{4}{c}{$\beta_{(3,4,5)}$}
+\\\hline
+0.01 & 189 & (1.84) & 262 & (2.55) & 289 & (2.85) & 334 & (3.32) & 275 & (2.72) &
+328 & (3.30)
+\\
+0.02 & 63.2 & (0.54) & 125 & (1.17) & 162 & (1.59) & 245 & (2.44) & 144 & (1.35) &
+233 & (2.26)
+\\
+0.05 & 12.5 & (0.06) & 24.1 & (0.15) & 32.9 & (0.24) & 71.8 & (0.61) & 29.4 & (0.20)
+& 62.0 & (0.52)
+\\
+0.20 & 2.72 & (0.01) & 3.99 & (0.01) & 4.89 & (0.02) & 8.04 & (0.03) & 4.77 & (0.02)
+& 7.27 & (0.03)
+\\
+$-0.01$ & 160 & (1.53) & 232 & (2.26) & 251 & (2.49) & 298 & (2.99) & 236 & (2.30) &
+290 & (2.88)
+\\
+$-0.02$ & 55.5 & (0.47) & 110 & (1.03) & 132 & (1.25) & 200 & (1.95) & 115 & (1.05)
+& 187 & (1.81)
+\\
+$-0.05$ & 11.3 & (0.05) & 20.6 & (0.13) & 26.5 & (0.18) & 55.8 & (0.47) & 24.1 &
+(0.16) & 47.8 & (0.38)
+\\
+$-0.20$ & 2.22 & (0.01) & 3.14 & (0.01) & 3.50 & (0.01) & 5.34 & (0.02) & 3.41 &
+(0.01) & 4.91 & (0.02)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses, $\mu=0.1$ and
+$N=1,000$.}
+\end{tabular}
+\end{table}
+
+%Table 3
+\begin{table}[!ht]
+\tabcolsep 7.7pt  \centering \caption{OC ARL comparison between the LLD and MBE
+charts for two-coefficient shifts of the first two orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{rr|cccc|cccc}\hline
+$\delta_1$ & $\delta_2$ & \multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MBE} &
+\multicolumn{2}{c}{LLD} & \multicolumn{2}{c}{MBE}
+\\\hline
+& & \multicolumn{2}{c}{$\beta_{(1)}+\delta_1$} &
+\multicolumn{2}{c|}{$\beta_{(5)}+\delta_2$} &
+\multicolumn{2}{c}{$\beta_{(2)}+\delta_1$} &
+\multicolumn{2}{c}{$\beta_{(1,3)}+\delta_2$}
+\\\hline
+0.02 & 0.02 & 31.9 & (0.23) & 31.8 & (0.22) & 35.1 & (0.25) & 45.9 & (0.36)
+\\
+0.02 & $-0.02$ & 43.4 & (0.33) & 31.3 & (0.22) & 66.9 & (0.57) & 81.3 & (0.74)
+\\
+$-0.02$ & 0.02 & 43.1 & (0.33) & 31.1 & (0.22) & 70.1 & (0.60) & 80.2 & (0.72)
+\\
+$-0.02$ & $-0.02$ & 29.1 & (0.21) & 28.4 & (0.20) & 30.6 & (0.22) & 39.2 & (0.30)
+\\
+0.20 & 0.20 & 2.04 & (0.01) & 2.01 & (0.01) & 2.19 & (0.01) & 2.46 & (0.01)
+\\
+0.20 & $-0.20$ & 2.10 & (0.01) & 1.82 & (0.01) & 2.29 & (0.01) & 2.67 & (0.01)
+\\
+$-0.20$ & 0.20 & 1.95 & (0.01) & 1.79 & (0.01) & 2.74 & (0.01) & 2.90 & (0.01)
+\\
+$-0.20$ & $-0.20$ & 1.71 & (0.01) & 1.62 & (0.01) & 1.63 & (0.01) & 1.76 & (0.01)
+\\\hline
+& & \multicolumn{2}{c}{$\beta_{(1,4)}+\delta_1$} &
+\multicolumn{2}{c|}{$\beta_{(4,5)}+\delta_2$} &
+\multicolumn{2}{c}{$\beta_{(1,5)}+\delta_1$} &
+\multicolumn{2}{c}{$\beta_{(2,3)}+\delta_2$}
+\\\hline
+0.02 & 0.02 & 26.9 & (0.18) & 45.6 & (0.36) & 18.7 & (0.11) & 25.4 & (0.17)
+\\
+0.02 & $-0.02$ & 47.6 & (0.37) & 101 & (0.93) & 76.6 & (0.67) & 96.8 & (0.87)
+\\
+$-0.02$ & 0.02 & 46.8 & (0.37) & 100 & (0.91) & 71.8 & (0.64) & 88.6 & (0.80)
+\\
+$-0.02$ & $-0.02$ & 24.4 & (0.16) & 40.9 & (0.32) & 17.0 & (0.10) & 23.0 & (0.15)
+\\
+0.20 & 0.20 & 1.93 & (0.01) & 2.32 & (0.01) & 1.69 & (0.00) & 1.88 & (0.01)
+\\
+0.20 & $-0.20$ & 2.13 & (0.01) & 3.23 & (0.01) & 2.88 & (0.01) & 3.40 & (0.01)
+\\
+$-0.20$ & 0.20 & 2.07 & (0.01) & 2.91 & (0.01) & 2.38 & (0.01) & 2.73 & (0.01)
+\\
+$-0.20$ & $-0.20$ & 1.55 & (0.01) & 1.91 & (0.01) & 1.22 & (0.00) & 1.43 & (0.00)
+\\\hline
+\multicolumn{10}{l}{NOTE: Standard errors are in parentheses, $\mu=0.1$ and
+$N=1,000$.}
+\end{tabular}
+\end{table}
+
+
+\subsection{Monitoring a Multivariate Multinomial Process}
+
+With a multivariate multinomial process, the LLD chart can be compared with only the
+somewhat naive multi-chart described earlier. Similar to the $\chi^2$-chart, the
+multi-chart should be equipped with the EWMA scheme by replacing the observation
+vectors in the charting statistic with their exponentially weighted sums. This is
+actually the multivariate multinomial EWMA (MME) chart introduced in Section 2.4.2.
+
+We consider the following case involving factors with mixed levels for illustration.
+A service flow has four quality characteristics being monitored, with the first two
+judged as satisfactory or unsatisfactory and the other two assessed as excellent,
+acceptable, or unacceptable. This yields a four-way $2\times2\times3\times3$
+contingency table. The IC log-linear model is described by the coefficient vector
+\begin{eqnarray}
+\begin{array}{rrrrrrrrrrrrl}
+\widetilde{\bm{\beta}}^{(0)} & = & [ & \beta_0 & 0.73 & 0.72 & 0.70 &
+0.12 & 0.71 & 0.10 & 0.17 & 0.12 & \\
+& & & -0.15 & 0.19 & -0.14 & 0.23 & 0.07 & 0.16 & -0.14 & 0.23 & -0.30 & \\
+& & & -0.17 & 0.14 & 0.10 & 0.06 & 0.09 & -0.12 & 0.19 & -0.15 & 0.11 & \\
+& & & 0.22 & 0.24 & 0.24 & -0.08 & -0.16 & 0.07 & -0.11 & 0.05 & 0.03 & ]^T,
+\end{array}
+\nonumber
+\end{eqnarray}
+where $\beta_0$ is the intercept accommodating the constraint $\bm1^T{\bf p}=1$.
+Since the service flow process has four factors, the MME chart here is composed of
+four individual charts. Their IC ARLs are selected by simulation in order to be
+identical and jointly achieve an overall ARL$_0$ of 370.
+
+Similar to the comparison between the LLD and MBE charts, the OC ARLs when only one
+coefficient changes by $\delta$ are reported in Table 3.4 with $\mu=0.1$ and
+$N=1,000$. When the one-coefficient shift comes from one of the main effects, for
+instance, $\beta_{(1)}$, $\beta_{(3_2)}$, or $\beta_{(4_1)}$, the MME chart shows
+better performance than the LLD chart in terms of giving rise to an OC alert faster.
+This is not surprising, as each of the four individual charts summarizes efficiently
+the one-way marginal sums for one of the four factors, and these are decided by the
+coefficients of the first order. When two-factor interaction effects such as
+$\beta_{(1,2)}$, $\beta_{(1,3_2)}$, $\beta_{(2,3_1)}$, $\beta_{(2,4_2)}$,
+$\beta_{(3_1,4_1)}$, and $\beta_{(3_2,4_2)}$ are the focus, the superiority of the
+LLD chart over the MME chart becomes clear. The advantage of the LLD chart lies
+partly in signalling shifts in higher-order interaction effects and partly in
+one-coefficient shifts.
+
+%Table 4
+\begin{table}[ht]
+\tabcolsep 4.5pt \vspace{-0.3cm} \centering \caption{OC ARL comparison between the
+LLD and MME charts for one-coefficient shifts of the first two orders}
+\vspace{0.3cm}
+\renewcommand{\arraystretch}{1.20}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MME} &
+\multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MME} & \multicolumn{2}{c}{LLD} &
+\multicolumn{2}{c}{MME}
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1)}$} & \multicolumn{4}{c|}{$\beta_{(3_2)}$} &
+\multicolumn{4}{c}{$\beta_{(4_1)}$}
+\\\hline
+0.02 & 128 & (1.20) & 88.2 & (0.80) & 145 & (1.36) & 148 & (1.39) & 110 & (0.99) &
+104 & (0.95)
+\\
+0.05 & 19.8 & (0.11) & 15.8 & (0.09) & 24.5 & (0.16) & 24.4 & (0.16) & 17.6 & (0.10)
+& 17.2 & (0.09)
+\\
+0.20 & 3.55 & (0.01) & 3.17 & (0.01) & 3.54 & (0.01) & 3.50 & (0.01) & 3.27 & (0.01)
+& 3.20 & (0.01)
+\\
+$-0.02$ & 103 & (0.94) & 72.7 & (0.66) & 153 & (1.45) & 150 & (1.43) & 92.4 & (0.85)
+& 86.5 & (0.77)
+\\
+$-0.05$ & 16.5 & (0.09) & 13.6 & (0.07) & 25.5 & (0.17) & 24.6 & (0.16) & 15.8 &
+(0.09) & 15.3 & (0.08)
+\\
+$-0.20$ & 2.61 & (0.01) & 2.35 & (0.01) & 3.69 & (0.01) & 3.63 & (0.01) & 2.64 &
+(0.01) & 2.58 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,2)}$} & \multicolumn{4}{c|}{$\beta_{(1,3_2)}$} &
+\multicolumn{4}{c}{$\beta_{(2,3_1)}$}
+\\\hline
+0.02 & 86.3 & (0.78) & 105 & (0.96) & 149 & (1.41) & 224 & (2.18) & 102 & (0.92) &
+140 & (1.25)
+\\
+0.05 & 14.3 & (0.07) & 21.1 & (0.13) & 24.5 & (0.16) & 51.7 & (0.42) & 16.6 & (0.09)
+& 26.4 & (0.18)
+\\
+0.20 & 2.95 & (0.01) & 3.84 & (0.01) & 3.51 & (0.01) & 5.15 & (0.02) & 3.10 & (0.01)
+& 4.11 & (0.01)
+\\
+$-0.02$ & 71.7 & (0.63) & 85.7 & (0.77) & 148 & (1.39) & 217 & (2.13) & 86.7 &
+(0.79) & 115 & (1.10)
+\\
+$-0.05$ & 12.6 & (0.06) & 17.1 & (0.10) & 24.9 & (0.16) & 53.1 & (0.43) & 14.9 &
+(0.08) & 22.8 & (0.15)
+\\
+$-0.20$ & 2.26 & (0.01) & 2.80 & (0.01) & 3.62 & (0.01) & 5.75 & (0.02) & 2.58 &
+(0.01) & 3.42 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(2,4_2)}$} & \multicolumn{4}{c|}{$\beta_{(3_1,4_1)}$}
+& \multicolumn{4}{c}{$\beta_{(3_2,4_2)}$}
+\\\hline
+0.02 & 165 & (1.58) & 245 & (2.43) & 94.6 & (0.85) & 136 & (1.25) & 259 & (2.54) &
+338 & (3.33)
+\\
+0.05 & 27.2 & (0.18) & 63.3 & (0.53) & 15.7 & (0.08) & 25.0 & (0.17) & 64.7 & (0.54)
+& 235 & (2.25)
+\\
+0.20 & 3.71 & (0.01) & 5.89 & (0.02) & 2.98 & (0.01) & 3.94 & (0.01) & 5.79 & (0.02)
+& 23.7 & (0.15)
+\\
+$-0.02$ & 165 & (1.61) & 235 & (2.32) & 82.2 & (0.75) & 114 & (1.05) & 261 & (2.55)
+& 332 & (3.31)
+\\
+$-0.05$ & 27.8 & (0.19) & 62.9 & (0.54) & 14.5 & (0.08) & 22.1 & (0.14) & 68.3 &
+(0.57) & 244 & (2.45)
+\\
+$-0.20$ & 3.81 & (0.01) & 6.28 & (0.02) & 2.59 & (0.01) & 3.44 & (0.01) & 5.96 &
+(0.02) & 31.1 & (0.22)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses, $\mu=0.1$ and
+$N=1,000$.}
+\end{tabular}\vspace{-0.3cm}
+\end{table}
+
+In practice, we should note that in a log-linear model, all the elements of a
+coefficient subvector as a whole represent the corresponding main or interaction
+effect, and that they should change simultaneously if there is a shift in this
+effect. In other words, a shift should occur at the effect or coefficient subvector
+level, instead of the coefficient level as shown in Table 3.4. There is a further
+discussion about monitoring such changes at the effect level in Section 3.8.3, the
+appendix in this chapter.
+
+Suppose that there is a shift at the effect level, by which all the elements of its
+corresponding coefficient subvector, say $\bm\beta_i$, shift simultaneously. This
+change can still be detected powerfully by the LLD chart, which checks individually
+whether each element in $\bm\beta_i$ shifts or not. Table 3.5 lists the comparison
+results. For a shift in the main effect of factor $C_3$, a change occurs in
+$\bm\beta_3=[\beta_{(3_1)},\beta_{(3_2)}]^T$, where $\beta_{(3_1)}$ and
+$\beta_{(3_2)}$ add by $\delta_1$ and $\delta_2$, respectively, the LLD chart
+detects it slower than the MME chart. This could be understood. However, if a shift
+arises in an interaction effect such as
+$\bm\beta_7=[\beta_{(1,4_1)},\beta_{(1,4_2)}]^T$ that represents the interaction
+effect of factors $C_1$ and $C_4$, $\bm\beta_8=[\beta_{(2,3_1)},\beta_{(2,3_2)}]^T$,
+and $\bm\beta_9=[\beta_{(2,4_1)},\beta_{(2,4_2)}]^T$, the situation is completely
+reversed, in that the LLD chart has uniformly smaller OC ARLs than the MME chart.
+This is still because the LLD chart takes advantage of cross-classifications among
+multiple factors.
+
+%Table 5
+\begin{table}[!ht]
+\tabcolsep 7.7pt  \centering \caption{OC ARL comparison between the LLD and MME
+charts for one-effect shifts of the first two orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{rr|cccc|cccc}\hline
+$\delta_1$ & $\delta_2$ & \multicolumn{2}{c}{LLD} & \multicolumn{2}{c|}{MME} &
+\multicolumn{2}{c}{LLD} & \multicolumn{2}{c}{MME}
+\\\hline
+& &\multicolumn{2}{c}{$\beta_{(3_1)}+\delta_1$} &
+\multicolumn{2}{c|}{$\beta_{(3_2)}+\delta_2$} &
+\multicolumn{2}{c}{$\beta_{(1,4_1)}+\delta_1$} &
+\multicolumn{2}{c}{$\beta_{(1,4_2)}+\delta_2$}
+\\\hline
+0.02 & 0.02 & 129 & (1.20) & 87.9 & (0.78) & 62.3 & (0.51) & 95.8 & (0.87) \\
+0.02 & $-0.02$ & 61.8 & (0.52) & 57.9 & (0.47) & 89.0 & (0.80) & 107 & (0.97) \\
+$-0.02$ & 0.02 & 55.1 & (0.45) & 51.4 & (0.41) & 77.1 & (0.68) & 89.7 & (0.80) \\
+$-0.02$ & $-0.02$ & 105 & (0.96) & 68.2 & (0.59) & 51.4 & (0.42) & 73.7 & (0.64)
+\\\hline
+$\delta_1$ & $\delta_2$ & \multicolumn{2}{c}{$\beta_{(2,3_1)}+\delta_1$} &
+\multicolumn{2}{c|}{$\beta_{(2,3_2)}+\delta_2$} &
+\multicolumn{2}{c}{$\beta_{(2,4_1)}+\delta_1$} &
+\multicolumn{2}{c}{$\beta_{(2,4_2)}+\delta_2$}
+\\\hline
+0.02 & 0.02 & 103 & (0.94) & 148 & (1.39) & 63.1 & (0.52) & 89.9 & (0.80) \\
+0.02 & $-0.02$ & 62.6 & (0.52) & 83.5 & (0.74) & 85.8 & (0.77) & 100 & (0.90) \\
+$-0.02$ & 0.02 & 55.1 & (0.46) & 73.1 & (0.64) & 73.5 & (0.64) & 87.1 & (0.77) \\
+$-0.02$ & $-0.02$ & 83.1 & (0.74) & 112 & (1.04) & 52.7 & (0.43) & 70.8 & (0.62)
+\\\hline
+\multicolumn{10}{l}{NOTE: Standard errors are in parentheses, $\mu=0.1$ and
+$N=1,000$.}
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Diagnostic Performance Analysis}
+
+The performance of our suggested diagnostic method is reported in this subsection.
+In the simulations, the change-point $\tau$ is set at 50, and 10,000 independent
+series are generated. Any series for which an OC indication is triggered before time
+point $\tau+1$ will be discarded. An IC log-linear model is used with the same
+coefficient vector as in the subsection on monitoring multivariate binomial
+processes, for the situation with five factors, each with two levels.
+
+According to our design recommendation for the diagnostic method, the candidate
+subset for potential shift directions is selected as coefficients in the effects of
+the first three orders with $q^{\prime}=3$, with the assumption that no effect of an
+order larger than three would shift. Therefore, in the simulations the real
+one-coefficient shifts considered are confined to the first three orders, in
+particular the main effects $\beta_{(2)}$ and $\beta_{(4)}$, the two-factor
+interaction effects $\beta_{(1,3)}$, $\beta_{(1,5)}$, $\beta_{(2,3)}$, and
+$\beta_{(4,5)}$, as well as the three-factor interaction effects $\beta_{(1,4,5)}$
+and $\beta_{(2,3,5)}$. The diagnostic performance is investigated for various shift
+magnitudes $\delta$ and different combinations of the EWMA smoothing parameter $\mu$
+and the sample size $N$. Table 3.6 lists the results for the observed matching
+probability $P(\hat{\zeta}=\zeta)$, where $\hat{\zeta}\in\mathbb{I}_{q^{\prime}}$ is
+the estimated shift direction index and $\zeta\in\mathbb{I}_{q^{\prime}}$ is the
+real one-coefficient shift direction index. For instance, in the case of $\mu=0.1$
+and $N=1,000$, when only the coefficient $\beta_{(2)}$ adds by $\delta=0.02$, the
+diagnostic scheme provides a correct prescription in $48\%$ of the simulations, and
+this percentage rises to $84\%$ if the magnitude $\delta$ is 0.05.
+
+At least three conclusions can be drawn with respect to the effects of the shift
+magnitudes $\delta$, the EWMA smoothing parameter $\mu$, and the sample size $N$.
+First, for one coefficient of the first three orders with fixed $\mu$ and $N$, as
+the magnitude $\delta$ increases, the diagnostic consistency improves progressively
+with the observed matching probability approaching 1, as might be expected. Second,
+while keeping $\mu$ and $\delta$ unchanged, a larger sample size $N$ will improve
+diagnostic performance, which is also to be expected. Third, a larger $\mu$ will be
+beneficial for identifying larger shifts while a smaller one can assist in
+recognizing smaller deviations. Figure 3.3 further demonstrates this pattern with
+various values of $\mu$ and $N=1,000$.
+
+%Table 6
+\begin{table}[ht]
+\tabcolsep 6.0pt \vspace{-0.3cm} \centering \caption{Observed matching probability
+in cases of one-coefficient shifts of the first three orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{r|r|c|c|c|c|c|c|c|c}\hline
+Case & $\delta$ & $\;\;\beta_{(2)}\;\;$ & $\;\;\beta_{(4)}\;\;$ &
+$\;\beta_{(1,3)}\;$ & $\;\beta_{(1,5)}\;$ & $\;\beta_{(2,3)\;}$ &
+$\;\beta_{(4,5)}\;$ & $\beta_{(1,4,5)}$ & $\beta_{(2,3,5)}$
+\\\hline
+& 0.02 & 0.48 & 0.46 & 0.52 & 0.43 & 0.46 & 0.50 & 0.23 & 0.18 \\
+$\mu=0.1$ & 0.05 & 0.84 & 0.71 & 0.73 & 0.62 & 0.73 & 0.73 & 0.71 & 0.64 \\
+& 0.20 & 0.95 & 0.84 & 0.84 & 0.77 & 0.86 & 0.86 & 0.87 & 0.85 \\
+& $-$0.02 & 0.51 & 0.46 & 0.53 & 0.43 & 0.46 & 0.50 & 0.24 & 0.20 \\
+$N=1,000$ & $-$0.05 & 0.82 & 0.69 & 0.71 & 0.61 & 0.71 & 0.71 & 0.71 & 0.63 \\
+& $-$0.20 & 0.94 & 0.85 & 0.84 & 0.79 & 0.86 & 0.86 & 0.87 & 0.85
+\\\hline
+\multicolumn{10}{l}{NOTE: $\mu=0.1$ and $N=1,000$.}
+\end{tabular}\vspace{-0.3cm}
+\end{table}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=15.0cm,height=8.0cm]{fig3-3.eps}
+\vspace{-0.3cm} \caption{\small Matching probability curves for the diagnostic
+scheme with various values of $\mu$ for identifying the real shifts in: (a)
+$\beta_{(2,3)}$; (b) $\beta_{(4,5)}$.}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+
+
+\section{Summary}\label{sec3.7}
+
+We have developed a new log-linear directional control chart for monitoring process
+shifts with high efficiency, which is based on combining the log-likelihood of
+log-linear models and the EWMA scheme. In addition, a post-signal diagnostic scheme
+for recognizing the shift direction is formulated. The LLD chart has been shown to
+work well with multivariate categorical processes, including multivariate binomial
+and multivariate multinomial distributions, and to successfully incorporate factor
+interactions among multiple categorical factors. Furthermore, the diagnostic method
+shows good performance in estimating fault directions. Practical guidelines for
+parameter settings have been provided, along with an illustrative example of
+implementing the monitoring and diagnostic methodology.
+
+
+
+\section{Appendix}\label{sec3.8}
+
+\subsection{Derivation of the GLRT Statistic in Equation
+(\ref{F3.5})}
+
+Denote the IC coefficient vector by
+$\widetilde{\bm{\beta}}^{(0)}=\big[\beta^{(0)}_0,\big(\bm{\beta}^{(0)}\big)^T\big]^T$,
+and the IC probability vector ${\bf p}^{(0)}$ satisfies
+\[
+{\bf p}^{(0)}=\exp\Big(\big[\bm{1},{\bf
+X}\big]\big[\beta^{(0)}_0,\big(\bm{\beta}^{(0)}\big)^T\big]^T\Big).
+\]
+Consider the log-likelihood function for the log-linear model (\ref{F3.1}), which
+can be written from the PMF of the multinomial distribution as
+\[
+l\big(\widetilde{\bm{\beta}}\big)={\bf n}^T\ln{\bf p}+\ln N!-(\ln {\bf
+n}!)^T\bm{1}={\bf n}^T\widetilde{{\bf X}}\widetilde{\bm{\beta}}+\ln N!-(\ln {\bf
+n}!)^T\bm{1}.
+\]
+Both the logarithm and the factorial operators on the column vectors operate on each
+of their entries.
+
+Without loss of generality, assume that in the OC state only the $i$th
+($i\in\mathbb{I}_q$) coefficient $\beta_i^{(0)}$ in $\bm{\beta}^{(0)}$ is
+incremented by an amount $\delta_i$, and that all the other $\beta_j^{(0)}$
+($j\in\{1,\ldots,h-1\}$ and $j\ne i$) remain unchanged. The log-likelihood of the
+observation vector ${\bf n}$ in Phase II can be expressed as
+\[
+l(\delta_i)={\bf n}^T\left[\bm{1},{\bf
+X}\right]\left[\beta^{(0)}_0+\alpha_i,\big(\bm{\beta}^{(0)}+{\bf
+d}_i\delta_i\big)^T\right]^T+\ln N!-(\ln{\bf n}!)^T\bm{1},
+\]
+where $\alpha_i$ is the variation of $\beta^{(0)}_0$ induced by the constraint
+$\bm{1}^T{\bf p}=1$. The MLE $\hat{\delta}_i$ of $\delta_i$ is actually the solution
+to $l^{\prime}(\delta_i)=0$. Solving this equation needs a numerical iteration such
+as that of Newton-Raphson. However, by some approximations, the MLE $\hat{\delta}_i$
+of $\delta_i$ can be expressed as a simple form, which is shown below.
+
+If only $\beta_i^{(0)}$ in $\bm{\beta}^{(0)}$ adds by a magnitude $\delta_i$, the
+variation $\alpha_i$ of $\beta^{(0)}_0$ must satisfy the constraint
+\begin{equation}
+\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf X}\bm\beta^{(0)}+\bm{1}\alpha_i+{\bf
+x}_i\delta_i\big)=1,\label{F3.8}
+\end{equation}
+and $\alpha_i$ is calculated as
+\begin{equation}
+\alpha_i=-\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf X}\bm\beta^{(0)}+{\bf
+x}_i\delta_i\big)\big).\label{F3.9}
+\end{equation}
+Therefore, $l(\delta_i)$ can be further rewritten as
+\begin{align*}
+l(\delta_i)=&\;{\bf n}^T\big[\bm{1}\beta^{(0)}_0 +{\bf
+X}\bm\beta^{(0)}-\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf
+X}\bm\beta^{(0)}+{\bf x}_i\delta_i\big)\big)+{\bf
+x}_i\delta_i\big]+\\
+&\;\ln N!-(\ln{\bf n}!)^T\bm{1}.
+\end{align*}
+The first-order derivative of $l(\delta_i)$ with respect to $\delta_i$ is
+\begin{align*}
+s(\delta_i)=&\;\frac{\ud
+l(\delta_i)}{\ud\delta_i}\\
+=&\;{\bf x}_i^T{\bf n}-N{\bf x}_i^T
+\exp\big[\bm{1}\beta^{(0)}_0+{\bf X}\bm\beta^{(0)}+{\bf x}_i\delta_i-\\
+&\;\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf X}\bm\beta^{(0)}+{\bf
+x}_i\delta_i\big)\big)\big].
+\end{align*}
+Let
+\[
+{\bf k}(\delta_i)=\exp\big[\bm{1}\beta^{(0)}_0+{\bf X}\bm\beta^{(0)}+{\bf
+x}_i\delta_i-\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf
+X}\bm\beta^{(0)}+{\bf x}_i\delta_i\big)\big)\big].
+\]
+We can further formulate the second-order derivative $l(\delta_i)$ with respect to
+$\delta_i$ as
+\[
+s^{\prime}(\delta_i)=\;\frac{\ud^2 l(\delta_i)}{\ud\delta^2_i}=\;-N{\bf
+x}_i^T\di\big({\bf k}(\delta_i)\big){\bf x}_i + N{\bf x}_i^T{\bf k}(\delta_i){\bf
+k}^T(\delta_i){\bf x}_i.
+\]
+Clearly,
+\begin{align*}
+&s(0)={\bf x}_i^T{\bf n}-N{\bf x}_i^T \exp\big(\bm{1}\beta^{(0)}_0+{\bf
+X}\bm\beta^{(0)}\big)={\bf x}_i^T({\bf
+n}-N{\bf p}^{(0)}),\\
+&s^{\prime}(0)=-N{\bf x}_i^T\di\big({\bf p}^{(0)}\big){\bf x}_i+ N{\bf x}_i^T{\bf
+p}^{(0)}({\bf p}^{(0)})^T{\bf x}_i=-N{\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i.
+\end{align*}
+By performing the first-order Taylor expansion of $s(\delta_i)$ at $\delta_i=0$, we
+have
+\[
+s(\delta_i)\approx s(0)+s^{\prime}(0)\delta_i.
+\]
+Note that the MLE $\hat{\delta}_i$ of $\delta_i$ should be the solution to
+$s(\delta_i)=0$, and therefore, the MLE $\hat{\delta}_i$ can be approximated as
+\begin{equation}
+\hat{\delta}_i\approx-\frac{s(0)}{s^{\prime}(0)}=\frac{1}{N}\big({\bf n}-N{\bf
+p}^{(0)}\big)^T{\bf x}_i\big({\bf x}_i^T\bm{\Sigma}^{(0)}{\bf
+x}_i\big)^{-1}.\label{F3.10}
+\end{equation}
+
+In the IC state, the log-likelihood function of the observation vector ${\bf n}$ in
+Phase II is
+\[
+l_0={\bf n}^T\big[\bm{1},{\bf
+X}\big]\big[\beta^{(0)}_0,\big(\bm{\beta}^{(0)}\big)^T\big]^T+\ln N!-(\ln{\bf
+n}!)^T\bm{1}.
+\]
+The $-2$LRT statistic will then be $Q_i(\hat{\delta_i})=2(l(\hat{\delta_i})-l_0)$.
+Here $Q_i(\hat{\delta_i})$ also has a simple form by some approximations, which is
+shown below.
+
+From (\ref{F3.9}), $Q_i(\delta_i)$ can be further rewritten as
+\begin{align*}
+Q_i(\delta_i)=&\;2{\bf n}^T(\bm{1}\alpha_i+{\bf
+x}_i\delta_i)\\
+=&\;-2N\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(0)}_0 +{\bf X}\bm\beta^{(0)}+{\bf
+x}_i\delta_i\big)\big) + 2{\bf n}^T{\bf x}_i\delta_i.
+\end{align*}
+By the second-order Taylor expansion of $Q_i(\delta_i)$ at $\delta_i=0$, we have
+\begin{equation}
+Q_i(\delta_i)\approx
+Q_i(0)+Q_i^{\prime}(0)\delta_i+\frac{1}{2}Q_i^{\prime\prime}(0)\delta_i^2.\label{F3.11}
+\end{equation}
+In a similar way to the formulation of ${s(0)}$ and ${s^{\prime}(0)}$, the following
+results hold:
+\begin{align*}
+&Q_i(0)=0,\\
+&Q_i^{\prime}(0)=2{\bf x}_i^T\big({\bf n}-N{\bf p}^{(0)}\big),\\
+&Q_i^{\prime\prime}(0)=-2N{\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i.
+\end{align*}
+By substituting these terms as well as $\hat{\delta}_i$ in (\ref{F3.10}) into
+(\ref{F3.11}) and some algebra, we obtain
+\[
+Q_i(\hat{\delta}_i)\approx\frac{1}{N}\big({\bf n}-N{\bf p}^{(0)}\big)^T{\bf
+x}_i\big({\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf
+n}-N{\bf p}^{(0)}\big).
+\]
+
+Up to now, it has been assumed that at most one coefficient $\beta_i^{(0)}$ in
+$\bm{\beta}^{(0)}$ will deviate, but its location is unknown. Therefore, for each
+$\beta_i^{(0)}$ ($i\in\mathbb{I}_q$), calculate its corresponding $-2$LRT statistic
+$Q_i(\hat{\delta}_i)$ and then combine them into the following GLRT statistic
+\begin{align*}
+Q=\max_{i\in\mathbb{I}_q}\Big(\frac{1}{N}\big({\bf n}-N{\bf p}^{(0)}\big)^T{\bf
+x}_i\big({\bf x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf
+n}-N{\bf p}^{(0)}\big)\Big).
+\end{align*}
+
+\subsection{Proof of the Consistency of $\arg\max_{j\in\mathbb{I}_{q^{\prime}}}S_j$ in Equation (\ref{F3.7})}
+
+Without loss of generality, we follow the assumption used in Section 3.8.1 that
+$\beta_i^{(0)}$ in $\bm{\beta}^{(0)}$ adds by a magnitude $\delta_i$. In
+$\widetilde{\bm{\beta}}^{(1,i)}$, $\bm{\beta}^{(1,i)}=\bm{\beta}^{(0)}+{\bf
+d}_i\delta_i$ and $\beta_0^{(1,i)}=\beta_0^{(0)}+\alpha_i$, and the OC probability
+vector satisfies
+\[
+{\bf p}^{(1,i)}=\exp\Big(\big[\bm{1},{\bf X}\big]\big[\beta^{(1,i)}_0,
+\big(\bm{\beta}^{(1,i)}\big)^T\big]^T\Big).
+\]
+
+To prove the consistency of this estimator is equivalent to showing that
+$$\Pr\left\{\bigcup\limits_{j\neq i}\left[S_j> S_i\right]\right\}\rightarrow 0
+\quad {\mathrm{as}} \quad N\rightarrow\infty.$$ By Bonferroni inequality, it further
+suffices to show that
+$$\sum\limits_{j\neq i}\Pr\left\{S_j> S_i \right\} \rightarrow 0  \quad {\mathrm{as}}
+\quad N\rightarrow\infty.$$ Denote $z_j=S_j-S_i$. For any $\varepsilon>0$,
+\begin{align}
+\sum\limits_{j\neq i}&\Pr\left\{z_j>\varepsilon\right\}\nonumber\\
+&\leq \sum\limits_{j\neq
+i}\Pr\left\{z_j-E(z_j)>\frac{\varepsilon}{2}\right\}+\sum\limits_{j\neq
+i}\Pr\left\{E(z_j)>\frac{\varepsilon}{2}\right\} \label{F3.12}
+\end{align}
+
+Firstly, we handle the second term in (\ref{F3.12}). Note that the constraint
+(\ref{F3.8}) can also be rewritten as
+\[
+\bm{1}^T\exp\big(\bm{1}\beta^{(1,i)}_0 +{\bf X}\bm\beta^{(1,i)}-\bm{1}\alpha_i-{\bf
+x}_i\delta_i\big)=1,
+\]
+and correspondingly we have
+\[
+\alpha_i=\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(1,i)}_0 +{\bf
+X}\bm\beta^{(1,i)}-{\bf x}_i\delta_i\big)\big).
+\]
+Moreover, the IC probability vector
+\begin{align*}
+{\bf p}^{(0)}=&\;\exp\big(\bm{1}\beta^{(0)}_0
++{\bf X}\bm\beta^{(0)}\big)\\
+=&\;\exp\big(\bm{1}\beta^{(1,i)}_0+{\bf X}\bm\beta^{(1,i)}-\bm{1}\alpha_i-{\bf
+x}_i\delta_i\big)\\
+=&\;\exp\big(\bm{1}\beta^{(1,i)}_0+{\bf X}\bm\beta^{(1,i)}-
+\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(1,i)}_0 +{\bf X}\bm\beta^{(1,i)}-{\bf
+x}_i\delta_i\big)\big)-{\bf x}_i\delta_i\big).
+\end{align*}
+Since diagnosis is considered in the OC state, we perform the first-order Taylor
+expansion of ${\bf p}^{(0)}$ at ${\bf p}^{(1,i)}$ (i.e., $\delta_i=0$ in the above
+equation), and obtain
+\begin{align*}
+{\bf p}^{(0)}\approx&\;\exp\big(\bm{1}\beta^{(1,i)}_0+{\bf
+X}\bm\beta^{(1,i)}\big)-\big(\di\big({\bf p}^{(1,i)}\big){\bf
+x}_i-{\bf p}^{(1,i)}({\bf p}^{(1,i)})^T{\bf x}_i\big)\delta_i\\
+=&\;{\bf p}^{(1,i)}-\bm{\Sigma}^{(1,i)}{\bf x}_i\delta_i.
+\end{align*}
+Since ${\bf n}$ is an observation vector of size $N$ collected from
+$F\big(\widetilde{{\bf X}};\widetilde{\bm{\beta}}^{(1,i)}\big)$, its expectation and
+covariance matrix satisfy
+\[
+\ext\big({\bf n}-N{\bf p}^{(0)}\big)=N{\bf p}^{(1,i)}-N{\bf
+p}^{(0)}=N\bm{\Sigma}^{(1,i)}{\bf x}_i\delta_i,
+\]
+\[
+\cov\big({\bf n}-N{\bf p}^{(0)}\big)=\cov\big({\bf n}\big)=N^2\bm{\Sigma}^{(1,i)}.
+\]
+Let
+\begin{align*}
+&{\bf A}_i={\bf x}_i\big({\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf
+x}_i\big)^{-1}{\bf x}_i^T,\;\;i\in\mathbb{I}_{q^{\prime}}\\
+&{\bf A}_j={\bf x}_j\big({\bf x}_j^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)^{-1}{\bf
+x}_j^T,\;\;j\in\mathbb{I}_{q^{\prime}}\;\;\textrm{and}\;\;j\ne i.
+\end{align*}
+Taking the expectation of $S_i$ and $S_j$, we have
+\begin{align*}
+\ext S_i=&\;\frac{1}{N}\tr\big({\bf A}_i\cov\big({\bf n}-N{\bf
+p}^{(0)}\big)\big)+\frac{1}{N}\ext^T\big({\bf n}-N{\bf
+p}^{(0)}\big){\bf A}_i\ext\big({\bf n}-N{\bf p}^{(0)}\big)\\
+=&\;N\tr\big(\big({\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf x}_i\big)^{-1}\big({\bf
+x}_i^T\bm{\Sigma}^{(1,i)}{\bf x}_i\big)\big)+N{\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf
+A}_i\bm{\Sigma}^{(1,i)}{\bf x}_i\delta_i^2\\
+=&\;N+N{\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf x}_i\delta_i^2,\\
+\ext S_j=&\;\frac{1}{N}\tr\big({\bf A}_j\cov\big({\bf n}-N{\bf
+p}^{(0)}\big)\big)+\frac{1}{N}\ext^T\big({\bf n}-N{\bf
+p}^{(0)}\big){\bf A}_j\ext\big({\bf n}-N{\bf p}^{(0)}\big)\\
+=&\;N\tr\big(\big({\bf x}_j^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)^{-1}\big({\bf
+x}_j^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)\big)+N{\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf
+A}_j\bm{\Sigma}^{(1,i)}{\bf x}_i\delta_i^2\\
+=&\;N+N\big({\bf x}_i^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)\big({\bf
+x}_j^T\bm{\Sigma}^{(1,i)}{\bf x}_j\big)^{-1}\big({\bf x}_j^T\bm{\Sigma}^{(1,i)}{\bf
+x}_i\big)\delta_i^2.
+\end{align*}
+From the Cauchy-Schwarz inequality, it follows clearly that
+\[
+\ext S_i>\ext S_j,
+\]
+say, $E(z_j)<0$ and thus it immediately follows that the second term of
+(\ref{F3.12}) equals to zero.
+
+On the other hand, it is not hard to verify that $z_j\rightarrow E(z_j)$ as
+$N\rightarrow \infty$ and ${\mathrm {Var}}(z_j)= O(N^{-1})$. Thus, by the Chebychev
+inequality, the first term of (\ref{F3.12}) tends to zero as $N\rightarrow \infty$.
+Taking all these results together, (\ref{F3.12}) tends to zero as $N\rightarrow
+\infty$, which establishes the consistency of diagnostic statistic
+$\arg\max_{j\in\mathbb{I}_{q^{\prime}}}S_j$.
+
+
+
+\subsection{Discussion on Monitoring Shifts at the Effect Level}
+
+The marginal distribution of one factor is mainly determined by its main effect,
+whereas the dependence among multiple factors is represented by their interaction
+effect. So shifts in the marginal distribution of one factor appear in the form of
+deviations of the coefficient subvector corresponding to its main effect, and shifts
+in the dependence among multiple factors arise in terms of deviations of the
+coefficient subvector reflecting their interaction effect. This is the practical
+explanation of shifts in multivariate categorical processes.
+
+In a $2\times 3$ contingency table, $\bm\beta_1=\beta_{(1)}=\beta_1$ measures the
+main effect of factor $C_1$ with two levels, and
+$\bm\beta_2=[\beta_{(2_1)},\beta_{(2_2)}]^T=[\beta_2,\beta_3]^T$ measures the main
+effect of factor $C_2$ with three levels. Here the coefficient subvector
+$\bm\beta_1$ is actually a scalar, whereas $\bm\beta_2$ is indeed a vector. Without
+any practical considerations, a shift in $\bm\beta_2$ may have multiple patterns,
+including only $\beta_2$ shifting, only $\beta_3$ shifting, and both $\beta_2$ and
+$\beta_3$ shifting simultaneously. However, for a coefficient subvector such as
+$\bm\beta_2$ above, a shift in only one element of it, say $\beta_2$ in
+$\bm\beta_2$, may not be possible in practice. This follows because all the elements
+of this coefficient subvector as a group represent the corresponding main or
+interaction effect, and they should change simultaneously if there is a shift in
+this effect. In other words, a shift should occur at the effect or subvector level
+instead of the coefficient level.
+
+It seems that the LLD chart should be modified to accommodate this fact. For
+simplicity, we ignore the fact that shifts tend to occur in lower-order effects,
+leading to testing the hypothesis with its alternative in (\ref{F3.3})
+\begin{align*}
+&H_0:\;\bm{\beta}\neq\bm\beta^{(0)}\\
+&H_1:\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_1\delta_1
+\;\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_2\delta_2\ldots\;
+\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf d}_{h-1}\delta_{h-1}.
+\end{align*}
+Consequently, the GLRT statistic is
+\begin{align}
+R_k=\max_{i\in\{1,\ldots,h-1\}}R_{i,k},\label{F3.13}
+\end{align}
+where
+\[
+R_{i,k}=\frac{1}{N}\big({\bf z}_k-N{\bf p}^{(0)}\big)^T{\bf x}_i\big({\bf
+x}_i^T\bm{\Sigma}^{(0)}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf z}_k-N{\bf
+p}^{(0)}\big)
+\]
+with the column vector ${\bf x}_i$ corresponding to the coefficient $\beta_i$.
+
+To account for practical shifts that are in the effect level, the  hypothesis should
+be
+\begin{align}\label{F3.14}
+&H_0:\;\bm{\beta}=\bm{\beta}^{(0)}\\\nonumber
+&H_1:\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf D}_1\bm\delta_1
+\;\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf D}_2\bm\delta_2\ldots\;
+\mathrm{or}\;\;\bm{\beta}=\bm{\beta}^{(0)}+{\bf D}_{2^p-1}\bm\delta_{2^p-1}.
+\end{align}
+Here ${\bf D}_i$ of size $(h-1)\times q_i$ is the direction matrixes, with only one
+1 and elsewhere 0 in each column corresponding to an element in the increment
+subvector $\bm\delta_i$ of size $q_i\times 1$, the same as that of $\bm\beta_i$. We
+can derive the GLRT statistic for testing hypothesis (\ref{F3.14}) is
+\begin{align}
+T_k=\max_{i\in\{1,\ldots,2^p-1\}}T_{i,k},\label{F3.15}
+\end{align}
+where
+\[
+T_{i,k}=\frac{1}{N}\big({\bf z}_k-N{\bf p}^{(0)}\big)^T{\bf X}_i\big({\bf
+X}_i^T\bm{\Sigma}^{(0)}{\bf X}_i\big)^{-1}{\bf X}_i^T\big({\bf z}_k-N{\bf
+p}^{(0)}\big)
+\]
+with the design submatrix ${\bf X}_i$ corresponding to the subvector $\bm\beta_i$.
+
+However, there is also another problem of using $T_k$. If at least one factor has
+more than two levels, for instance, in the $2\times 3$ contingency table, the
+coefficient subvectors are $\bm\beta_1=\beta_1$, $\bm\beta_2=[\beta_2,\beta_3]^T$,
+and $\bm\beta_3=[\beta_4,\beta_5]^T$. The alternative hypothesis in (\ref{F3.14}) is
+actually
+\[
+H_1:\;\bm\delta_1=\delta_1\neq
+0\;\;\mathrm{or}\;\;\bm\delta_2=[\delta_2,\delta_3]^T\neq \bm
+0_2\;\;\mathrm{or}\;\;\bm\delta_3=[\delta_4,\delta_5]^T\neq\bm 0_2,
+\]
+which includes one 1-D real-line and two 2-D planes except their origins. On the
+other hand, the alternative hypothesis in (\ref{F3.3}) is
+\[
+H_1:\;\delta_1\neq 0\;\;\mathrm{or}\;\;\delta_2\neq 0\;\;\mathrm{or}\;\;\delta_3\neq
+0\;\;\mathrm{or}\;\;\delta_4\neq 0\;\;\mathrm{or}\;\;\delta_5\neq 0,
+\]
+which includes five 1-D real-lines except their origins. We see that the alternative
+hypothesis in (\ref{F3.14}) considers a much larger difference space than that in
+(\ref{F3.3}), which is
+\[
+S=\{(\delta_2,\delta_3)|\delta_2\neq 0\ \mathrm{and}\ \delta_3\neq
+0\}\cup\{(\delta_4,\delta_5)|\delta_4\neq 0\ \mathrm{and}\ \delta_5\neq 0\}.
+\]
+Therefore, if a shift occurs in $\bm\beta_2$ and its elements $\beta_2$ and
+$\beta_3$ change simultaneously, the charting statistic $T_k$ in (\ref{F3.15})
+should be more powerful to detect this shift in terms of a smaller ARL than $R_k$ in
+(\ref{F3.13}). This follows because this shift in $\bm\beta_2$ leading to
+$\delta_2\neq 0\ \mathrm{and}\ \delta_3\neq 0$ is in the difference space $S$.
+However, for a shift arising in $\bm\beta_1=\beta_{(1)}$, $T_k$ should have a larger
+ARL than $R_k$, since the shift in $\bm\beta_1$ resulting in $\delta_1\neq 0$ is not
+in $S$.
+
+By simulation, we have found that if the only shift does not occur in such a
+difference space like $S$, $T_k$ leads to a much larger ARL in detecting it than
+$R_k$. On the other hand, if the only shift occurs in the difference space, $T_k$
+leads to an ARL that is only sightly smaller than $R_k$. This is because a shift in
+the difference space is reflected in its edges to a fairly large extent. For
+instance, in the $2\times 3$ contingency table, a shift $(\delta_2,\delta_3)$
+$(\delta_2\neq 0\ \mathrm{and}\ \delta_3\neq 0)$ in $\bm\beta_2$ is reflected mostly
+by $(\delta_2,0)$ and $(0,\delta_3)$. In addition, the alternative hypothesis in
+(\ref{F3.3}) is actually a collection of all the edges of the space considered in
+the alternative hypothesis in (\ref{F3.14}). So $R_k$ can still detect it faster.
+Therefore, in spite of practical shifts at the effect level, we still use the
+original charting statistic $R_k$, which only takes a relatively small expense in
+detecting shifts in the case of at least one factor with more than two levels.

@@ -1,0 +1,403 @@
+\chapter{Introduction}\label{chp1}
+
+
+\section{Background and Motivation}\label{sec1.1}
+
+\subsection{Statistical Process Control}
+
+Quality has become one of the most important factors that decides selection of
+products and services. Therefore, improving quality is key to business success,
+growth, and competitiveness. Traditionally, quality means fitness for use. This
+definition is based on the viewpoint that products and services must meet consumers'
+requirements. Extending from it, quality can have eight dimensions Garvin (1987),
+including performance, reliability, durability, serviceability, aesthetics,
+features, perceived quality and conformance to standards. In fact, everyone has a
+conceptual understanding of quality that relates to one or more characteristics a
+product or service should possess.
+
+With the rapid development of technology, actually we prefer a modern definition of
+quality, which is that quality is inversely proportional to variability. Based on
+it, quality improvement is the reduction of variability in processes and products
+Montgomery (2009). Since variability can only be characterized in statistical terms,
+statistical methods play a critical rule in improving quality. Statistical process
+control (SPC) is the application of statistical methods to the monitoring and
+control of a process to ensure that it operates at its full potential to produce
+conforming products.
+
+In general, there are two types of variability in any production process. The first
+comes from chance causes of variation. Basically, it is the cumulative effect of
+many small unavoidable causes. Such variability is inherent or natural and always
+exists, no matter how well designed or carefully maintained the process is. If a
+process involves only chance causes of variation, it is said to be in (statistcal)
+control (IC). The second is related to assignable causes of variation, which usually
+results from improper operations or defective raw materials, etc. Generally, such
+variability is large compared to the first type and usually indicates an
+unacceptable level of process performance. If a process is operating with assignable
+causes of variation, it is regarded as out-of-control (OC).
+
+Statistical process control mainly aims at detecting the assignable causes of
+variation as quickly as possible, so that corrective actions may be undertaken to
+avoid many nonconforming products. SPC usually consists of two phases. In Phase I, a
+process reference dataset is collected and examined to see if any unusual patterns
+exist. After they are identified and adjusted, a clean dataset results. This dataset
+is called the IC dataset and is used for estimating the IC model, which
+characterizes the process under IC operating conditions. The performance of Phase I
+analysis is often measured by the statistical power of detecting these
+abnormalities. After this off-line retrospective analysis, quality inspectors will
+have a good reference IC model.
+
+In Phase II, the main task is to construct control charts for monitoring the process
+and detecting any shifts from the IC state. The performance of control charts in
+Phase II is usually measured by the average run length (ARL), which is defined as
+the average number of samples needed for the control chart to trigger an OC signal.
+The control chart is an online technique, composed of control limits and charting
+statistics. In particular, a charing statistic is calculated based on a sample and
+plotted against this sample. A charting statistic falling beyond the control limits
+indicates a shift to OC states in the process. The IC ARL is usually fixed to be 370
+by selecting suitable control limits, which is a convention in SPC. As a result, for
+a shift, a control chart with a smaller OC ARL needs fewer samples to trigger an OC
+signal and therefore detects this shift more quickly.
+
+
+
+\subsection{Multivariate Categorical Processes}
+
+The overall quality of most modern processes is best described in terms of multiple
+characteristics. Multivariate statistical process control is applied in practical
+situations where several quality characteristics must be monitored simultaneously.
+For instance, tensile strength and diameter, which have been assumed to follow a
+bivariate normal distribution, are two important quality characteristics of a
+textile fiber that must be jointly controlled.
+
+In manufacturing and especially service industries, however, it is increasingly
+common to have quality characteristics that cannot be measured numerically. Although
+obtaining their precise continuous values may be expensive, unnecessary, or even
+impossible, collecting some attribute data related to them may be quite feasible.
+Such rough classification levels do not require precise measurements. Examples
+include items on a production line whose several quality characteristics are each
+evaluated as conforming or nonconforming according to predefined specifications and
+multiple indexes in a service flow that may be assessed as excellent, acceptable, or
+unacceptable. The characteristics all have two or more attribute levels, so that the
+data are multivariate categorical. Note that this is similar to having multiple
+factors in design of experiments (DOE), where each factor has several specific
+levels. Here, for simplicity, we use ``factor'' to designate a categorical
+characteristic.
+
+We illustrate multivariate categorical processes with two motivating examples.
+Aluminium electrolytic capacitor (AEC) manufacturing is a multi-stage process,
+comprising a series of stages, from cutting, winding, drying, impregnating, and
+assembling, to sleeving, washing, aging, and packaging. The production line
+manufactures AECs from various raw materials, including anode aluminum foil, cathode
+aluminum foil, guiding pin, electrolyte sheet, plastic cover, aluminum shell, and
+plastic tube. Right after each stage, the quality of the stagewise AEC products,
+namely capacitor elements in terms of appearance condition and functional
+performance, will be inspected by sampling in order to meet the specifications. Here
+we concentrate on the quality after the aging stage, which is assessed mainly in
+terms of leakage current (LC), dissipation factor (DF), and capacity (CAP). Each
+characteristic is classified automatically as conforming or nonconforming to the
+specifications by an electronic device at a very high speed, and engineers are
+reluctant to obtain their precise continuous or numerical values (which is costly
+but not impossible). Consequently, this is a multivariate categorical process with
+three factors LC, DF and CAP, each with two levels and therefore $2^3=8$ level
+combinations. Without loss of generality, for each factor, $-1$ represents
+``conforming'' and 1 ``nonconforming''. For example, the combination ($-1$, 1, $-1$)
+means an AEC with conforming LC and CAP and nonconforming DF.
+
+Another example is the quality control of welding rods. One of the key aspects of
+welding rod inspection is their appearance, which directly reflects the integrated
+level of welding rod manufacturing and influences the welding performance. The
+welding rod is composed of a cylindrical metallic core wire and a coating
+composition (flux) covering the circumference of the metallic core wire. Its
+appearance has some important characteristics such as eccentricity of the core wire,
+moisture resistance of the coating, strength of the coating, and rod bend. During
+testing, each is simply evaluated as either conforming or nonconforming, and their
+(latent) continuous values are not considered. With the four factors (eccentricity,
+moisture resistance, strength, and bend), each with two attribute levels, this is
+also a multivariate categorical process with $2^4=16$ cross-classification level
+combinations.
+
+Consider now a general multivariate categorical process. Suppose that there are $p$
+factors $C_1,\ldots,C_p$, and that each classification factor $C_i$ has $h_i$
+possible levels. The overall cross-classifications among all the level combinations
+of these factors form a $p$-way $h_1\times\ldots\times h_p$ contingency table with
+$h=\prod_{i=1}^p h_i$ cells. Each cell corresponds to one level combination of the
+$p$ factors and stores the count under this level combination.
+
+For a simple $h_1\times h_2\times h_3$ three-way table, denote the observed count by
+$n_{ijk}$ in cell$(i,j,k)$ ($i=1,\ldots,h_1$; $j=1,\ldots,h_2$; $k=1,\ldots,h_3$)
+and its expectation by $m_{ijk}$. If the observations are made over a period of
+time, it is reasonable to assume that each cell count follows an independent Poisson
+distribution (see Bishop et al. (2007)). During the Phase II SPC monitoring process,
+the total sum of observations is usually fixed. Conditional on the total sum of cell
+counts, a series of independent Poisson distributions result in a multinomial
+distribution. So in one sample of size $N$, the cell counts in the three-way
+contingency table therefore jointly follow the multinomial distribution
+$\mbox{MN}(N;p_{ijk})$ ($i=1,\ldots,h_1$; $j=1,\ldots,h_2$; $k=1,\ldots,h_3$). Here
+$p_{ijk}=m_{ijk}/N$ is the probability of an observation falling into cell$(i,j,k)$,
+and these probabilities must sum to 1.
+
+To generalize the three-way table to a general $p$-way $h_1\times \ldots\times h_p$
+contingency table (see Johnson et al. (1997)), let the probability of obtaining the
+combination of the factor levels $a_1,\ldots,a_p$ be $p_{a_1\ldots a_p}$
+($a_i=1,\ldots,h_i$ and $i=1,\ldots,p$). Furthermore, denote the count of
+observations with the level combination $a_1\ldots a_p$ among a sample of size $N$
+by $n_{a_1\ldots a_p}$. The marginal counts for factor $C_i$, which are denoted by
+$n_{(i)1},\ldots,n_{(i)h_i}$ and calculated as
+\[
+n_{(i)v}=\sum_{a_1}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots \sum_{a_p}n_{a_1\ldots
+a_{i-1}va_{i+1}\ldots a_p},\quad v=1,\ldots,h_i,
+\]
+will follow the multinomial distribution $\mbox{MN}(N; p_{(i)1},\ldots,p_{(i)h_i})$,
+where
+\[
+p_{(i)v}=\sum_{a_1}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots \sum_{a_p}p_{a_1\ldots
+a_{i-1}va_{i+1}\ldots a_p},\quad v=1,\ldots,h_i.
+\]
+Here, $n_{(i)v}$ is actually the sum of the cell counts $n_{a_1\ldots a_p}$ over all
+levels of all factors other than $C_i$ and for $C_i$ at level $v$. Also,
+$p_{(i)1},\ldots,p_{(i)h_i}$ are the marginal probabilities of factor $C_i$, which
+can be calculated in a similar way to $n_{(i)1},\ldots,n_{(i)h_i}$. Thus, consider
+the joint distribution of the $p$ sets of variables
+\[
+n_{(i)1},\ldots,n_{(i)h_i},\quad i=1,\ldots,p,
+\]
+each being a multinomial distribution. This joint distribution is a multivariate
+multinomial distribution (Johnson et al. (1997)), $\mbox{MMN}(N;{\bf p})$, where
+$\bf p$ is the $h$-variate cell probability vector composed of $p_{a_1\ldots a_p}$
+($a_i=1,\ldots,h_i$ and $i=1,\ldots,p$). When each factor has two levels, it reduces
+naturally to a multivariate binomial distribution. Therefore, based on the framework
+of multivariate binomial and multivariate multinomial distributions, multiple
+categorical factors can be studied.
+
+
+
+\section{Literature Review}\label{sec1.2}
+
+\subsection{Overview}
+
+Much effort has been devoted to the monitoring problem in settings where all the
+observed variables are numerical and continuous. The most famous control chart is
+the Hotelling's $T^2$ chart (see Montgomery (2009)), which assume process data come
+from a multivariate normal distribution. Refer to Lowry and Montgomery (1995) and
+Bersimis et al. (2007) for thorough reviews of monitoring multivariate continuous
+processes. Recent developments introduce variable selection into multivariate
+continuous SPC, such as forward selection procedures in Wang and Jiang (2009) and
+Wang et al. (2012), as well as least absolute shrinkage and selection operator
+(LASSO) (see Tibshirani (1996)) in Zou and Qiu (2009) and Zou et al. (2011). Some
+data mining approaches are also employed for monitoring multivariate continuous
+processes, such as kernel-distance-based methods. Related work include Sun and Tsung
+(2003) and Ning and Tsung (2012). In addition, some multivariate nonparametric
+control charts are proposed, including the spatial-sign-based multivariate chart
+(Zou and Tsung (2011)) and the spatial-rank-based multivariate chart (Zou et al.
+(2012)). These charts are affine-invariant, have a small-sample distribution-free
+property over a broad class of distributions, and perform very well in comparison
+with Hotelling's $T^2$ chart and other multivariate nonparametric charts on
+non-normal distributions.
+
+For categorical or attribute data, the $p$-chart and the $np$-chart for binomial
+distributed variables, together with the $c$-chart and the $u$-chart for Poisson
+processes, are typical SPC tools used with univariate categorical processes. To
+monitor multiple factors, we may employ multiple univariate categorical control
+charts as a multi-chart (see Woodall and Ncube (1985)). However, this may be an
+unattractive approach for two reasons: First, it is difficult to determine the
+control limit to achieve a desired ARL. The control limits of the separate
+univariate charts must be set such that each chart achieves a specific individual IC
+ARL, so that the overall IC ARL of the multi-chart is the desired value. Determining
+these control limits is nontrivial even for the low-dimensional case of a small
+number of categorical factors, let alone for a general multivariate categorical
+distribution. This complexity also increases dramatically when the marginal
+distributions of categorical factors are not identical, since the individual charts
+have different run length distributions. Second, a multi-chart considers individual
+categorical factors in parallel and therefore is unable to account for any
+correlations among them. Naturally, it is desirable to introduce multivariate
+categorical control charts that can appropriately describe and exploit the
+relationships among multiple categorical factors.
+
+Woodall (1997) summarized many aspects of the control charts for attribute data, but
+mostly considered univariate categorical charts. In the literature, some effort has
+been devoted to monitoring multinomial and multi-attribute processes. See Topalidou
+and Psarakis (2009) for an overview. Among others, Patel (1973) suggested a
+$\chi^2$-chart for multivariate binomial populations, which is based on the
+assumption that the joint distribution of the correlated binomial variables can be
+approximated by a multivariate normal distribution given a sufficiently large sample
+size. More recent developments include the Shewhart-type $mnp$-chart proposed by Lu
+et al. (1998), which uses the weighted sum of the number of nonconforming units for
+each quality characteristic. There is also the $mp$-chart designed by Chiu and Kuo
+(2008) for multivariate Poisson count data. However, as with Patel's $\chi^2$-chart,
+these two charts can only deal with factors having two levels, i.e., multivariate
+binomial processes. On the other hand, some methods focus on monitoring multinomial
+processes that have only one factor with three or more levels, such as the
+generalized $p$-chart developed by Marcucci (1985). This chart extends the
+traditional $p$-chart by adopting the Pearson chi-square statistic. The multinomial
+cumulative sum (CUSUM) chart proposed by Ryan et al. (2011) can also deal with this
+problem and is based on the likelihood ratio statistic equipped with a CUSUM scheme.
+Note that the prior approaches for monitoring multinomial processes are actually
+univariate charts, since only one factor is involved.
+
+To this end, we see that with several factors, at least one of them having more than
+two levels (i.e., multivariate multinomial processes), there are no appropriate
+approaches available. In addition to this deficiency in monitoring multivariate
+multinomial processes, most of the existing methods focus entirely on the marginal
+sums with respect to each categorical factor, neglecting the cross-classifications
+between factors. Because of this, if some cross-classification probabilities shift
+to OC states, these charts may not detect them quickly. Therefore, a general
+monitoring methodology for multivariate categorical processes is required.
+
+Control charts are for monitoring online processes in Phase II SPC. It should be
+noted that the model, based on which a control chart is constructed, is assumed to
+represent the IC operating condition and have been estimated from an IC reference
+dataset. However, in reality this is not always the case, and any unusual patterns
+in this dataset could yield an erroneous IC model estimate. Among others, a
+change-point is a sustained special cause that remains until some corrective action
+is taken, and an outlier is an isolated special cause that affects a single sample
+and then disappears (Hawkins and Qiu (2003)). We must ensure that we have an IC
+dataset for estimating the parameters for constructing control charts. This leads to
+Phase I analysis, in which the main objective is to identify unusual patterns such
+as change-points or outliers and bring the reference dataset into a state of
+statistical control. As for multivariate categorical processes, Phase I analysis for
+them still remains a challenge and has not been investigated to the best of our
+knowledge. Methods for Phase I analysis under the umbrella of multivariate binomial
+and multivariate multinomial processes are called for.
+
+
+
+\subsection{Some Typical Conventional Approaches}
+
+In this section, we review some typical methods for monitoring multivariate binomial
+and multivariate multinomial processes. Hereafter we use the superscripts ``(0)''
+and ``(1)'' to denote the IC and OC states, respectively.
+
+In a multivariate binomial process, each factor has two levels, giving rise to a
+$p$-way contingency table with $2^p$ cells for $p$ factors. Denote the two levels of
+each factor by 1 and 2 and the IC probability of factor $C_i$ taking Level 1 as
+$p_{(i)}^{(0)}$ $(i=1,\ldots,p)$, which is known and calculated as
+\[
+p_{(i)}^{(0)}=\sum_{a_1}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots
+\sum_{a_p}p_{a_1\ldots a_{i-1}1a_{i+1}\ldots a_p}^{(0)}.
+\]
+For the $k$th sample of size $N$ in Phase II, if the process is IC, the Level 1
+count $n_{(i)k}$ of factor $C_i$ ($i=1,\ldots,p$), which equals
+\[
+n_{(i)k}=\sum_{a_1}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots \sum_{a_p}n_{a_1\ldots
+a_{i-1}1a_{i+1}\ldots a_p,k},
+\]
+is binomially distributed with the total size $N$ and its IC Level 1 probability
+$p_{(i)}^{(0)}$. Let ${\bf n}_{\mathrm{MB},k}=\big[n_{(1)k},\ldots,n_{(p)k}\big]^T$
+and ${\bf p}^{(0)}_{\mathrm{MB}}=\big[p_{(1)}^{(0)},\ldots,p_{(p)}^{(0)}\big]^T$.
+Based on these, Patel (1973) constructed the $\chi^2$ charting statistic of the
+Hotelling's $T^2$ form
+\begin{equation}
+G_{\mathrm{MB},k}=\frac{1}{N}\big({\bf n}_{\mathrm{MB},k}-N{\bf
+p}^{(0)}_{\mathrm{MB}}\big)^T\bm{\Sigma}^{-1}_{\mathrm{MB}}\big({\bf
+n}_{\mathrm{MB},k}-N{\bf p}^{(0)}_{\mathrm{MB}}\big).\label{F1.1}
+\end{equation}
+Here, the covariance matrix term $\bm{\Sigma}_{\mathrm{MB}}$ has the elements
+\begin{align*}
+\bm{\Sigma}_{\mathrm{MB}\;ij}&=\left\{\begin{array}{ll}p^{(0)}_{(i)}\big(1-p^{(0)}_{(i)}\big)&\textrm{if}\
+i=j\\p^{(0)}_{(ij)}-p^{(0)}_{(i)}p^{(0)}_{(j)}&\textrm{if}\ i\ne
+j\end{array}\right..
+\end{align*}
+Here $p^{(0)}_{(ij)}$ is the IC probability of factors $C_i$ and $C_j$ both taking
+Level 1, which is also known and calculated as
+\[
+p_{(ij)}^{(0)}=\sum_{a_1}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}
+\ldots\sum_{a_{j-1}}\sum_{a_{j+1}}\ldots \sum_{a_p}p_{a_1\ldots
+a_{i-1}1a_{i+1}\ldots a_{j-1}1a_{j+1}\ldots a_p}^{(0)}
+\]
+by assuming $i<j$ without loss of generality.
+
+Factors with three or more levels are also common in production and service
+applications, and they can be treated as multivariate multinomial processes.
+Consider customer attitudes towards a service for instance. Suppose that there are
+four indexes, each of which may take the values of excellent, acceptable, or
+unacceptable. This forms a four-way contingency table with $3^4$ cells. No
+appropriate monitoring methods exist that incorporate the cross-classifications
+among factors when at least one of them has more than two attribute levels.
+
+The only feasible existing approach of monitoring multivariate multinomial processes
+with $p$ factors, albeit a naive one, might be to monitor the $p$ groups of marginal
+sums of each factor using $p$ individual charts. If we consider only the group of
+marginal sums of factor $C_i$ $(i=1,\ldots,p)$, it is a multinomial process, which
+could be handled by applying Marcucci's (1985) generalized $p$-chart. Denote the IC
+probability of factor $C_i$ taking Level $v$ ($v=1,\ldots,h_i$) by
+$p^{(0)}_{(i,v)}$, which is known as
+\[
+p^{(0)}_{(i,v)}=\sum_{a_1}\sum_{a_2}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots
+\sum_{a_{p-1}}\sum_{a_p}p^{(0)}_{a_1a_2\ldots a_{i-1}va_{i+1}\ldots
+a_{p-1}a_p},\quad v=1,\ldots,h_i.
+\]
+Let the Level $v$ count of factor $C_i$ in the $k$th sample of size $N$ in Phase II
+be $n_{(i,v)k}$, which equals
+\[
+n_{(i,v)k}=\sum_{a_1}\sum_{a_2}\ldots\sum_{a_{i-1}}\sum_{a_{i+1}}\ldots
+\sum_{a_{p-1}}\sum_{a_p}n_{a_1a_2\ldots a_{i-1}va_{i+1}\ldots a_{p-1}a_p,k},\quad
+v=1,\ldots,h_i.
+\]
+In the IC state, $n_{(i,v)k}$ ($v=1,\ldots,h_i$) jointly follow the multinomial
+distribution $\mbox{MN}\big(N;$ $p^{(0)}_{(i,1)},\ldots,p^{(0)}_{(i,h_i)}\big)$. Let
+${\bf n}_{\mathrm{MM},(i)k}=\big[n_{(i,1)k},\ldots,n_{(i,h_i-1)k}\big]^T$ and ${\bf
+p}^{(0)}_{\mathrm{MM},(i)}=\big[p^{(0)}_{(i,1)},\ldots,p^{(0)}_{(i,h_i-1)}\big]^T$.
+For the $k$th sample, the Pearson chi-square charting statistic given by Marcucci
+(1985) is
+\begin{equation}
+G_{\mathrm{MM},(i)k}=\frac{1}{N}\big({\bf n}_{\mathrm{MM},(i)k}-N{\bf
+p}^{(0)}_{\mathrm{MM},(i)}\big)^T\bm{\Sigma}^{-1}_{\mathrm{MM},(i)} \big({\bf
+n}_{\mathrm{MM},(i)k}-N{\bf p}^{(0)}_{\mathrm{MM},(i)}\big),\label{F1.2}
+\end{equation}
+where $\bm{\Sigma}_{\mathrm{MM},(i)}$ has the elements
+\begin{align*}
+\bm{\Sigma}_{\mathrm{MM},(i)\;uv}&=\left\{\begin{array}{ll}p^{(0)}_{(i,u)}
+\big(1-p^{(0)}_{(i,u)}\big)&\textrm{if
+$u=v$}\\-p^{(0)}_{(i,u)}p^{(0)}_{(i,v)}&\textrm{if $u\ne v$}\end{array}\right.\quad
+u,v=1,\ldots,h_i-1.
+\end{align*}
+So each factor has a charting statistic $G_{\mathrm{MM},(i)k}$ ($i=1,\ldots,p$), and
+they consist of a multi-chart. Such a multi-chart would signal whenever at least one
+of the $p$ individual charts signals.
+
+
+
+\section{Research Objectives}\label{sec1.3}
+
+By reviewing these typical monitoring methods, the above-mentioned two shortcomings,
+including applying to only multivariate binomial processes and univariate
+multinomial processes as well as almost entirely neglecting cross-classification
+interactions among factors, can be seen more clearly. In particular, the
+$\chi^2$-chart applies to only multivariate binomial processes, and the multi-chart
+developed for multivariate multinomial processes is actually problematic. Both
+charts focus on the one-way marginal sums of each factor.
+
+This thesis provides a systematic methodology of statistical process control for
+multivariate categorical processes. The whole work is based on log-linear models
+(Bishop et al. (2007)), which can completely characterize both the marginal
+distribution and the association structure between multiple categorical factors
+subject to a multivariate binomial/multinomial distribution. Therefore, the existing
+two difficulties in the literature on SPC for multivariate categorical processes can
+be overcome, either in Phase I or Phase II. This forms the main objective of this
+thesis. In particular, the contribution is composed of the following three aspects:
+\begin{enumerate}
+\item A log-linear multivariate categorical (LMC) control chart is proposed for
+online monitoring, which is a general Phase II tool to detect various shifts
+efficiently, especially those in interaction effects representing the dependence
+among characteristics.
+\item A log-linear directional (LLD) control chart is developed for Phase II SPC,
+which exploits directional shift information and aims at online detecting more
+practical shifts with some patterns, namely one-coefficient shifts and high-order
+interaction shifts. The corresponding diagnostic method can also identify the shift
+location powerfully.
+\item An off-line Phase I analysis method is proposed by change-point detection
+in a dataset collected from a multivariate categorical process. This approach also
+considers directional shift information and can detect one-coefficient shifts and
+high-order interaction shifts powerfully. The corresponding diagnostic method can
+also recognize the change-point and the shift location with accuracy.
+\end{enumerate}
+
+The rest of the thesis is arranged as follows. We propose the two control charts,
+namely the log-linear multivariate categorical (LMC) control chart and the
+log-linear directional (LLD) control chart, for online monitoring multivariate
+categorical processes in Chapters 2 and 3, respectively. Note that these two charts
+are for Phase II SPC. For Phase I analysis, we propose in Chapter 4 the directional
+method for detecting change-points in multivariate categorical processes. In Chapter
+5, concluding remarks together with some future research opportunities in this area
+are provided. For convenience, appendixes relating to one chapter are attached at
+the end of it, instead of the end of the thesis.

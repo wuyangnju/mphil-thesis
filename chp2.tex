@@ -1,0 +1,1028 @@
+\chapter{Log-Linear Multivariate Categorical Chart}\label{chp2}
+
+\section{Introduction}\label{sec2.1}
+
+This chapter and the next focus on Phase II SPC for multivariate categorical
+processes, assuming that the IC parameters are known or have been estimated based on
+an IC reference dataset. The proposed log-linear multivariate categorical (LMC)
+control chart is illustrated in this chapter, which is a general and robust one for
+monitoring multivariate categorical processes.
+
+Existing methods lack robustness for some deficiencies, in that they only apply to
+univariate/multivariate binomial processes or univariate multinomial processes, and
+they neglect the interaction structure among categorical factors. Compared to them,
+the LMC chart applies to the systematic framework of univariate/multivariate
+binomial/multinomial processes, and it can characterize the association patterns
+among categorical factors. Simply put, the LMC chart employs a log-linear model and
+relates the logarithms of the expected cell counts in a multi-way contingency table
+to a linear model that is similar to an analysis of variance (ANOVA) model. The LMC
+chart utilizes the log-likelihood function of log-linear models and incorporates the
+exponentially weighted moving average (EWMA) control scheme into the log-likelihood
+function, leading to an exponentially weighted log-likelihood ratio test statistic.
+Numerical results further confirm its effectiveness under various conditions, as
+well as its superiority over existing charts in detecting shifts in interaction
+effects that reflect the dependence among factors.
+
+
+
+\section{Log-Linear Models}\label{sec2.2}
+
+Multivariate categorical data are usually summarized in a multi-way contingency
+table, and there is a clear need to model the relationship between each cell count
+and factor levels associated with it. This resembles standard multi-way ANOVA, where
+responses to all factor level combinations are also placed in a multi-way table.
+Standard multi-way ANOVA is based on the assumption that the responses are normally
+distributed, and it aims to quantify how the responses are influenced by main factor
+effects and factor interaction effects. Consider for illustration a three-way ANOVA
+model, where the three factors take $h_1$, $h_2$, and $h_3$ levels. Denote the
+expected response with the first factor at its $i$th level, the second factor at its
+$j$th level, and the third factor at its $k$th level by $y_{ijk}$ ($i=1,\ldots,h_1$;
+$j=1,\ldots,h_2$; $k=1,\ldots,h_3$). The three-way ANOVA model is
+\[
+y_{ijk}=u^{(0)}+u^{(1)}_i+u^{(2)}_j+u^{(3)}_k
++u^{(1,2)}_{i,j}+u^{(1,3)}_{i,k}+u^{(2,3)}_{j,k}+u^{(1,2,3)}_{i,j,k},
+\]
+where $u^{(0)}$ is the overall mean, $u^{(1)}, u^{(2)}, u^{(3)}$ are the main
+effects, $u^{(1,2)}, u^{(1,3)}, u^{(2,3)}$ are the two-factor interaction effects,
+and $u^{(1,2,3)}$ is the three-factor interaction effect. Furthermore,
+identifiability requires constraints such as
+\[
+\sum_i u^{(1)}_i=\sum_i u^{(1,2)}_{i,j}=\sum_i u^{(1,3)}_{i,k}=\sum_i
+u^{(1,2,3)}_{i,j,k}=0
+\]
+for the first factor along its index $i$. Similar equations describe the second and
+third factors along with their indexes $j$ and $k$, respectively. Therefore, ANOVA
+can be represented as a linear regression model. From the generalized linear model
+(GLM) point of view, a linear regression model where the response is normally
+distributed has a canonical link function of unity (see McCullagh and Nelder
+(1989)).
+
+By analogy with the preceding standard ANOVA model, it is possible to build a
+similar regression model relating the cell counts and their corresponding factor
+levels in a multi-way contingency table. Note that in our case the response (the
+cell count) is not normally distributed. With no restriction on the total sample
+size, we have assumed that each cell count is independently Poisson distributed. A
+GLM where the response follows a Poisson distribution has a canonical link function
+that is a logarithm (see McCullagh and Nelder (1989)). Therefore, we assume a
+log-linear model. A detailed discussion of log-linear models and their applications
+are given by Bishop et al. (2007). For a three-way contingency table of size
+$h_1\times h_2\times h_3$, the log-linear model characterizing the relationship
+between the expectation $m_{ijk}$ ($i=1,\ldots,h_1$; $j=1,\ldots,h_2$;
+$k=1,\ldots,h_3$) of the count in cell$(i,j,k)$ and the factor levels indexed with
+$i,j,k$, is
+\[
+\ln m_{ijk}=u^{(0)}+u^{(1)}_i+u^{(2)}_j+u^{(3)}_k
++u^{(1,2)}_{i,j}+u^{(1,3)}_{i,k}+u^{(2,3)}_{j,k}+u^{(1,2,3)}_{i,j,k},
+\]
+where the $u$-terms are the main or factor interaction effects defined as in the
+ANOVA model (see Bishop et al. (2007)). They also satisfy the identifiability
+constraints. When the total sample size $N$ is fixed, the cell counts jointly follow
+a multinomial distribution, and it is more convenient to focus on the probability
+$p_{ijk}$ instead of the expectation $m_{ijk}=Np_{ijk}$. In this case, the
+log-linear model will be
+\begin{align}
+&\ln p_{ijk}=u^{(0)}+u^{(1)}_i+u^{(2)}_j+u^{(3)}_k
++u^{(1,2)}_{i,j}+u^{(1,3)}_{i,k}+u^{(2,3)}_{j,k}+u^{(1,2,3)}_{i,j,k},\label{F2.1}
+\end{align}
+where the probabilities must satisfy $\sum_{i,j,k}p_{ijk}=1$. Clearly, the
+interaction terms such as $u^{(1,2)}$ reflect the dependence among the factors, and
+for a log-linear model without any interaction effects, the factors are independent.
+In addition, we see that the main effect of a factor determines its marginal
+distribution.
+
+The identifiability constraints applicable to a log-linear model in the form of
+Equation (\ref{F2.1}) are somewhat inconvenient to write out, but they can be
+rewritten equivalently in the following form, which we illustrate for a $2\times 3$
+contingency table having factor $C_1$ with two levels and factor $C_2$ with three
+levels
+\begin{eqnarray}
+\begin{array}{lll}
+u^{(0)}=\beta_0, & u^{(1)}_1=\beta_{(1)}, &
+u^{(1)}_2=-\beta_{(1)},\\
+u^{(2)}_1=\beta_{(2_1)}, & u^{(2)}_2=\beta_{(2_2)}, &
+u^{(2)}_3=-\beta_{(2_1)}-\beta_{(2_2)},\\
+u^{(1,2)}_{1,1}=\beta_{(1,2_1)}, & u^{(1,2)}_{1,2}=\beta_{(1,2_2)},
+& u^{(1,2)}_{1,3}=-\beta_{(1,2_1)}-\beta_{(1,2_2)}, \\
+u^{(1,2)}_{2,1}=-\beta_{(1,2_1)}, & u^{(1,2)}_{2,2}=-\beta_{(1,2_2)}, &
+u^{(1,2)}_{2,3}=\beta_{(1,2_1)}+\beta_{(1,2_2)}.
+\end{array}
+\nonumber
+\end{eqnarray}
+Therefore, the logarithms of the probabilities $p_{ij}$ ($i=1,2$; $j=1,2,3$) can be
+expressed as a linear combination of the coefficients. Here, $\beta_{(1)}$ measures
+the main effect $u^{(1)}$ of factor $C_1$, $[\beta_{(2_1)},\beta_{(2_2)}]^T$
+measures the main effect $u^{(2)}$ of factor $C_2$, and
+$[\beta_{(1,2_1)},\beta_{(1,2_2)}]^T$ measures the interaction effect $u^{(1,2)}$ of
+the two factors. Such representation of factor effects in terms of coefficients can
+be extended to a general scenario.
+
+The identifiability constraints dictate that the log-linear model for a general
+$p$-way contingency table in which $p$ factors are considered in the form of
+Equation (\ref{F2.1}) can be expressed in the following regression form (see
+Dahinden et al. (2007))
+\begin{equation}
+\ln {\bf p}=\bm 1\beta_0+\sum_{i=1}^{2^p-1}{\bf X}_i\bm{\beta}_i,\label{F2.2}
+\end{equation}
+where ${\bf p}$ is the $h\times 1$ probability vector corresponding to the $h$ cells
+of the contingency table, $\bm{1}$ is a column vector of appropriate dimension
+consisting of 1 as all its entries, ${\bf X}_i$ is an $h\times q_i$ design submatrix
+corresponding to the $i$th main or interaction effect and containing 1, 0, or $-1$
+as its elements, and $\bm{\beta}_i$ is the coefficient subvector of size $q_i\times
+1$. For the preceding illustrative $2\times 3$ contingency table example with $p=2$
+factors, ${\bf p}=[p_{11},p_{12},p_{13},p_{21},p_{22},p_{23}]^T$ and $\bm 1=\bm 1_6$
+are both of size $6\times 1$, and $\bm\beta_1=\beta_1$,
+$\bm\beta_2=[\beta_2,\beta_3]^T$, $\bm\beta_3=[\beta_4,\beta_5]^T$, and the design
+submatrixes are
+\[
+{\bf X}_1=\left[\begin{array}{r}\bm 1_3\\-\bm 1_3\end{array}\right],\ {\bf
+X}_2=\left[\begin{array}{r}{\bf J}\\{\bf J}\end{array}\right],\ \mathrm{and}\ {\bf
+X}_3=\left[\begin{array}{r}{\bf J}\\-{\bf J}\end{array}\right],
+\]
+where
+\[
+{\bf J}=\left[\begin{array}{rr}1&0\\0&1\\-1&-1\end{array}\right].
+\]
+Note that the column sums in ${\bf J}$ are all zero, which assures identifiability.
+
+Denoting the design matrix by
+\[
+\widetilde{{\bf X}}=[\bm{1},{\bf X}]\quad\mathrm{with}\quad{\bf X}=[{\bf
+X}_1,\ldots,{\bf X}_{2^p-1}]
+\]
+and the coefficient vector by
+\[
+\widetilde{\bm{\beta}}=[\beta_0,\bm{\beta}^T]^T\quad\mathrm{with}\quad
+\bm\beta=[\bm{\beta}_1^T,\ldots,\bm{\beta}_{2^p-1}^T]^T,
+\]
+we can rewrite Equation
+(\ref{F2.2}) as $\ln {\bf p}=\widetilde{{\bf X}}\widetilde{\bm{\beta}}$. The
+log-linear model (\ref{F2.2}) is at the effect level, and there are in total $2^p-1$
+effects from the main effects up to the $p$-factor interaction effect. Here,
+$\bm1^T{\bf p}=1$, and $\beta_0$ is a scalar representing the intercept. Therefore,
+only $h-1$ coefficients are free to vary independently, and $\beta_0$ is included to
+ensure the constraint $\bm1^T{\bf p}=1$. Hereafter, attention will be paid to the
+coefficient subvectors $\bm\beta=[\bm{\beta}_1^T,\ldots,\bm{\beta}_{2^p-1}^T]^T$. In
+the case of factors all with two levels, the derivation of the design matrix
+$\widetilde{{\bf X}}$ is identical to that of the design matrix of a $2^k$ full
+factorial experiment with 1 and $-1$ representing the high and low levels,
+respectively. However, this becomes a little complex if at least one factor has more
+than two levels. We defer the design matrix derivation for a general multivariate
+categorical process till the next chapter, since the LMC chart depicted in this
+chapter actually skips such derivation in computing its charting statistic.
+
+The design submatrixes, together with their corresponding coefficient subvectors,
+are arranged in a log-linear model from the overall mean $\beta_0$, the main
+effects, up to the effect of the highest order. For example, we consider three
+factors $C_1$, $C_2$, and $C_3$ with 2, 3, and 3 levels, respectively. The sequence
+is the overall mean, the main effects $C_1$, $C_2$, and $C_3$, the two-factor
+interaction effects $C_1C_2$, $C_1C_3$, and $C_2C_3$, and finally the three-factor
+interaction effect $C_1C_2C_3$. Hence, the coefficient vector is
+\begin{eqnarray}
+\begin{array}{rrrlllllll}
+\widetilde{\bm{\beta}} & = & [ & \beta_0 & \beta_{(1)} & \beta_{(2_1)} &
+\beta_{(2_2)} & \beta_{(3_1)} & \beta_{(3_2)} & \\
+& & & \beta_{(1,2_1)} & \beta_{(1,2_2)} & \beta_{(1,3_1)} & \beta_{(1,3_2)} &
+\beta_{(2_1,3_1)} & \beta_{(2_1,3_2)} & \\
+& & & \beta_{(2_2,3_1)} & \beta_{(2_2,3_2)} & \beta_{(1,2_1,3_1)} &
+\beta_{(1,2_1,3_2)} & \beta_{(1,2_2,3_1)} & \beta_{(1,2_2,3_2)} & ]^T.
+\end{array}\nonumber
+\end{eqnarray}
+Note that by the identifiability constraints, the scalar $\beta_{(1)}$ is sufficient
+to determine the main effect of factor $C_1$ with only two levels. However, we need
+the two coefficients $\beta_{(3_1)}$ and $\beta_{(3_2)}$ consisting of the subvector
+$\bm\beta_3$ to jointly represent the main effect of factor $C_3$ with three levels.
+In fact, for an effect that contains a factor with three levels or more, its
+corresponding coefficient subvector has two elements or more, instead of reducing
+into a scalar. Similarly, $\bm{\beta}_4=[\beta_{(1,2_1)},\beta_{(1,2_2)}]^T$
+measures the two-factor interaction effect $C_1C_2$, and
+$\bm{\beta}_7=[\beta_{(1,2_1,3_1)},
+\beta_{(1,2_1,3_2)},\beta_{(1,2_2,3_1)},\beta_{(1,2_2,3_2)}]^T$ measures the
+three-factor interaction effect $C_1C_2C_3$. We see that the $i$th main or
+interaction effect, the design submatrix ${\bf X}_i$, and the coefficient subvector
+$\bm{\beta}_i$ ($i=1,\ldots,2^p-1$) correspond to each other. Therefore, the cell
+probability vector is ultimately determined by the magnitudes of these coefficient
+subvectors.
+
+A log-linear model for a $p$-way contingency table is saturated if it involves all
+the effects of all orders from 1 up to $p$. In other words, from the main effects to
+the $p$-factor interaction effect, they are all included in the log-linear model.
+See model (\ref{F2.1}) for a saturated log-linear model example. Usually, a reduced
+model can be obtained via variable selection. It means that some effects in the
+saturated model can be dropped whereas others are retained. Therefore, some of the
+coefficient subvectors $\bm\beta_i$ together with their corresponding design
+submatrixes ${\bf X}_i$ in model (\ref{F2.2}) may be dropped.
+
+For the reduced models, the hierarchy principle should be followed. It means that
+all the lower-order effects have to be included if a higher-order interaction effect
+containing them appears in the model. For instance, for a three-way contingency
+table, if the effect $u^{(2,3)}$ is in the log-linear model, $u^{(2)}$ and $u^{(3)}$
+should also be adopted. The hierarchical models can be denoted in a simple way, such
+as [13][23] representing the model without the effects $u^{(1,2)}$ or $u^{(1,2,3)}$
+as well as [123] representing the saturated model (\ref{F2.1}). In a log-linear
+model, the design matrix such as $\widetilde{\bf X}$ may actually be constructed in
+other ways. If the hierarchical log-linear model is reparametrized using a different
+design matrix, all the zero terms in the coefficient vector still remain zero.
+However, this cannot apply to non-hierarchical ones. In other words, hierarchy is
+preserved after reparametrization, and all the zero coefficients can be interpreted
+in terms of conditional independence (Dahinden et al. (2007)). This is the main
+advantage of hierarchical models over non-hierarchical ones.
+
+
+
+\section{Phase II Multivariate Categorical Monitoring}\label{sec2.3}
+
+This chapter focuses on Phase II monitoring only and presumes that the coefficient
+vector $\widetilde{\bm\beta}$ in the log-linear model (\ref{F2.2}) has already been
+estimated from an IC dataset by variable selection and parameter estimation, which
+is denoted by $\widetilde{\bm\beta}^{(0)}$. Refer to Christensen (1997) to see the
+stepwise procedures for variable selection and the Newton-Raphson iterative
+algorithm for parameter estimation. Correspondingly, let ${\bf p}^{(0)}$ be the
+known IC cell probability vector, which can be derived from
+$\widetilde{\bm\beta}^{(0)}$.
+
+Based on the IC coefficient vector in a log-linear model, we present in this section
+a Phase II monitoring scheme, which is able to detect various shifts among multiple
+categorical variables in the systematic framework of univariate/multivariate
+binomial/multinomial distributions. For simplicity, let $F({\bf X};{\bm\beta})$
+represent the pre-specified log-linear model
+\begin{align}
+\ln{\bf p}=\widetilde{\bf X}\widetilde{\bm\beta}=\bm 1\beta_0+{\bf
+X}\bm\beta\quad\mathrm{and}\quad\bm 1^T{\bf p}=1.\label{F2.3}
+\end{align}
+Since $\beta_0$ can be determined by $\bm\beta$, we focus on $\bm\beta$. It is
+usually reasonable to assume that the $j$th online multivariate sampling observation
+vector, ${\bf n}_j$ of size $h\times 1$, is collected over time from the following
+change-point model with the Phase II sample size $N$
+\begin{align}
+{\bf n}_j\ {\mathop{\sim}\limits^{\mbox{i.i.d.}}}\left\{\hspace{-0.1cm}
+\begin{array}{ll} F({\bf X};{\bm\beta}^{(0)}), & {\mathrm {for\ }} \quad j=1,\ldots,\tau,\\[0.1cm]
+F({\bf X};{\bm\beta}^{(1)}), & {\mathrm {for\ }} \quad j=\tau+1,\ldots,
+\end{array}\right.\label{F2.4}
+\end{align}
+where $\tau$ is the unknown change-point, and $\bm\beta^{(0)} \neq \bm\beta^{(1)}$
+are the known IC and unknown OC process coefficient vectors, respectively. To this
+end, the monitoring problem is closely related to the goodness-of-fit test in the
+context of multinomial analysis (Bishop et al. (2007)).
+
+There is a one-to-one correspondence between factor effects and coefficient
+subvectors. Therefore, shifts in the marginal distributions of factors or the
+dependence among multiple factors to OC states, which appear in the form of
+deviations of their main effects or interaction effects, respectively, are reflected
+in the changes of corresponding coefficient subvectors. As a result, the monitoring
+task is to test if $\bm\beta=\bm\beta^{(0)}$. Based on the likelihood ratio test
+(LRT) (Christensen (1997)), a naive method that comes to mind for online detection
+is to use the current sampling observation vector to construct a Shewhart-type
+chart. However, this would be very inefficient for moderate and small changes, since
+it completely ignores past samples. As an alternative, we may consider an EWMA
+scheme. A natural idea is to first obtain the estimate of the coefficient vector
+$\bm\beta$ for each sample, and then apply the multivariate EWMA chart (Lowry et al.
+(1992)) and some modifications of the LRT to these estimates of $\bm\beta$ at
+different time points. However, this naive approach may still be inefficient, since
+for each sample the coefficient vector $\bm\beta$ is estimated based on only $N$
+random observations.
+
+Alternatively, we propose an EWMA-type control chart by using the idea of weighted
+likelihood. The log-likelihood of the observation vector ${\bf n}_j$ in the $j$th
+sample of size $N$ in Phase II can be written from the probability mass function
+(PMF) of the multinomial distribution and expressed as
+\begin{align*}
+l_j(\widetilde{\bm\beta})=&\sum_{a_1,a_2,\ldots,a_p}n_{a_1a_2\ldots a_p,j}\ln
+p_{a_1a_2\ldots a_p} + \ln(N!)-\sum_{a_1,a_2,\ldots,a_p}\ln(n_{a_1a_2\ldots
+a_p,j}!)\nonumber\\
+=&{\bf n}^T_j\ln{\bf p}+\ln(N!)-\bm 1^T\ln({\bf n}_j!)\nonumber\\
+=&{\bf n}^T_j\widetilde{\bf X}\widetilde{\bm\beta}+\ln(N!)-\bm 1^T\ln({\bf
+n}_j!).
+%\nonumber\\
+%=&N\beta_0+{\bf n}^T_j{\bf X}\bm\beta+\ln(N!)-\bm 1^T\ln({\bf n}_j!)
+\end{align*}
+For any time point $k$, consider the following exponentially weighted log-likelihood
+over samples 1 to $k$,
+\begin{equation*}
+w_k(\widetilde{\bm\beta})=
+a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}l_j(\widetilde{\bm\beta}),
+\end{equation*}
+where $\mu\in(0,1]$ is the smoothing parameter, and $
+a_{t_0,t_1,\mu}=\sum_{j=t_0+1}^{t_1}(1-\mu)^{t_1-j}$ is a sequence of constants to
+ensure that all the weights sum up to 1. Here, $w_k(\widetilde{\bm\beta})$ makes
+full use of all available samples up to the current time point $k$, and different
+samples are weighted as in an EWMA chart (i.e., the more recent sample has more
+weight, and the weight changes exponentially over time). Then given $\mu$, the
+maximum weighted likelihood estimate of $\widetilde{\bm\beta}$ at the time point
+$k$, $\widehat{\widetilde{\bm\beta}}_k$, is defined as the solution to the following
+maximization problem,
+\begin{align}
+\widehat{\widetilde{\bm\beta}}_k=\arg\max_{\widetilde{\bm\beta}}
+w_k(\widetilde{\bm\beta}),\ \ &\mbox{subject to} \ \bm 1^T\exp(\widetilde{\bf
+X}\widetilde{\bm\beta})=1.\label{F2.5}
+\end{align}
+Therefore, the weighted likelihoods under the alternative and null hypotheses,
+evaluated at $\widehat{\wt{\bm\beta}}_k$ and $\wt{\bm\beta}^{(0)}$, respectively,
+are given by
+\begin{align*}
+{w}_{1,k}&=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}l_j(\widehat{\wt{\bm\beta}}_k),\\
+{w}_{0,k}&=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}l_j({\wt{\bm\beta}}^{(0)}).
+\end{align*}
+Consequently, the $-2$LRT statistic will be
+\begin{align}
+U_k&=2(w_{1,k}-w_{0,k})\nonumber\\
+&=2{\bf z}_k^T\big(\wt{\bf X}\widehat{\wt{\bm\beta}}_k-\wt{\bf
+X}\wt{\bm\beta}^{(0)}\big), \label{F2.6}
+\end{align}
+where
+\begin{equation}
+{\bf z}_k=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}{\bf n}_j.\label{F2.7}
+\end{equation}
+Clearly, ${\bf z}_k$ is the exponentially weighted average of the observation
+vectors ${\bf n}_j$ ($j=1,\ldots,k$) over time. Before proceeding, we need to
+calculate the weighted likelihood $w_{1,k}$ in which ${\bf z}_k^T\wt{\bf
+X}\widehat{\wt{\bm\beta}}_k$ is involved. Although computing power has greatly
+improved, and it is computationally trivial to perform log-linear model estimation
+for individual sampling observation vectors, for online process monitoring which
+generally handles a large amount of samples, fast implementation is important, and
+some computational issues deserve our careful examination. At first glance, to
+obtain $\widehat{\wt{\bm\beta}}_k$ by solving the maximization problem (\ref{F2.5})
+directly requires a considerable amount of computing time especially when $k$ is
+large. However, notice that the core of the exponentially weighted log-likelihood
+$w_k(\wt{\bm\beta})$ over samples 1 to $k$, which contains $\wt{\bm\beta}$, is
+$a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}{\bf n}_j\wt{\bf X}\wt{\bm\beta}$, and
+that the log-likelihood of ${\bf z}_k$ is ${\bf z}_k\wt{\bf X}\wt{\bm\beta}$ by
+ignoring some constants. According to Equation (\ref{F2.7}), these two parts are
+equal, which concludes the following proposition.
+\begin{pro}
+The $\wh{\wt{\bm\beta}}_k$ is the maximum likelihood estimation (MLE) of the
+log-linear model (\ref{F2.3}) with a pseudo-observation vector ${\bf z}_k$ in
+Equation (\ref{F2.7}).
+\end{pro}
+We call ${\bf z}_k$ the pseudo-observation vector, because its components are not
+integers so that it cannot be observed in reality. Proposition 1 provides an easy
+way to evaluate $w_{1,k}$. Furthermore, since $\bm 1^T{\bf z}_k=N$ and the
+constraint in Equation (\ref{F2.5}) is identical to that in the log-linear model
+(\ref{F2.3}), the maximization in Equation (\ref{F2.5}) is exactly the same as
+solving the MLE for model (\ref{F2.3}) with ${\bf z}_k$. Therefore, we can rewrite
+$U_k$ in Equation (\ref{F2.6}) as
+\begin{equation}
+U_k=2{\bf z}_k^T(\ln\widehat{\bf q}_k-\ln{\bf p}^{(0)}),\label{F2.8}
+\end{equation}
+where $\widehat{\bf q}_k$ is the MLE of the cell probability vector estimated from
+${\bf z}_k$. Note that the probability vector $\widehat{\bf q}_k$ in Equation
+(\ref{F2.8}) can be obtained by performing the iterative proportional fitting (IPF)
+algorithm (Bishop et al. (2007)), which is efficient in calculating the MLE of cell
+count expectations under any hierarchical log-linear model and is included in major
+statistical softwares such as the subroutine ``PRPFT'' in Fortran with the IMSL
+library.
+
+By using Equation (\ref{F2.8}), a large value of $U_k$ rejects the null hypothesis,
+and hence our proposed chart triggers an OC signal if
+\[
+U_k>L,\  \mbox{for}\  k\geq 1,
+\]
+where $L>0$ is a control limit chosen to achieve a specific IC ARL, denoted by
+ARL$_0$. This is the proposed log-linear multivariate categorical (LMC) control
+chart. The control limit $L$ can be searched by simulation based on the IC model.
+For a given $\mu$, model $F({\bf X};\bm\beta)$, and a desired ARL$_0$, the
+computation involved in finding $L$ is not difficult, partly due to the fact that
+the IPF algorithm used in the MLE computation is efficient. For the searching
+procedure, some numerical searching algorithms, such as the bisection search, can be
+applied.
+
+We now discuss the diagnostic issue of multivariate binomial and multivariate
+multinomial processes. According to the one-to-one correspondence between factor
+effects and coefficient subvectors in a log-linear model, shifts in the marginal
+distribution of one factor lead to deviations of the coefficient subvector
+corresponding to its main effect, and shifts in the dependence among multiple
+factors result in deviations of the coefficient subvector reflecting their
+interaction effect. Possible diagnostic procedures should focus on separating the
+shifted coefficient subvector once an OC signal is triggered. The LASSO proposed by
+Tibshirani (1996) could be employed to identify this. In particular, Zou et al.
+(2011) provided a general framework for diagnosis, and log-linear models can be
+formulated to adapt this framework.
+
+\noindent {\it Remark 1}. In some applications, only a few cells or even only one
+cell of a contingency table have very large probabilities, and therefore the
+remaining cells share the residuary very small probability. If some cells have very
+small probabilities or the sample size is not large enough, there will be no
+observations in these cells, and these cells have zero counts and are
+noninformative. Because of the sampling zeros, it may be questioned whether the
+sampled data come from the multinomial distribution that it claims to be. So this
+sparsity phenomenon deserves special consideration. A direct aftermath of sparsity
+in model estimation is the nonexistence of MLEs, which is related to the presence of
+zero cells. Indeed, some researchers have informally observed that the only thing
+that appeared to matter was the number and locations of sampling zeros in the
+contingency table, not the values of the cell counts in the remaining cells
+(Fienberg and Rinaldo (2007)). For each observation vector ${\bf n}_j$, it is
+probably the case that sampling zeros would occur when the sample size in Phase II
+is not large enough, or some cell probabilities are extremely small. However, the
+locations of zero cells may differ from sample to sample. By combining the collected
+samples in an exponentially weighted way, the probability that the
+pseudo-observation vector ${\bf z}_k$ still has exact zero cells is low, especially
+when $k$ becomes large as the process goes on. The cell counts of ${\bf z}_k$ still
+sum up to the sample size $N$, and most of them may not be integers, i.e., a
+pseudo-observation vector. Therefore, the sparsity is mitigated to a large extent or
+even eliminated by the EWMA scheme, and much more information about the process
+states is collected, as if the sample size is very large. Thus the nonexistence of
+MLEs is avoided, and they can be performed with accuracy. We found that the
+non-convergence frequency of IPF is negligible in our all simulation studies. Of
+course, how to handle the non-convergence situation should be a topic for future
+research.
+
+\noindent {\it Remark 2}. The IPF method proportionally adjusts the cell counts of a
+sample to fit a set of margins (e.g., the factor association or interaction
+structure). Once given the hierarchical structure of log-linear models, this
+successive proportional adjustment can obtain directly the MLE of the cell
+probability vector $\bf p$ by skipping the estimation of the coefficient vector
+$\widetilde{\bm\beta}$. In addition, it has the following properties (Biship et al.
+(2007)): (1) converging to the required unique set of MLEs; (2) a stopping rule that
+ensures accuracy to any desired degree in the elementary cell estimates; (3)
+depending only on the sufficient configurations and no special provision for
+sporadic cells with no observations (this relates to the sparsity phenomenon above);
+(4) any set of starting values; (5) yielding the exact estimates in one cycle if
+direct estimates exist. The IPF algorithm possesses these advantages over the
+earlier techniques proposed, such as the Newton-Raphson which fails to have
+properties (3) and (5) above. Therefore, we adopt the IPF for online estimation in
+Phase II.
+
+
+
+\section{Performance Assessment}\label{sec2.4}
+
+In this section, the performance of the proposed LMC chart is investigated through
+some numerical simulations. The simulations are made in scenarios of both
+multivariate binomial and multivariate multinomial processes. In both cases, the LMC
+chart is compared with its counterparts in various cases of shifts, and the
+advantages of the LMC chart over others are verified. Throughout the simulation, for
+fair comparison, the IC ARL is fixed at 370 for each control chart, and all ARL
+values reported are averages of 10,000 replicated simulations. If the process is OC,
+a smaller OC ARL of a chart means that it needs fewer samples and gives rise to an
+OC signal faster, and that therefore this chart performs better.
+
+\subsection{Monitoring a Multivariate Binomial Process}
+
+For monitoring multivariate binomial processes, a natural competitive method is
+Patel's (1973) Hotelling's $T^2$ type $\chi^2$-chart. However, since the
+$\chi^2$-chart is the Shewhart-type, and the LMC chart is the EWMA-type, the
+comparison may not be fair to the Shewhart-type as we could expect its deficiency in
+detecting small and moderate shifts due to the fact that it completely ignores past
+information. Hence, the EWMA version of the $\chi^2$-chart, which is a typical
+competitor of the LMC chart for monitoring multivariate binomial processes, is
+developed accordingly for fair comparison. By replacing ${\bf n}_{\mathrm{MB},k}$ in
+Equation (\ref{F1.1}) with
+\[
+{\bf z}_{\mathrm{MB},k}=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j}{\bf
+n}_{\mathrm{MB},j},
+\]
+we combine the $\chi^2$-chart with the EWMA scheme and refer to this revised chart
+as the multivariate binomial EWMA (MBE) control chart. We compare it with the LMC
+chart in monitoring multivariate binomial processes.
+
+Suppose that during a production process, five quality characteristics each labeled
+as conforming or nonconforming are being monitored, hence we have a five-way
+contingency table with $2^5$ cells. After model estimation from an IC dataset, we
+obtain the IC model hierarchy structure [14][123][135][234][235][345] and the IC
+log-linear model with the coefficient vector
+\begin{eqnarray}
+\begin{array}{rrrrrrrrrrrl}
+\wt{\bm\beta}^{(0)} & = & [ & \beta_0 & 0.72 & 0.93
+& 0.49 & 0.25 & 0.47 & -0.57 & 0.22 & \\
+& & & 0.11 & -0.14 & 0.15 & -0.16 & 0.41 & 0.16 & -0.19 & 0.33 & \\
+& & & 0.39 & 0 & 0 & 0 & 0.21 & 0 & 0.45 & 0.33 & \\
+& & & 0 & 0.27 & 0 & 0 & 0 & 0 & 0 & 0 & ]^T.
+\end{array}
+\nonumber
+\end{eqnarray}
+Here, $\beta_0$ is the intercept accommodating the constraint that all cell
+probabilities sum up to 1 as expressed in Equation (\ref{F2.3}). Note that the zeros
+here mean that the corresponding effect terms are excluded.
+
+%Table 1
+\begin{table}[htp]
+\tabcolsep 4.5pt \vspace{-0.1cm} \centering \caption{OC ARL comparison between the
+LMC and MBE charts when only one coefficient changes} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.32}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MBE} &
+\multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MBE} & \multicolumn{2}{c}{LMC} &
+\multicolumn{2}{c}{MBE}
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1)}$} & \multicolumn{4}{c|}{$\beta_{(4)}$} &
+\multicolumn{4}{c}{$\beta_{(1,2)}$}
+\\\hline
+0.01 & 232 & (2.30) & 160 & (1.52) & 246 & (2.40) & 172 & (1.65) & 210 & (2.02) &
+156 & (1.51)
+\\
+0.02 & 87.8 & (0.77) & 49.0 & (0.39) & 100 & (0.92) & 56.7 & (0.47) & 71.0 & (0.61)
+& 45.4 & (0.36)
+\\
+0.05 & 14.8 & (0.07) & 10.2 & (0.05) & 16.6 & (0.08) & 11.3 & (0.05) & 12.5 & (0.06)
+& 9.61 & (0.04)
+\\
+0.20 & 2.99 & (0.01) & 2.38 & (0.01) & 3.24 & (0.01) & 2.56 & (0.01) & 2.67 & (0.01)
+& 2.27 & (0.01)
+\\
+$-0.01$ & 224 & (2.19) & 146 & (1.40) & 240 & (2.37) & 156& (1.50) & 205 & (1.96) &
+139 & (1.34)
+\\
+$-0.02$ & 81.7 & (0.72) & 44.1 & (0.36) & 94.8 & (0.87) & 50.2 & (0.42) & 67.7 &
+(0.59) & 41.6 & (0.33)
+\\
+$-0.05$ & 13.5 & (0.07) & 9.21 & (0.04) & 15.1 & (0.08) & 10.2 & (0.05) & 11.7 &
+(0.05) & 8.87 & (0.04)
+\\
+$-0.20$ & 2.41 & (0.01) & 1.95 & (0.01) & 2.54 & (0.01) & 2.04 & (0.01) & 2.26 &
+(0.01) & 1.94 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(2,3)}$} & \multicolumn{4}{c|}{$\beta_{(2,5)}$} &
+\multicolumn{4}{c}{$\beta_{(3,4)}$}
+\\\hline
+0.01 & 259 & (2.55) & 248 & (2.41) & 289 & (2.88) & 322 & (3.28) & 262 & (2.62) &
+305 & (3.01)
+\\
+0.02 & 110 & (1.01) & 106 & (0.97) & 148 & (1.42) & 199 & (1.93) & 114 & (1.04) &
+156 & (1.50)
+\\
+0.05 & 18.3 & (0.10) & 19.2 & (0.11) & 25.9 & (0.16) & 44.4 & (0.35) & 19.0 & (0.10)
+& 30.3 & (0.21)
+\\
+0.20 & 3.42 & (0.01) & 3.54 & (0.01) & 4.21 & (0.01) & 5.86 & (0.02) & 3.49 & (0.01)
+& 4.61 & (0.02)
+\\
+$-0.01$ & 248 & (2.47) & 221 & (2.20) & 279 & (2.79) & 287 & (2.84) & 249 & (2.47) &
+259 & (2.56)
+\\
+$-0.02$ & 101 & (0.91) & 89.3 & (0.81) & 139 & (1.29) & 170 & (1.63) & 106 & (0.99)
+& 131 & (1.24)
+\\
+$-0.05$ & 16.3 & (0.09) & 16.4 & (0.10) & 22.4 & (0.14) & 34.9 & (0.26) & 16.9 &
+(0.09) & 24.5 & (0.17)
+\\
+$-0.20$ & 2.63 & (0.01) & 2.66 & (0.01) & 3.07 & (0.01) & 4.01 & (0.01) & 2.67 &
+(0.01) & 3.37 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,3,5)}$} & \multicolumn{4}{c|}{$\beta_{(2,3,4)}$} &
+\multicolumn{4}{c}{$\beta_{(3,4,5)}$}
+\\\hline
+0.01 & 232 & (2.33) & 252 & (2.43) & 273 & (2.70) & 339 & (3.38) & 264 & (2.62) &
+343 & (3.38)
+\\
+0.02 & 84.7 & (0.74) & 109 & (1.01) & 132 & (1.23) & 239 & (2.33) & 118 & (1.10) &
+233 & (2.32)
+\\
+0.05 & 14.4 & (0.07) & 20.0 & (0.12) & 21.7 & (0.13) & 64.5 & (0.56) & 19.1 & (0.10)
+& 59.7 & (0.50)
+\\
+0.20 & 2.95 & (0.01) & 3.56 & (0.01) & 3.80 & (0.01) & 7.41 & (0.03) & 3.55 & (0.01)
+& 6.91 & (0.03)
+\\
+$-0.01$ & 227 & (2.24) & 227 & (2.21) & 267 & (2.65) & 314 & (3.14) & 251 & (2.46) &
+302 & (2.97)
+\\
+$-0.02$ & 79.6 & (0.70) & 94.7 & (0.87) & 120 & (1.11) & 204 & (1.99) & 109 & (1.03)
+& 194 & (1.88)
+\\
+$-0.05$ & 13.2 & (0.06) & 17.4 & (0.10) & 19.3 & (0.11) & 51.3 & (0.42) & 17.1 &
+(0.09) & 46.5 & (0.37)
+\\
+$-0.20$ & 2.41 & (0.01) & 2.82 & (0.01) & 2.85 & (0.01) & 5.03 & (0.02) & 2.70 &
+(0.01) & 4.81 & (0.02)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses.}
+\end{tabular}
+\end{table}
+
+
+It is believed that possible shifts to OC states arise in the main effect of one
+factor reflecting its marginal distribution or in the interaction effect of multiple
+factors representing their dependence. According to the one-to-one correspondence
+between factor effects and coefficient subvectors, shifts to OC states reflect the
+changes of the corresponding coefficient subvectors in the IC log-linear model. For
+simplicity, we consider the case where only one coefficient of the log-linear model
+changes by adding a magnitude $\delta$ and study the OC ARL performance. Note that
+the models before and after the change have the same hierarchy structure, and that
+the change only occurs on the coefficient magnitude of one retained term. The OC
+ARLs of the LMC and MBE charts for various shift magnitudes are presented in Table
+2.1 with the smoothing parameter $\mu=0.1$ and the Phase II sample size $N=1,000$.
+To save space, not all coefficients are listed. According to Table 2.1, for main
+factor effects, e.g., $\beta_{(1)}$ and $\beta_{(4)}$, the MBE chart outperforms the
+LMC chart almost uniformly. The MBE chart exactly and completely summarizes the
+one-way marginal sums for each factor, which are mostly determined by the main
+effects. Therefore, it is more sensitive than the LMC chart to the change of each
+main effect, which reflects the shifts of the one-way marginal sums directly. For
+two-factor interaction effects such as $\beta_{(1,2)}$, $\beta_{(2,3)}$,
+$\beta_{(2,5)}$, and $\beta_{(3,4)}$ as well as three-factor interaction effects
+including $\beta_{(1,3,5)}$, $\beta_{(2,3,4)}$, and $\beta_{(3,4,5)}$, as the effect
+order increases, the LMC chart shows more and more significant superiority over the
+MBE chart. The change occurring in a high-order interaction effect leads to little
+shifts of the one-way marginal sums, which are difficult for the MBE chart to
+detect. However, the LMC chart is still capable of capturing the potential change of
+a high-order interaction effect powerfully via the log-likelihood ratio.
+
+The OC ARLs of the LMC and MBE charts for the same coefficient shift magnitudes as
+Table 2.1 under some other choices of the $\mu$ and $N$ combination are omitted here
+for saving space. Generally, they exhibit the same patterns as in Table 2.1 for
+various changes of the coefficients, and similar conclusions can be drawn. With a
+fixed $\mu$, for the same change, both charts become more powerful when the sample
+size $N$ increases. Moreover, for a fixed sample size $N$ and the same coefficient,
+the LMC chart with a smaller $\mu$ detects smaller shifts faster, whereas it has a
+better performance when detecting larger shifts with a larger $\mu$. This is
+consistent with the properties of the conventional EWMA chart (Lucas and Saccucci
+(1990)), and it is further confirmed by Figures 2.1-(a) and -(b), which show the OC
+ARL curves (in log-scale) of the LMC chart with the $\mu$ values of 0.05, 0.1, 0.2,
+and 0.5 when there are shifts in $\beta_{(2,5)}$ and $\beta_{(2,3,4)}$,
+respectively. The above property can in fact guide the selection of $\mu$, and our
+empirical results show that a reasonable suggestion of $\mu$ may be between 0.05 and
+0.2.
+
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=16.0cm,height=8.0cm]{fig2-1.ps}
+\vspace{-0.5cm} \caption{\small OC ARL curves of the LMC chart with various values
+of $\mu$ when there are shifts in: (a) $\beta_{(2,5)}$; (b)
+$\beta_{(2,3,4)}$}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+
+We assume in the above that the model hierarchy structures in both the IC and OC
+states are identical. Recall that the IC model hierarchy structure is
+[14][123][135][234][235] [345]. This means the IC log-linear model does not contain
+the terms $\beta_{(1,2,4)}$, $\beta_{(1,2,5)}$, $\beta_{(1,3,4)}$,
+$\beta_{(1,4,5)}$, $\beta_{(2,4,5)}$, $\beta_{(1,2,3,4)}$, $\beta_{(1,2,3,5)}$,
+$\beta_{(1,2,4,5)}$, $\beta_{(1,3,4,5)}$, $\beta_{(2,3,4,5)}$,
+$\beta_{(1,2,3,4,5)}$, which leads to the absence of the three-factor interaction
+effects $C_1C_2C_4$, $C_1C_2C_5$, $C_1C_3C_4$, $C_1C_4C_5$, and $C_2C_4C_5$, as well
+as all the four-factor interaction effects and the five-factor interaction effect.
+However, sometimes the model structure itself changes when the process is OC.
+Compared to the IC model, the OC model may be either reduced or extended. In either
+case, the hierarchy principle should not be violated. After model extension by only
+one term, one nonexistent effect term emerges, such as $\beta_{(1,2,4)}$,
+$\beta_{(1,3,4)}$, and $\beta_{(1,4,5)}$ with some magnitude $\delta$, and the
+original IC model does not encompass the current model any longer. Hence, the LMC
+chart may not be necessarily superior over the MBE chart. The simulation results are
+illustrated in the upper half of Table 2.2 with $\mu=0.1$ and $N=1,000$. On the
+other hand, after model reduction by only one term, one effect becomes zero or
+disappears, and the original IC model can still include the reduced model.
+Therefore, the LMC chart may still outperform the MBE chart. Some cases of removing
+merely one existent effect, for instance, $\beta_{(1,3,5)}$, $\beta_{(2,3,4)}$, and
+$\beta_{(3,4,5)}$, are listed in the lower half.
+
+%Table 2
+\begin{table}[ht]
+\tabcolsep 3.6pt \vspace{-0.1cm} \centering \caption{OC ARL comparison between the
+LMC and MBE charts for model misspecification} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.32}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MBE} &
+\multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MBE} & \multicolumn{2}{c}{LMC} &
+\multicolumn{2}{c}{MBE}
+\\\hline
+$$ & \multicolumn{4}{c|}{$\beta_{(1,2,4)}$} &
+\multicolumn{4}{c|}{$\beta_{(1,3,4)}$} & \multicolumn{4}{c}{$\beta_{(1,4,5)}$}
+\\\hline
+0.01 & 231 & (2.31) & 275 & (2.74) & 233 & (2.25) & 207 & (2.02) & 249 & (2.49) &
+267 & (2.65)
+\\
+0.02 & 87.6 & (0.77) & 132 & (1.27) & 89.4 & (0.79) & 71.8 & (0.64) & 107 & (0.98) &
+124 & (1.17)
+\\
+0.05 & 14.8 & (0.07) & 24.6 & (0.16) & 15.2 & (0.07) & 13.4 & (0.04) & 17.7 & (0.09)
+& 22.9 & (0.15)
+\\
+0.20 & 2.96 & (0.01) & 3.99 & (0.01) & 2.97 & (0.01) & 2.78 & (0.01) & 3.30 & (0.01)
+& 3.84 & (0.01)
+\\
+$-0.01$ & 224 & (2.17) & 239 & (2.29) & 232 & (2.29) & 179 & (1.74) & 248 & (2.45) &
+240 & (2.36)
+\\
+$-0.02$ & 83.9 & (0.75) & 113 & (1.06) & 86.2 & (0.77) & 63.2 & (0.54) & 102 &
+(0.92) & 109 & (1.01)
+\\
+$-0.05$ & 13.7 & (0.07) & 21.3 & (0.14) & 14.1 & (0.07) & 12.2 & (0.06) & 16.1 &
+(0.08) & 19.8 & (0.12)
+\\
+$-0.20$ & 2.47 & (0.01) & 3.18 & (0.01) & 2.52 & (0.01) & 2.32 & (0.01) & 2.69 &
+(0.01) & 3.05 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,3,5)}$} & \multicolumn{4}{c|}{$\beta_{(2,3,4)}$} &
+\multicolumn{4}{c}{$\beta_{(3,4,5)}$}
+\\\hline
+ & 2.26 & (0.01) & 2.64 & (0.01) & 1.20 & (0.00) & 1.94 &
+(0.01) & 1.99 & (0.01) & 3.30 & (0.01)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses.}
+\end{tabular}\vspace{-0.3cm}
+\end{table}
+
+
+\subsection{Monitoring a Multivariate Multinomial Process}
+
+Apart from all factors with two levels, factors at least one with three or more
+levels may exist in real production or services. A simple example is the attitude of
+a customer towards a service, which may take on the values of excellent, acceptable,
+or unacceptable. If four service indexes are taken into account, there will be a
+four-way contingency table with $3^4$ cells for the four factors. In such complex
+cases, it is challenging to compare the proposed approach with alternative methods.
+This is because to the best of our knowledge, there is currently no appropriate
+monitoring approach incorporating the cross-classifications among multiple factors,
+among which at least one has more than two attribute levels. A naive method that
+comes into mind for comparison is to monitor the $p$ groups of marginal sums of a
+$p$-way contingency table by introducing $p$ individual charts separately.
+
+If only the group of marginal sums for the $i$th factor $(i=1,\ldots,p)$ is
+considered, we face the same situation as the generalized $p$-chart in Marcucci
+(1985), which treated the monitoring of univariate multinomial processes with the
+Pearson chi-square statistic. Still for fair comparison purpose, by replacing
+\[
+{\bf z}_{\mathrm{MM},(i)k}=a_{0,k,\mu}^{-1}\sum_{j=1}^{k}(1-\mu)^{k-j} {\bf
+n}_{\mathrm{MM},(i)j}
+\]
+with ${\bf n}_{\mathrm{MM},(i)k}$ in Equation (\ref{F1.2}), we obtain the EWMA
+version of the charting statistic of the generalized $p$-chart. Hereafter, this
+updated multi-chart is referred to as the multivariate multinomial EWMA (MME) chart,
+in the sense that it signals whenever at least one of these $p$ charts constituting
+the MME chart does. We compare the LMC and MME charts in monitoring multivariate
+multinomial processes.
+
+Assume that a service flow has four quality characteristics under surveillance, with
+the first two evaluated as satisfactory or dissatisfactory and the last two assessed
+as excellent, acceptable, or unacceptable. This is a case of factors with mixed
+levels, and it forms a four-way contingency table of size $2\times2\times3\times3$
+with 36 cells. After model estimation from an IC dataset, we obtain the IC model
+hierarchy structure [12][134][234] and the IC log-linear model with the coefficient
+vector
+\begin{eqnarray}
+\begin{array}{rrrrrrrrrrrrl}
+\wt{\bm\beta}^{(0)} & = & [ & \beta_0 & 0.73 & 0.72 & 0.70 &
+0.12 & 0.72 & 0.11 & 0.17 & 0.12 & \\
+& & & -0.15 & 0.19 & -0.14 & 0.23 & 0.07 & 0.16 & -0.14 & 0.23 & -0.30 & \\
+& & & -0.17 & 0.14 & 0 & 0 & 0 & 0 & 0.19 & -0.15 & 0.11 & \\
+& & & 0.22 & 0.24 & 0.24 & -0.08 & -0.16 & 0 & 0 & 0 & 0 & ]^T,
+\end{array}
+\nonumber
+\end{eqnarray}
+where $\beta_0$ is the intercept accommodating the sum 1 constraint in Equation
+(\ref{F2.3}), and the zeros represent the removed effect terms.
+
+%Table 3
+\begin{table}[htp]
+\tabcolsep 4.5pt \vspace{-0.1cm} \centering \caption{OC ARL comparison between the
+LMC and MME charts when only one coefficient changes} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.32}
+\begin{tabular}{r|cccc|cccc|cccc}\hline
+$\delta$ & \multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MME} &
+\multicolumn{2}{c}{LMC} & \multicolumn{2}{c|}{MME} & \multicolumn{2}{c}{LMC} &
+\multicolumn{2}{c}{MME}
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(2)}$} & \multicolumn{4}{c|}{$\beta_{(4_2)}$} &
+\multicolumn{4}{c}{$\beta_{(1,3_1)}$}
+\\\hline
+0.02 & 172 & (1.66) & 79.7 & (0.68) & 200 & (1.99) & 134 & (1.25) & 132 & (1.24) &
+111 & (1.04)
+\\
+0.05 & 30.4 & (0.20) & 14.7 & (0.08) & 41.6 & (0.31) & 22.4 & (0.14) & 21.8 & (0.13)
+& 20.4 & (0.12)
+\\
+0.20 & 4.57 & (0.01) & 3.02 & (0.01) & 4.73 & (0.01) & 3.36 & (0.01) & 3.66 & (0.01)
+& 3.56 & (0.01)
+\\
+$-0.02$ & 153 & (1.48) & 68.4 & (0.61) & 205 & (1.97) & 141 & (1.34) & 125 & (1.16)
+& 93.6 & (0.85)
+\\
+$-0.05$ & 25.7 & (0.17) & 12.5 & (0.07) & 42.8 & (0.32) & 23.1 & (0.14) & 19.8 &
+(0.11) & 17.8 & (0.11)
+\\
+$-0.20$ & 3.26 & (0.01) & 2.26 & (0.01) & 4.85 & (0.01) & 3.46 & (0.01) & 3.00 &
+(0.01) & 2.97 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,4_2)}$} & \multicolumn{4}{c|}{$\beta_{(2,3_2)}$} &
+\multicolumn{4}{c}{$\beta_{(2,4_1)}$}
+\\\hline
+0.02 & 201 & (1.96) & 243 & (2.39) & 198 & (1.90) & 230 & (2.26) & 134 & (1.26) &
+114 & (1.09)
+\\
+0.05 & 41.0 & (0.30) & 61.6 & (0.52) & 39.5 & (0.29) & 52.8 & (0.43) & 22.2 & (0.13)
+& 20.7 & (0.13)
+\\
+0.20 & 4.68 & (0.01) & 5.75 & (0.02) & 4.57 & (0.01) & 5.19 & (0.02) & 3.71 & (0.01)
+& 3.59 & (0.01)
+\\
+$-0.02$ & 201 & (2.00) & 242 & (2.40) & 197 & (1.92) & 230 & (2.25) & 123 & (1.17) &
+95.1 & (0.87)
+\\
+$-0.05$ & 41.9 & (0.31) & 64.2 & (0.55) & 39.6 & (0.29) & 55.0 & (0.45) & 20.0 &
+(0.12) & 18.1 & (0.11)
+\\
+$-0.20$ & 4.72 & (0.01) & 6.31 & (0.02) & 4.66 & (0.01) & 5.96 & (0.02) & 3.00 &
+(0.01) & 2.97 & (0.01)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(3_2,4_1)}$} &
+\multicolumn{4}{c|}{$\beta_{(3_2,4_2)}$} & \multicolumn{4}{c}{$\beta_{(1,3_1,4_2)}$}
+\\\hline
+0.02 & 234 & (2.30) & 291 & (2.84) & 276 & (2.74) & 343 & (3.46) & 241 & (2.37) &
+342 & (3.42)
+\\
+0.05 & 55.4 & (0.45) & 103 & (0.95) & 90.8 & (0.82) & 228 & (2.22) & 62.7 & (0.51) &
+222 & (2.14)
+\\
+0.20 & 5.47 & (0.02) & 7.88 & (0.03) & 7.32 & (0.03) & 20.8 & (0.13) & 5.90 & (0.02)
+& 17.5 & (0.10)
+\\
+$-0.02$ & 234 & (2.38) & 278 & (2.78) & 277 & (2.70) & 339 & (3.41) & 243 & (2.36) &
+335 & (3.34)
+\\
+$-0.05$ & 56.6 & (0.47) & 106 & (0.99) & 92.4 & (0.84) & 238 & (2.34) & 63.8 &
+(0.54) & 217 & (2.12)
+\\
+$-0.20$ & 5.64 & (0.02) & 9.23 & (0.04) & 7.58 & (0.03) & 27.6 & (0.18) & 5.96 &
+(0.02) & 22.0 & (0.14)
+\\\hline
+& \multicolumn{4}{c|}{$\beta_{(1,3_2,4_2)}$} &
+\multicolumn{4}{c|}{$\beta_{(2,3_1,4_1)}$} &
+\multicolumn{4}{c}{$\beta_{(2,3_2,4_2)}$}
+\\\hline
+0.02 & 271 & (2.67) & 359 & (3.58) & 143 & (1.36) & 156 & (1.51) & 274 & (2.69) &
+362 & (3.69)
+\\
+0.05 & 90.2 & (0.80) & 286 & (2.81) & 23.8 & (0.14) & 30.6 & (0.21) & 92.5 & (0.83)
+& 300 & (3.04)
+\\
+0.20 & 7.34 & (0.03) & 39.6 & (0.30) & 3.77 & (0.01) & 4.39 & (0.01) & 7.36 & (0.03)
+& 44.5 & (0.35)
+\\
+$-0.02$ & 271 & (2.70) & 359 & (3.62) & 136 & (1.30) & 131 & (1.24) & 273 & (2.74) &
+367 & (3.66)
+\\
+$-0.05$ & 91.4 & (0.81) & 314 & (3.17) & 21.9 & (0.13) & 26.8 & (0.19) & 91.8 &
+(0.82) & 296 & (2.92)
+\\
+$-0.20$ & 7.60 & (0.03) & 102 & (0.94) & 3.25 & (0.01) & 3.98 & (0.01) & 7.48 &
+(0.03) & 59.7 & (0.51)
+\\\hline
+\multicolumn{13}{l}{NOTE: Standard errors are in parentheses.}
+\end{tabular}\vspace{-0.1cm}
+\end{table}
+
+
+The control limits of the MME chart are chosen by simulation so that each individual
+chart has an identical IC ARL, jointly yielding the overall $\mbox{ARL}_0=370$.
+Similar to the comparison between the LMC and MBE charts, we also present the
+results where only one coefficient changes by adding a shift magnitude of $\delta$
+and study the OC ARL performance. Some simulation results are listed in Table 2.3 in
+the case of $\mu=0.1$ and $N=1,000$. From Table 2.3, we see that the MME chart shows
+better performance than the LMC chart when main effects, e.g., $\beta_{(2)}$ and
+$\beta_{(4_2)}$, change as we would expect. This is easy to understand, since each
+of the individual charts constituting the MME chart collects adequately the one-way
+marginal sums, which result directly from main effects. Therefore, the MME chart
+stands out with a higher sensitivity to main effects than the LMC chart. The
+superiority of the LMC chart over the MME chart becomes remarkable when two-factor
+interaction effects such as $\beta_{(1,3_1)}$, $\beta_{(1,4_2)}$, $\beta_{(2,3_2)}$,
+$\beta_{(2,4_1)}$, $\beta_{(3_2,4_1)}$, and $\beta_{(3_2,4_2)}$ are focused on, and
+especially in the cases of changes in three-factor interaction effects, such as
+$\beta_{(1,3_1,4_2)}$, $\beta_{(1,3_2,4_2)}$, $\beta_{(2,3_1,4_1)}$, and
+$\beta_{(2,3_2,4_2)}$, where the MME chart is outperformed by the LMC chart by quite
+a large margin. Like the comparison between the LMC chart and the MBE chart,
+simulations under some other parameter settings also exhibit the same trends as in
+Table 2.3. The effects of the Phase II sample size $N$ and the EWMA smoothing
+parameter $\mu$ on the LMC chart are similar to those in multivariate binomial
+processes.
+
+Combined with the comparison between the LMC and MBE charts, it is affirmed again
+that the superiority of the LMC chart lies in shifts in the interaction effects of
+multiple factors that represent the dependence among them. In addition, it should be
+noted that when there is only one factor, the LMC chart reduces to the EWMA version
+of the log-likelihood ratio statistic, and the MME chart simplifies to the EWMA
+version of the Pearson chi-square statistic. Their performance should be more or
+less the same, since they enjoy the same asymptotic distribution under the null
+hypothesis as a central $\chi^2$ with an appropriate degree of freedom. Hence, the
+LMC chart can work well within the unified framework of the univariate/multivariate
+binomial/multinomial processes.
+
+
+
+\section{A Real Application}\label{sec2.5}
+
+In this section, the proposed methodology is implemented in the aluminium
+electrolytic capacitor (AEC) manufacturing process introduced in Section 1.1.2 to
+demonstrate its real utilization. This may be regarded as a typical example to apply
+the LMC chart in practice.
+
+We consider the quality in the aging stage, where the AEC quality monitoring is
+concentrated on three most important quality characteristics: leakage current (LC),
+dissipation factor (DF), and capacity (CAP). Each characteristic can be evaluated as
+conforming or nonconforming to its specification by an electronic device at a very
+high speed. Obtaining their precise numerical values is possible, but this will cost
+too much. To this end, for a specific sample size in Phase II, this can be regarded
+as a multivariate binomial process, which has three factors including LC, DF, and
+CAP all with two levels. The cross-classification counts with all factor level
+combinations are stored in a three-way contingency table with $2^3=8$ cells. Based
+on the above information, the log-linear model is formulated as
+\[
+\ln p_{ijk}=\beta_0+\beta_{(1)}x_1+\beta_{(2)}x_2+\beta_{(3)}x_3+
+\beta_{(1,2)}x_1x_2+\beta_{(1,3)}x_1x_3+\beta_{(2,3)}x_2x_3+\beta_{(1,2,3)}x_1x_2x_3,
+\]
+where $i=1,2;j=1,2;k=1,2$ and all the cell count probabilities $p_{ijk}$ sum up to
+1. In addition, $x_1$, $x_2$, and $x_3$ take 1 or $-1$ representing the two levels
+of three factors LC, DF, and CAP, respectively. This log-linear can adequately
+characterize the relationship between the cell counts and these level combinations.
+Therefore, the proposed LMC chart can be adopted to monitor the three quality
+characteristics simultaneously in the aging stage.
+
+It is known that each workbench in the aging stage manufactures at least 6,000 AEC
+elements every day, and that the three quality characteristics LC, DF, and CAP for
+each AEC element are then inspected automatically as conforming or nonconforming by
+an electronic device. We perform model estimation from a historical IC dataset
+[2,1,19,12,1,75,732,39447] with about 40,000 observations, which contains the 8 cell
+counts and could have been completed by one workbench within only a few days. By
+variable selection, the IC model has a hierarchy structure [LC CAP][DF CAP].
+Furthermore, the estimated coefficient vector is given by
+$\wt{\bm\beta}^{(0)}$=[$\beta_0$, 0.88, 2.11, 1.91, 0.00, 1.11, 1.02, 0.00]$^T$. In
+addition, the AECs are usually inspected in a batch of 500, hence we have a Phase II
+sample size $N=500$. Based on this, the IC cell probability vector
+\[
+{\bf p}^{(0)}=[0.4599,0.2847,4.752,2.942,0.3435,18.52,181.6,9791]^T\times 10^{-4}.
+\]
+
+In Phase II, the EWMA smoothing parameter $\mu$ is chosen to be 0.1. We obtain the
+control limit of the LMC chart, which is 0.83, by simulation, such that the IC ARL
+is 370. Now the LMC chart is ready to be constructed to monitor the process. After
+obtaining new observations, we calculate the charting statistics $U_k$ for each
+sample, then plot them in the control chart, and compare them with the control
+limit. We take the 9th point for example to illustrate the calculation of charting
+statistics. Based on ${\bf p}^{(0)}$ and the original observation vectors ${\bf
+n}_1,\ldots,{\bf n}_9$, for example, ${\bf n}_9=[0, 0, 0, 0, 0, 6, 10, 484]^T$, we
+first calculate the pseudo-observation vector
+\[
+{\bf z}_9=[0.89090, 0.55151, 22.598, 26.403, 0.66537, 133.15, 873.51, 48942]^T\times
+10^{-2}
+\]
+using Equation (\ref{F2.7}). Then we use the IPF algorithm based on the hierarchy
+structure [LC CAP][DF CAP] to get the MLE of the cell probability vector over ${\bf
+z}_9$, which is
+\[
+\widehat{\bf q}_9=[0.1343, 0.1542, 4.563, 5.237, 0.4684, 26.29, 174.4, 9789]^T\times
+10^{-4}.
+\]
+Finally, by Equation (\ref{F2.8}), its charting statistic $R_9$ is calculated as
+0.25332. Figure 2.2 shows the resulting LMC chart (solid curve connecting the dots),
+along with its control limit (solid horizontal line). The LMC chart signals at the
+28th observation and remains above the control limit in the remainder of the
+sequence.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=14.0cm,height=10.0cm]{fig2-2.ps}
+\vspace{-0.7cm} \caption{An LMC control chart for monitoring the AEC
+process}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+By comparison, we also adopt the MBE chart to monitor the AEC process with
+ARL$_0=370$, $N=1,000$, and $\mu=0.1$, which is shown in Figure 2.3. The MBE chart
+also triggers an OC signal at the 28th sample. However, it is difficult to say which
+chart performs better based on only this single run. The MBE chart enjoys a charting
+statistic of a simpler form, but it cannot provide the practical interpretation of
+shifts according to the one-to-one correspondence between factor effects and
+coefficient subvectors in a log-linear model. As indicated earlier, this
+correspondence may exploit insights into multivariate binomial/multinomial processes
+and assist in further diagnosis.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=14.0cm,height=10.0cm]{fig2-3.ps}
+\vspace{-0.7cm} \caption{An MBE control chart for monitoring the AEC
+process}\vspace{-0.3cm}
+\end{center}
+\end{figure}
+
+
+
+\section{Summary}\label{sec2.6}
+
+This chapter proposes a Phase II control chart, namely the log-linear multivariate
+categorical control chart, which can be actualized as a general SPC tool for the
+monitoring of multivariate/univariate binomial/multinomial data. The LMC chart
+adopts the EWMA control scheme in terms of the exponentially weighted
+pseudo-observation vector in Phase II, which exploits the information of past and
+current sampling cells adequately and distinguishingly as well as mitigates the
+potential tendency of sparsity in a multi-way contingency table. In comparison with
+the existing approaches, numerical simulations demonstrate that at certain expenses
+of sensitivity to changes in main effects, the LMC chart is much more robust than
+traditional ones, which take only marginal cell probability sums into account.
+Instead, the LMC chart provides much higher detection ability to possible shifts in
+interaction effects of multiple factors which represent their dependence. In
+addition, the AEC application shows that the LMC chart can be implemented
+effortlessly into real manufacturing and even service industries.
+
+As pointed out previously, we assume in this work that the model hierarchy
+structures under the IC and OC conditions are the same. However, this is not always
+the case. Our ongoing research focuses on monitoring simultaneously possible changes
+of both the model hierarchy structure and the coefficient vector, such that the
+potential shifts can be detected and diagnosed more accurately and efficiently.
+Moreover, the log-linear model may explode when the numbers of factors or their
+levels are large. As mentioned in Section 2.2, a reduced model via variable
+selection is desired accordingly. In such cases, our proposed procedure is still
+applicable. As we can expect, the performance of the proposed chart is affected by
+the amount of data in the reference dataset, especially for a large number of
+factors or their levels. Very large Phase I samples must be collected for the LMC
+chart to perform as well as those with known parameters. So determining the Phase I
+sample size required to remove the effects of estimated parameters is critical and
+warrants future research.

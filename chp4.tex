@@ -1,0 +1,898 @@
+\chapter{Phase I Analysis by Change-Point Detection}\label{chp4}
+
+
+\section{Introduction}\label{sec4.1}
+
+It is known that statistical process control involves two phases. In Phase I, a set
+of process data are collected and examined. If there are any unusual patterns such
+as change-points or outliers, they are identified and adjusted, resulting in a IC
+dataset used for estimating the IC model. Phase I analysis primarily assists in
+bringing the data into a state of statistical control. After this retrospective
+analysis, quality inspectors will have a good reference IC model. This provides the
+basis for constructing control charts in Phase II, in which detecting shifts in the
+online process is the main objective.
+
+It should be noted that the proposed control charts such as the LMC and the LLD
+charts in previous chapters as well as those in the literature used in Phase II SPC
+all assume that the process model is representative of the IC operating conditions,
+and that its parameters have been estimated from an IC reference dataset. However,
+in reality this is not always the case, and any unusual patterns such as
+change-points or outliers in the reference dataset could yield an erroneous IC model
+estimate. Employing control charts built on such models for online monitoring may be
+misleading. Therefore, Phase I analysis is crucial.
+
+This chapter presents an approach of detecting change-points for Phase I analysis in
+multivariate categorical processes. Based on log-linear models, our suggested method
+applies to the unified framework of multivariate binomial and multivariate
+multinomial processes and considers factor interactions besides main effects.
+Furthermore, to detect change-points as powerfully as possible, the method also
+integrates directional shift information as with the LLD chart. This follows that at
+the change-point, shifts that arise in factor effects should result in deviations of
+their corresponding coefficient subvectors. A concomitant diagnostic scheme is also
+developed to identify the change-point location and the shift direction upon
+change-point detection. Monte Carlo simulations are performed to demonstrate the
+effectiveness of the change-point detection and diagnostic approach.
+
+
+
+\section{Two-Sample Multivariate Categorical Test Problem}\label{sec4.2}
+
+Before introducing the proposed change-point detection method, we need first to
+state the two-sample multivariate categorical test in the framework of multivariate
+binomial and multivariate multinomial distributions. This is the basis of the
+change-point problem. Given a $p$-way contingency table with $h$ cells, consider the
+two multinomial distributions $\mbox{MN}(N_{\mathrm{a}};{\bf p}_{\mathrm{a}})$ and
+$\mbox{MN}(N_{\mathrm{b}};{\bf p}_{\mathrm{b}})$, where ${\bf p}_{\mathrm{a}}$ and
+${\bf p}_{\mathrm{b}}$ are both of size $h\times 1$ and
+\[
+\ln{\bf p}_{\mathrm{a}}=\bm 1\beta^{(\mathrm{a})}_0+{\bf
+X}\bm\beta^{(\mathrm{a})},\quad \ln{\bf p}_{\mathrm{b}}=\bm
+1\beta^{(\mathrm{b})}_0+{\bf X}\bm\beta^{(\mathrm{b})}.
+\]
+We want to test the following hypothesis
+\begin{align}\label{F4.1}
+H_0:\;{\bf p}_{\mathrm{a}}={\bf p}_{\mathrm{b}}\ \ \mbox{versus}\ \ H_1:\;{\bf
+p}_{\mathrm{a}}\ne{\bf p}_{\mathrm{b}}.
+\end{align}
+According to the employed log-linear model (\ref{F3.1})
+\[
+\ln {\bf
+p}=\bm{1}\beta_0+\sum_{i=1}^{h-1}{\bf x}_i\beta_i,
+\]
+$\beta^{(t)}_0$ ($t=\mathrm{a},\mathrm{b}$) can be determined by $\bm\beta^{(t)}$
+(as $\bm 1^T{\bf p}=1$), hypothesis (\ref{F4.1}) is equivalent to
+\begin{align}\label{F4.2}
+H_0:\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}\ \ \mbox{versus}\ \
+H_1:\;\bm{\beta}^{(\mathrm{b})}\ne\bm{\beta}^{(\mathrm{a})}.
+\end{align}
+Assume that ${\bf n}_{\mathrm{a}}$ and ${\bf n}_{\mathrm{b}}$ are two independent
+random vectors subject to $\mbox{MN}(N_{\mathrm{a}};{\bf p}_{\mathrm{a}})$ and
+$\mbox{MN}(N_{\mathrm{b}};{\bf p}_{\mathrm{b}})$, respectively. We have $\bm 1^T{\bf
+n}_{\mathrm{a}}=N_{\mathrm{a}}$ and $\bm 1^T{\bf n}_{\mathrm{b}}=N_{\mathrm{b}}$.
+The joint log-likelihood function of ${\bf p}_{\mathrm{a}}$ and ${\bf
+p}_{\mathrm{b}}$ can be written from the PMF of the multinomial distribution as
+\begin{align*}
+l&={\bf n}_{\mathrm{a}}^T\ln{\bf p}_{\mathrm{a}}+\ln N_{\mathrm{a}}!-\bm 1^T\ln{\bf
+n}_{\mathrm{a}}!+{\bf n}_{\mathrm{b}}^T\ln{\bf p}_{\mathrm{b}}+\ln
+N_{\mathrm{b}}!-\bm 1^T\ln{\bf n}_{\mathrm{b}}!.
+\end{align*}
+A natural test for hypothesis (\ref{F4.1}) or (\ref{F4.2}) may be constructed using
+the generalized likelihood ratio test (GLRT; Anderson (2003)). By some derivations,
+it is easy to see that the MLEs of ${\bf p}_{\mathrm{a}}$ and ${\bf p}_{\mathrm{b}}$
+under $H_0$ in (\ref{F4.1}) are both equal to $({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})/(N_{\mathrm{a}}+N_{\mathrm{b}})$, whereas under $H_1$ they are
+${\bf n}_{\mathrm{a}}/N_{\mathrm{a}}$ and ${\bf n}_{\mathrm{b}}/N_{\mathrm{b}}$,
+respectively. So the $-2$LRT statistic is
+\begin{align}\label{F4.3}
+\theta&=2{\bf n}_{\mathrm{a}}^T\ln\Big(\frac{{\bf
+n}_{\mathrm{a}}}{N_{\mathrm{a}}}\Big)+2{\bf n}_{\mathrm{b}}^T\ln\Big(\frac{{\bf
+n}_{\mathrm{b}}}{N_{\mathrm{b}}}\Big)-2({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})^T\ln\Big(\frac{{\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}}}{N_{\mathrm{a}}+N_{\mathrm{b}}}\Big).
+\end{align}
+
+Hypotheses (\ref{F4.1}) and (\ref{F4.2}) state that $\bm{\beta}^{(\mathrm{b})}$
+differs from $\bm{\beta}^{(\mathrm{a})}$ in all coefficients. With the practical
+definition of shifts, however, it is usually reasonable to assume that in real
+processes shifts occur in only a few coefficient subvectors or only a few
+coefficients, reflecting the changes in their corresponding main effects or
+interaction effects. Suppose that there is some prior knowledge that a shift arises
+in only one coefficient in $\bm{\beta}^{(\mathrm{a})}$, say the $i$th ($1\leq i\leq
+h-1$) coefficient, by adding an unknown constant $\delta_i$ to it. Then
+$\widetilde{\bm\beta}^{(\mathrm{a})}$ and $\widetilde{\bm\beta}^{(\mathrm{b})}$ have
+a relationship such that
+\begin{align}
+\left\{
+\begin{array}{rll}
+\beta^{(\mathrm{b})}_i&\!\!\!\!=\beta^{(\mathrm{a})}_i+\delta_i&\mathrm{for\ some}\ i,\mathrm{and}\ 1\leq i\leq h-1,\\
+\beta^{(\mathrm{b})}_j&\!\!\!\!=\beta^{(\mathrm{a})}_j&\mathrm{for\ all}\ j\neq i, \mathrm{and}\ 1\leq j\leq h-1,\\
+\beta^{(\mathrm{b})}_0&\!\!\!\!=\beta^{(\mathrm{a})}_0+\alpha_i,&
+\end{array}
+\right.\label{F4.4}
+\end{align}
+where $\beta^{(t)}_i$ is the $i$th element of $\bm\beta^{(t)}$
+($t=\mathrm{a},\mathrm{b}$), and $\alpha_i$ is also an unknown constant. Here
+$\alpha_i$ is actually the increment of $\beta^{(\mathrm{a})}_0$ induced by the
+constraint $\bm{1}^T{\bf p}=1$. Now the hypothesis can be expressed as
+\begin{align}\label{F4.5}
+H_0:\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}\ \ \mbox{versus}\ \
+H_1:\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}+{\bf d}_i\delta_i,
+\end{align}
+where ${\bf d}_i$ is the direction vector of size $(h-1)\times 1$ with 1 at its
+$i$th element and 0s elsewhere.
+
+Hypothesis (\ref{F4.5}) assumes that the location of the only dissimilar coefficient
+between $\bm\beta^{(\mathrm{a})}$ and $\bm\beta^{(\mathrm{b})}$ is known. Here we
+consider a more practical and general case where compared to
+$\bm\beta^{(\mathrm{a})}$, $\bm\beta^{(\mathrm{b})}$ deviates in only one
+coefficient, but its location is unknown. So the original alternative hypothesis in
+(\ref{F4.2}) becomes
+\begin{align}
+H_1:\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}+{\bf d}_1\delta_1
+\;\mathrm{or}\;\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}+{\bf
+d}_2\delta_2\ldots\;
+\mathrm{or}\;\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}+{\bf
+d}_{h-1}\delta_{h-1},\label{F4.6}
+\end{align}
+where $\delta_i$ ($i=1,2,\ldots,h-1$) are the unknown shift magnitudes, and the
+finite possible shift direction vectors ${\bf d}_1$, ${\bf d}_2$, \ldots, ${\bf
+d}_{h-1}$, which apply to $\beta^{(\mathrm{a})}_1$, $\beta^{(\mathrm{a})}_2$,
+\ldots, $\beta^{(\mathrm{a})}_{h-1}$, respectively, are defined similarly. In other
+words, hypothesis (\ref{F4.6}) states that $\bm\beta^{(\mathrm{b})}$ may differ from
+$\bm\beta^{(\mathrm{a})}$ in only one unknown coefficient, which may be any of the
+coefficients from the main factor effects up to the highest $p$-factor interaction
+effect. Since the GLRT derived from (\ref{F4.6}) exploits more constructive
+information about potential shift directions, it should be more powerful than that
+from (\ref{F4.2}).
+
+Let us now generalize hypothesis (\ref{F4.6}). Hypothesis (\ref{F4.6}) considers
+shifts in effects of all orders, but it is believed that usually deviations
+containing fewer factors occur more frequently. In other words, most shifts appear
+in lower-order effects such as main effects and two-factor interaction effects,
+instead of higher-order ones. So far we have seen this reasoning is very similar to
+that from hypothesis (\ref{F3.2}) to hypothesis (\ref{F3.4}) for deriving the
+charting statistic of the LLD chart in Chapter 3. Thus, we may pay sufficient
+attention to effects of the first few, say $q$, orders. This allows focusing
+detection power on a limited subspace with improved sensitivity. For the log-linear
+model (\ref{F3.1}), still denote the set of coefficient indexes corresponding to the
+effects of the first $q$ orders by $\mathbb{I}_q$ ($1\leq q\leq p$). Then hypothesis
+(\ref{F4.6}) has a coefficient set $\mathbb{I}_p$, and it can further be generalized
+as
+\begin{align}
+H_0:\;\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}\ \ \mbox{versus}\ \
+H_1:\;\bigcup_{i\in\mathbb{I}_q}\Big(\bm{\beta}^{(\mathrm{b})}=\bm{\beta}^{(\mathrm{a})}+{\bf
+d}_i\delta_i\Big),\quad 1\leq q\leq p.\label{F4.7}
+\end{align}
+If $q=p$, the alternative hypothesis in (\ref{F4.7}) is equivalent to that in
+(\ref{F4.6}). Since shifts usually occur in low-order effects, it is clear that the
+larger $q$ is, the less powerful the GLRT based on (\ref{F4.7}) will be. This
+follows because the alternative hypothesis considers redundant high-order shift
+directions. If the real shift indeed appears in an effect of the first $q$ orders,
+the GLRT will certainly be powerful. Even if a shift occurs in an effect of an order
+higher than $q$, this change will be reflected to a large extent by the derived
+$-2$LRT statistic, and the GLRT will still be effective.
+
+To obtain the $-2$LRT statistic $\lambda$ for testing hypothesis (\ref{F4.7}), we
+need first to derive the $-2$LRT statistic $\lambda_i$ for testing hypothesis
+(\ref{F4.5}), where it is assumed that only the coefficient $\beta_i$ shifts. The
+derivation of $\lambda_i$ is a little complex, so it is left in the appendix in this
+chapter (Section 4.7) and finalized in Equation (\ref{F4.20}). Given $\lambda_i$,
+the $-2$LRT statistic for testing hypothesis (\ref{F4.7}) is therefore
+\begin{align}
+\lambda=\max_{i\in\mathbb{I}_q}\lambda_i.\label{F4.8}
+\end{align}
+
+
+
+\section{Directional Change-Point Detection}\label{sec4.3}
+
+Based on the two-sample test with directional shift information, we can build the
+directional change-point detection method for Phase I analysis of multivariate
+categorical processes. The pre-specified log-linear model is summarized by
+$F\big({\bf X}; \bm\beta\big)$ in Equation (\ref{F2.3}). In Phase I analysis, it is
+usually reasonable to assume that the given dataset is composed of multiple samples,
+say $M$, of size $N$, and each sample forms an observation vector of dimension
+$h\times 1$ subject to the multinomial distribution $\mbox{MN}(N;{\bf p})$.
+Furthermore, it is also reasonably assumed that the $j$th multivariate sampling
+observation vector ${\bf n}_j$ is collected over time from the following
+change-point model
+\begin{align*}
+{\bf n}_j\ {\mathop{\sim}\limits^{\mbox{i.i.d.}}}\left\{\hspace{-0.1cm}
+\begin{array}{ll} F\big({\bf X};\bm\beta^{(\mathrm{a})}\big), &
+{\mathrm{for\ }} \quad j=1,\ldots,\tau,\\[0.1cm]
+F\big({\bf X};\bm\beta^{(\mathrm{b})}\big), & {\mathrm {for\ }} \quad
+j=\tau+1,\ldots,M,
+\end{array}\right.
+\end{align*}
+where $\tau$ is the unknown change-point, and $\bm\beta^{(\mathrm{a})} \neq
+\bm\beta^{(\mathrm{b})}$ are the unknown before-change and after-change process
+coefficient vectors, respectively. Note that hereafter we use the superscripts
+``$(\mathrm{a})$'' and ``$(\mathrm{b})$'' to denote the before-change and
+after-change cases, respectively.
+
+To detect the change-point, like Srivastava and Worsley (1986) which aimed at
+detecting a change-point in the mean vector of a multivariate normal distribution,
+one natural idea is to integrate the GLRT with the binary segmentation procedure.
+Given the observation vectors ${\bf n}_j$ ($j=1,\ldots,M$), the change-point $\tau$
+is unknown and may take any of the values $1,\ldots,M-1$. Therefore, for each
+possible $\tau$, we pool both the before-$\tau$ and after-$\tau$ samples together to
+form two large samples, respectively, and based on them compare the process
+coefficient vectors $\widetilde{\bm{\beta}}^{(\mathrm{a})}$ and
+$\widetilde{\bm{\beta}}^{(\mathrm{b})}$ by performing the two-sample test for
+hypothesis (\ref{F4.2}) in multivariate categorical distributions. If the maximum of
+the $M-1$ statistics is large enough, there will be a change-point during the
+process. To be more specific, let
+\begin{align}\label{F4.9}
+{\bf n}^{\mathrm{A}}_k=\sum_{j=1}^k{\bf n}_j,\quad\ &
+{\bf n}^{\mathrm{B}}_k=\sum_{j=k+1}^M{\bf n}_j,\nonumber\\
+N^{\mathrm{A}}_k=kN,\quad\quad\quad & N^{\mathrm{B}}_k=(M-k)N.
+\end{align}
+Actually, ${\bf n}^{\mathrm{A}}_k$ and ${\bf n}^{\mathrm{B}}_k$ can be regarded as
+being collected from $\mbox{MN}(N^{\mathrm{A}}_k;{\bf p}_{\mathrm{a}})$ and
+$\mbox{MN}(N^{\mathrm{B}}_k;{\bf p}_{\mathrm{b}})$, respectively, where the
+probability vectors ${\bf p}_{\mathrm{a}}$ and ${\bf p}_{\mathrm{b}}$ are determined
+by $\widetilde{\bm{\beta}}^{(\mathrm{a})}$ and
+$\widetilde{\bm{\beta}}^{(\mathrm{b})}$, respectively. Clearly, this results in a
+two-sample test problem. By replacing ${\bf n}_{\mathrm{a}}$, ${\bf
+n}_{\mathrm{b}}$, $N_{\mathrm{a}}$, and $N_{\mathrm{b}}$ in (\ref{F4.3}) by ${\bf
+n}^{\mathrm{A}}_k$, ${\bf n}^{\mathrm{B}}_k$, $N^{\mathrm{A}}_k$, and
+$N^{\mathrm{B}}_k$ in (\ref{F4.9}), respectively, we obtain a $-2$LRT statistic
+$\Theta_k$. If the maximum
+\begin{align*}
+\Theta=\max_{k\in\{1,\ldots,M-1\}}\Theta_k
+\end{align*}
+exceeds a critical value, an alarm will sound for a change-point. Accordingly, the
+change-point $\tau$ may be estimated as
+\begin{align}
+\hat{\tau}=\mathop{\arg\max}_{k\in\{1,\ldots,M-1\}}\Theta_k.\label{F4.10}
+\end{align}
+
+The above change-point detection approach is based on the two-sample test method
+without considering directional shift information. In reality, however, practical
+shifts tend to appear in only a few effects, leading to deviations of only a few
+coefficient subvectors. In change-point detection, such knowledge about the most
+likely shift directions should be exploited sufficiently. To this end, we combine
+the $-2$LRT statistic in Equation (\ref{F4.8}) for testing hypothesis (\ref{F4.7})
+with the foregoing binary segmentation method. This leads to the change-point
+detection test statistic
+\[
+\Lambda=\max_{i\in\mathbb{I}_q}\Lambda_i=\max_{i\in\mathbb{I}_q}\max_{k\in\{1,\ldots,M-1\}}\Lambda_{i,k},
+\]
+where $\Lambda_{i,k}$ is obtained in a similar fashion to $\lambda_i$ in Equation
+(\ref{F4.8}) by using ${\bf n}^{\mathrm{A}}_k$, ${\bf n}^{\mathrm{B}}_k$,
+$N^{\mathrm{A}}_k$, and $N^{\mathrm{B}}_k$ in (\ref{F4.9}).
+
+There remains an issue about the choice of $\mathbb{I}_q$. With the same reasons as
+the choice of $\mathbb{I}_q$ for the LLD chart, we recommend considering about only
+main effects and two-factor interaction effects and let $\mathbb{I}_q$ be
+$\mathbb{I}_2$. If the shift indeed occurs in a main effect or a two-factor
+interaction effect, the GLRT for testing hypothesis (\ref{F4.7}) with $\mathbb{I}_2$
+is definitely powerful. Further, even if a shift appears in a three-factor or
+higher-order interaction effect, the effects of the first two orders will be
+affected to a fairly large extent, so it would still be detected powerfully.
+Therefore, the test statistic for directional change-point detection can be
+finalized as
+\begin{align}
+\Lambda=\max_{i\in\mathbb{I}_2}\Lambda_i
+=\max_{i\in\mathbb{I}_2}\max_{k\in\{1,\ldots,M-1\}}\Lambda_{i,k}
+=\max_{k\in\{1,\ldots,M-1\}}\max_{i\in\mathbb{I}_2}\Lambda_{i,k}.\label{F4.11}
+\end{align}
+
+Similar to the change-point estimation in (\ref{F4.10}), a relevant diagnostic
+approach could also be developed based on the directional detection method, which
+aims at identifying both the change-point and the shift direction. However, unlike
+the detection method which employs an index subset $\mathbb{I}_2$ and can only tell
+whether there is a change-point or not, the diagnosis needs to recognize the shift
+direction, which may indeed be in an effect of an order higher than two. We still
+refer to the choice of the candidate diagnostic set upon a signal of the LLD chart
+in Section \ref{sec3.4}. Therefore, the candidate diagnostic subset of shift
+directions here is suggested as $\mathbb{I}_3$. Accordingly, the change-point $\tau$
+can be estimated as
+\begin{align}
+\hat{\tau}=\mathop{\arg\max}_{k\in\{1,\ldots,M-1\}}\Big(\max_{i\in\mathbb{I}_3}\Lambda_{i,k}\Big).\label{F4.12}
+\end{align}
+Based on the estimated change-point $\hat{\tau}$, the shift direction $\zeta$ can
+further be identified as
+\begin{align}
+\hat{\zeta}=\arg\max_{i\in\mathbb{I}_3}\Lambda_{i,\hat{\tau}}.\label{F4.13}
+\end{align}
+
+
+
+\section{Approximation of Significance Levels}\label{sec4.4}
+
+The derived $-2$LRT statistics $\Theta$ and $\Lambda$ for change-point detection
+need to be compared with their critical values. However, since the exact
+distributions of these statistics seem impossible to find, in this section we
+suggest a suitable approach to approximate their critical values or equivalently
+significance levels.
+
+Since $\Lambda=\max_{i\in\mathbb{I}_2}\Lambda_i$ in Equation (\ref{F4.11}), the
+significance level of $\Lambda$ can be approximated based on that of $\Lambda_i$.
+The significance levels of $\Theta$ and $\Lambda_i$ are in fact approximated in the
+same way. Here $\Theta=\max_k\Theta_k$ is the maximal LRT statistic without
+integrating directional information, and $\Theta_k$ is the $-2$LRT statistic for
+testing hypothesis (\ref{F4.2}) where $\widetilde{\bm{\beta}}^{(\mathrm{b})}$
+differs from $\widetilde{\bm{\beta}}^{(\mathrm{a})}$ in $h-1$ independent
+parameters. Similarly, $\Lambda_i=\max_k\Lambda_{i,k}$ is the maximal LRT statistic
+with a given shift direction, and $\Lambda_{i,k}$ is the $-2$LRT statistic for
+testing hypothesis (\ref{F4.5}) where $\widetilde{\bm{\beta}}^{(\mathrm{b})}$
+deviates from $\widetilde{\bm{\beta}}^{(\mathrm{a})}$ in only one independent
+parameter. So the difference between $\Theta$ and $\Lambda_i$ lies mainly in the
+number of changed parameters. Let
+\begin{align*}
+& A(x)=(2\ln x)^{\frac{1}{2}}\quad\mathrm{and}\\
+& D_d(x)=2\ln x+\frac{d}{2}\ln\ln x-\ln\Gamma\Big(\frac{d}{2}\Big),
+\end{align*}
+where $\Gamma(x)$ is the Gamma function. According to Theorem 1.3.1 of
+Cs\"{o}rg\H{o} and Horv\'{a}th (1997), we have the following proposition for the
+asymptotic null distribution of a maximal LRT statistic $Z$ such as $\Theta$ or
+$\Lambda_i$ in change-point problems.
+\begin{pro}
+If the process is statistically IC, we have
+\[
+\lim_{M\to\infty}\mathrm{Pr}\Big(A(\ln M)Z^{\frac{1}{2}}\leq x+D_d(\ln
+M)\Big)=\exp(-2e^{-x})
+\]
+with $d=h-1$ for $Z=\Theta$ and $d=1$ for $Z=\Lambda_i$ $(i\in\mathbb{I}_2)$.
+\end{pro}
+
+We can use Proposition 4.1 to obtain the asymptotic $p$-values of $\Theta$ and
+$\Lambda_i$. However, it is believed that their rates of convergence are very slow,
+and we may need a very large number $M$ of samples if we want to employ Proposition
+4.1 for change-point detection. From the discussions in Section 1.3 of
+Cs\"{o}rg\H{o} and Horv\'{a}th (1997), usually, if $M$ is not large enough, using
+Proposition 4.1 results in a much larger critical value and therefore a rejection
+region that is too conservative. Fortunately, based on its Theorem 1.3.2,
+Cs\"{o}rg\H{o} and Horv\'{a}th (1997) also recommended another more accurate form
+for approximating the $p$-value of a maximal LRT statistic $Z$ such as $\Theta$ or
+$\Lambda_i$. This form is
+\begin{align}
+\mathrm{Pr}\big(Z^{\frac{1}{2}}>x\big)=\frac{x^d\exp(-x^2/2)}{2^{d/2}\Gamma(d/2)}
+\Big(\ln s-\frac{d}{x^2}\ln s+\frac{4}{x^2}\Big)\label{F4.14}
+\end{align}
+with $d=h-1$ for $Z=\Theta$ and $d=1$ for $Z=\Lambda_i$ $(i\in\mathbb{I}_2)$, where
+$s=(1-b_1)(1-b_2)/(b_1b_2)$ and $b_1=b_2=(\ln M)^{\frac{3}{2}}/M$.
+
+Based on the approximate $p$-value of $\Lambda_i$, let us now turn to the
+significance level of $\Lambda=\max_{i\in\mathbb{I}_2}\Lambda_i$. Generally, these
+$\Lambda_i$s are correlated, and therefore the analytical form of
+$\mathrm{Pr}(\Lambda>c)$ seems rather difficult to obtain. One simple and natural
+idea is to use the classical Bonferroni procedure in terms of rejecting $\Lambda\geq
+c$ with a desired type I error $\alpha$ if any
+$\mathrm{Pr}(\Lambda_i>c)\leq\alpha/K$ ($i\in\mathbb{I}_2$), where $K$ is the
+cardinality of the subset $\mathbb{I}_2$. If $K$ is small, the Bonferroni procedure
+would have a false alarm rate close to $\alpha$. However, it is rather conservative
+if $K$ is large and the $\Lambda_i$s are highly correlated.
+
+Hence, we recommend using the famous modified Bonferroni procedure (Simes (1986)),
+which is less conservative than the classical one but still simple to apply. In
+addition, the modified procedure is superior to the classical one when the test
+statistics involved are highly correlated. The modified Bonferroni procedure for
+these $\Lambda_i$ ($i\in\mathbb{I}_2$) are summarized as follows:
+\begin{description}
+\item[Step 1.] Calculate $\Lambda_i$ for each
+$i\in\mathbb{I}_2$ based on $\Lambda_{i,k}$ ($k=1,\ldots,M-1$);
+\item[Step 2.] Use Equation (\ref{F4.14}) with $d=1$ to compute the
+approximate $p$-values $\hat{p}_i$ for each $\Lambda_i$, $i\in\mathbb{I}_2$;
+\item[Step 3.] Given a desired type I error $\alpha$, reject
+the null hypothesis if $\hat{p}_{(i)}\leq i\alpha/K$ for at least one $i$, where
+$\hat{p}_{(1)}\leq\ldots\leq\hat{p}_{(K)}$ are the ordered values of
+$\hat{p}_{1},\ldots,\hat{p}_{K}$.
+\end{description}
+
+%Table 1
+\begin{table}[!ht]
+\tabcolsep 8.5pt \vspace{-0.1cm} \centering \caption{Performance of the modified
+Bonferroni procedure in approximating the significance levels of $\Lambda$}
+\vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c|c|ccc}\hline
+$\alpha$ & $M$ & $i\in\mathbb{I}_1$, $K=5$ & $i\in\mathbb{I}_2$, $K=14$ &
+$i\in\mathbb{I}_3$, $K=21$
+\\\hline
+& 40 & 0.045 & 0.036 & 0.035\\
+0.05 & 80 & 0.046 & 0.044 & 0.042\\
+& 120 & 0.051 & 0.046 & 0.042
+\\\hline
+& 40 & 0.089 & 0.077 & 0.075\\
+0.10 & 80 & 0.096 & 0.084 & 0.079\\
+& 120 & 0.101 & 0.089 & 0.082
+\\\hline
+\end{tabular}
+\end{table}
+
+Table 4.1 lists the approximate false alarm rate $\hat{\alpha}$ of $\Lambda$ in
+various cases, given a desired type I error $\alpha$ and simulated by applying the
+modified Bonferroni procedure and Equation (\ref{F4.14}). Here we consider four
+factors with 2, 2, 2, and 3 levels. In addition, for simulation purpose, we also
+consider shift directions with indexes in the subsets $\mathbb{I}_1$,
+$\mathbb{I}_2$, and $\mathbb{I}_3$ with their cardinalities $K=$ 5, 14, and 21,
+respectively. The results are based on 5,000 replicated simulations. Clearly, the
+false alarm rate $\hat{\alpha}$ increases as the cardinality $K$ of the selected
+index subset decreases and the number $M$ of samples increases. These simulated
+$\hat{\alpha}$s are close to their desired value $\alpha$. Even for the worst case
+of $K=21$ and $M=40$, the method still produces a good approximation.
+
+
+
+\section{Performance Assessment}\label{sec4.5}
+
+In this section, we compare the powers of the two change-point detection methods,
+which are based on the two-sample test with and without integrating directional
+shift information. Then we investigate the corresponding diagnostic performance of
+the two approaches in identifying the change-point $\tau$ and the shift direction
+$\zeta$. In addition, by revisiting the AEC example introduced previously in Section
+1.1.2, we illustrate the implementation of the proposed directional change-point
+detection and diagnostic approaches.
+
+Assume that during a production process there are four quality characteristics with
+the first three assessed as conforming or nonconforming and the last one evaluated
+as excellent, acceptable, or unacceptable. This leads to a multivariate multinomial
+process with four factors $C_1$, $C_2$, $C_3$, and $C_4$, which can be arranged into
+a four-way contingency table of size $2\times2\times2\times3$. Also assume that
+before the change-point $\tau$, the log-linear model has the coefficient vector
+\begin{eqnarray}
+\begin{array}{rrrrrrrrrl}
+\widetilde{\bm{\beta}}^{(\mathrm{a})}=[ & \beta_0 & 0.86 & 0.89
+& 0.82 & 0.72 & 0.08 & \\
+& 0.10 & 0.12 & 0.12 & -0.13 & 0.10 & -0.06 & \\
+& 0.07 & 0.16 & -0.14 & 0.13 & -0.10 & -0.08 & \\
+& -0.04 & -0.07 & -0.11 & -0.05 & 0 & 0 & ]^T,
+\end{array}
+\nonumber
+\end{eqnarray}
+where $\beta_0$ is the intercept accommodating the constraint $\bm{1}^T{\bf p}=1$.
+Based on $\widetilde{\bm{\beta}}^{(\mathrm{a})}$, the before-change probability
+vector ${\bf p}_{\mathrm{a}}$ can be further calculated. Assume that throughout the
+simulations there are $M=80$ samples of size $N=1200$, and the change-point $\tau$
+is set as 30.
+
+
+\subsection{Power Comparison}
+
+%Table 2
+\begin{table}[!ht]
+\tabcolsep 7.5pt \vspace{-0.1cm} \centering \caption{Power comparison for
+one-coefficient shifts of the first two orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c|cc|cc|cc}\hline
+$\delta$ & With & Without & With & Without & With & Without
+\\\hline
+& \multicolumn{2}{c|}{$\beta_{(2)}$} & \multicolumn{2}{c|}{$\beta_{(4_1)}$} &
+\multicolumn{2}{c}{$\beta_{(1,3)}$}
+\\\hline
+0.02 & 0.121 & 0.081 & 0.210 & 0.107 & 0.171 & 0.100 \\
+0.03 & 0.332 & 0.151 & 0.555 & 0.239 & 0.486 & 0.221 \\
+0.04 & 0.633 & 0.314 & 0.876 & 0.503 & 0.847 & 0.488 \\
+0.05 & 0.888 & 0.553 & 0.985 & 0.809 & 0.981 & 0.785 \\
+0.06 & 0.985 & 0.804 & 1.000 & 0.967 & 0.999 & 0.950 \\
+0.07 & 0.998 & 0.944 & 1.000 & 0.999 & 1.000 & 0.994
+\\\hline
+& \multicolumn{2}{c|}{$\beta_{(1,4_2)}$} & \multicolumn{2}{c|}{$\beta_{(2,3)}$} &
+\multicolumn{2}{c}{$\beta_{(3,4_1)}$}
+\\\hline
+0.02 & 0.130 & 0.085 & 0.192 & 0.102 & 0.214 & 0.110 \\
+0.03 & 0.339 & 0.154 & 0.532 & 0.247 & 0.607 & 0.273 \\
+0.04 & 0.673 & 0.327 & 0.875 & 0.532 & 0.910 & 0.574 \\
+0.05 & 0.908 & 0.562 & 0.988 & 0.832 & 0.993 & 0.870 \\
+0.06 & 0.986 & 0.825 & 0.999 & 0.969 & 1.000 & 0.984 \\
+0.07 & 0.999 & 0.953 & 1.000 & 0.998 & 1.000 & 0.999
+\\\hline
+\multicolumn{7}{l}{$\hat{\alpha}=0.044$ for ``With'' and 0.048 for ``Without''.}
+\end{tabular}
+\end{table}
+
+The desired type I error $\alpha$ is set as 0.05 for both detection methods. The
+reported results are based on 5,000 replicated simulations. As mentioned previously,
+shifts in the marginal distribution of one factor are represented by deviations of
+its main effect or the corresponding coefficient subvector, and shifts in the
+dependence among multiple factors are reflected by deviations of their interaction
+effect or the corresponding coefficient subvector. So let us consider first that at
+the change-point $\tau$, only one coefficient, say $\beta_i$ ($i\in\mathbb{I}_2$),
+in $\bm{\beta}^{(\mathrm{a})}$ adds with an increment $\delta_i$. In other words,
+this one-coefficient shift occurs in a main effect or a two-factor interaction
+effect. Table 4.2 tabulates the powers of the two change-point detection approaches
+``with'' and ``without'' the knowledge of shift directions. Hereafter, the two
+methods are represented by ``With'' and ``Without'' for short in the tables. Note
+that the approximate false alarm rate $\hat{\alpha}$ of the directional method is
+0.044, a little smaller than the $\hat{\alpha}$ 0.048 of the undirectional one. In
+spite of this, in the case of one-coefficient shifts such as deviations of
+$\beta_{(2)}$, $\beta_{(4_1)}$, $\beta_{(1,3)}$, $\beta_{(1,4_2)}$, $\beta_{(2,3)}$,
+and $\beta_{(3,4_1)}$, the power of the directional method is uniformly greater than
+that of the undirectional approach. This is expected, since the directional method
+takes advantage of the information about one-coefficient shifts in the effects of
+the first two orders, whereas the undirectional approach has to consider all kinds
+of shifts.
+
+%Table 3
+\begin{table}[!ht]
+\tabcolsep 7.5pt \vspace{-0.1cm} \centering \caption{Power comparison for
+one-coefficient shifts of the third order} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c|cc|cc|cc}\hline
+$\delta$ & With & Without & With & Without & With & Without
+\\\hline
+& \multicolumn{2}{c|}{$\beta_{(1,2,3)}$} & \multicolumn{2}{c|}{$\beta_{(1,3,4_2)}$}
+& \multicolumn{2}{c}{$\beta_{(2,3,4_1)}$}
+\\\hline
+0.02 & 0.157 & 0.116 & 0.102 & 0.075 & 0.197 & 0.125 \\
+0.03 & 0.406 & 0.289 & 0.229 & 0.151 & 0.490 & 0.315 \\
+0.04 & 0.733 & 0.623 & 0.461 & 0.307 & 0.817 & 0.644 \\
+0.05 & 0.939 & 0.900 & 0.721 & 0.571 & 0.975 & 0.920 \\
+0.06 & 0.992 & 0.989 & 0.907 & 0.819 & 0.999 & 0.992 \\
+0.07 & 1.000 & 1.000 & 0.979 & 0.959 & 1.000 & 1.000
+\\\hline
+\multicolumn{7}{l}{$\hat{\alpha}=0.044$ for ``With'' and 0.048 for ``Without''.}
+\end{tabular}
+\end{table}
+
+Let us now turn to the performance of the two methods if at the change-point $\tau$
+the only shift occurs in a three-factor interaction effect. The results are given in
+Table 4.3, where shifts in $\beta_{(1,2,3)}$, $\beta_{(1,3,4_2)}$, and
+$\beta_{(2,3,4_1)}$ are considered. Since shifts in a third-order effect can be
+reflected to a large extent by changes in the effects of the first two orders, Table
+4.3 shows that the directional method still uniformly outperforms the undirectional
+one.
+
+We come next to the case of two-coefficient shifts to verify the robustness of the
+directional method, which specializes in detecting shifts in only one coefficient.
+Here two coefficients increase by $\delta_1$ and $\delta_2$, e.g.,
+$\beta_{(1)}+\delta_1$ and $\beta_{(4_2)}+\delta_2$ simultaneously at the
+change-point $\tau$. Table 4.4 demonstrates the powers of the two detection
+approaches under different combinations of coefficients of the first three orders.
+We can see that the directional method is still more powerful than the undirectional
+one, reflecting a robustness to shifts in more than one coefficient.
+
+%Table 4
+\begin{table}[!ht]
+\tabcolsep 5.5pt \vspace{-0.1cm} \centering \caption{Power comparison for
+two-coefficient shifts of the first three orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{cc|cc|cc|cc|cc}\hline
+\ $\delta_1$\  & \ $\delta_2$\  & With & Without & With & Without & With & Without &
+With & Without
+\\\hline
+& & $\beta_{(1)}$ & $\beta_{(4_2)}$ & $\beta_{(2)}$ & $\beta_{(1,4_1)}$ &
+$\beta_{(3)}$ & $\beta_{(2,3)}$ & $\beta_{(1,2)}$ & $\beta_{(1,3)}$
+\\\hline
+0.02 & 0.02 & 0.180 & 0.115 & 0.285 & 0.162 & 0.599 & 0.290 & 0.589 & 0.303 \\
+0.02 & 0.04 & 0.651 & 0.358 & 0.915 & 0.653 & 0.987 & 0.839 & 0.973 & 0.804 \\
+0.04 & 0.02 & 0.554 & 0.335 & 0.707 & 0.450 & 0.957 & 0.715 & 0.983 & 0.833 \\
+0.04 & 0.04 & 0.799 & 0.634 & 0.960 & 0.867 & 1.000 & 0.986 & 1.000 & 0.990
+\\\hline
+& & $\beta_{(2,3)}$ & $\beta_{(3,4_1)}$ & $\beta_{(2,4_1)}$ & $\beta_{(2,4_2)}$ &
+$\beta_{(1,2,4_1)}$ & $\beta_{(1,2,4_2)}$ & $\beta_{(1,3,4_1)}$ &
+$\beta_{(2,3,4_1)}$
+\\\hline
+0.02 & 0.02 & 0.455 & 0.256 & 0.532 & 0.255 & 0.446 & 0.263 & 0.783 & 0.504 \\
+0.02 & 0.04 & 0.959 & 0.787 & 0.914 & 0.647 & 0.852 & 0.691 & 0.996 & 0.970 \\
+0.04 & 0.02 & 0.935 & 0.753 & 0.986 & 0.832 & 0.952 & 0.857 & 0.996 & 0.966 \\
+0.04 & 0.04 & 0.997 & 0.974 & 0.999 & 0.977 & 0.995 & 0.984 & 1.000 & 0.999
+\\\hline
+\multicolumn{10}{l}{$\hat{\alpha}=0.044$ for ``With'' and 0.048 for ``Without''.}
+\end{tabular}
+\end{table}
+
+\subsection{Diagnostic Performance}
+
+The diagnostic performance is investigated in this subsection, under the same
+parameter settings as in last section. The change-point $\tau$ is estimated based on
+Equation (\ref{F4.10}) for the method without directional shift information and on
+Equation (\ref{F4.12}) for the one with such information. These two schemes are
+compared in terms of the averages (Avg) and the standard deviations (Std) of the
+change-point estimates $\hat{\tau}$, and the probabilities
+$\mathrm{Pr}(|\hat{\tau}-\tau|\leq 1)$ and $\mathrm{Pr}(|\hat{\tau}-\tau|\leq 2)$
+(denoted by $\mathrm{Pr}_1$ and $\mathrm{Pr}_2$, respectively), which quantify the
+consistency of change-point identification. On the other hand, the shift direction
+estimate $\hat{\zeta}$ is derived using Equation (\ref{F4.13}) only for the
+directional approach, and to the best of our knowledge, there is currently no method
+for comparison in recognizing shift directions. Here the matching probability that
+the estimated index $\hat{\zeta}$ of the only deviated coefficient $\beta_{\zeta}$
+is indeed the true one $\zeta$, $\mathrm{Pr}(\hat{\zeta}=\zeta)$ denoted by
+$\mathrm{Pr}_{\zeta}$, is selected for measuring the accuracy of identifying shift
+directions. Note that for diagnosis the directional method employs the
+one-coefficient shift direction index subset $\mathbb{I}_3$ rather than
+$\mathbb{I}_2$, including coefficients in the main, two-factor interaction, and
+three-factor interaction effects as the candidate diagnostic shift directions.
+
+%Table 5
+\begin{table}[htp]
+\tabcolsep 4.0pt \vspace{-0.1cm} \centering \caption{Diagnostic comparison for
+one-coefficient shifts of the first three orders} \vspace{0.3cm}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c|c|cc|cc|cc|cc|c}\hline
+$\beta$ & $\delta$ & With & Without & With & Without & With & Without & With &
+Without & With
+\\\hline
+& & \multicolumn{2}{c|}{Avg} & \multicolumn{2}{c|}{Std} &
+\multicolumn{2}{c|}{$\mathrm{Pr}_1$} & \multicolumn{2}{c|}{$\mathrm{Pr}_2$} &
+$\mathrm{Pr}_{\zeta}$
+\\\hline
+& 0.03 & 34.3 & 36.1 & 19.5 & 24.1 & 0.188 & 0.105 & 0.267 & 0.157 & 0.522 \\
+& 0.04 & 31.7 & 34.3 & 13.2 & 19.9 & 0.354 & 0.197 & 0.461 & 0.271 & 0.765 \\
+$\beta_{(2)}$ & 0.05 & 30.5 & 32.1 & 7.58 & 14.5 & 0.516 & 0.320 & 0.643 & 0.421 & 0.917 \\
+& 0.06 & 30.2 & 31.0 & 4.37 & 9.74 & 0.633 & 0.453 & 0.761 & 0.582 & 0.981 \\
+& 0.08 & 30.0 & 30.1 & 1.87 & 3.53 & 0.787 & 0.685 & 0.882 & 0.803 & 0.999 \\
+& 0.10 & 30.0 & 30.0 & 1.17 & 1.63 & 0.888 & 0.830 & 0.952 & 0.914 & 1.000
+\\\hline
+& 0.03 & 32.9 & 35.8 & 16.2 & 22.4 & 0.269 & 0.135 & 0.361 & 0.186 & 0.633 \\
+& 0.04 & 31.1 & 32.7 & 9.06 & 16.0 & 0.469 & 0.280 & 0.595 & 0.376 & 0.874 \\
+$\beta_{(1,3)}$ & 0.05 & 30.1 & 31.0 & 4.50 & 10.2 & 0.622 & 0.437 & 0.751 & 0.564 & 0.968 \\
+& 0.06 & 30.0 & 30.2 & 2.75 & 5.47 & 0.725 & 0.593 & 0.835 & 0.712 & 0.992 \\
+& 0.08 & 30.0 & 30.1 & 1.32 & 1.99 & 0.857 & 0.801 & 0.937 & 0.893 & 1.000 \\
+& 0.10 & 30.0 & 30.0 & 0.809 & 1.01 & 0.937 & 0.913 & 0.976 & 0.965 & 1.000
+\\\hline
+& 0.03 & 32.1 & 34.7 & 14.1 & 20.6 & 0.309 & 0.184 & 0.418 & 0.254 & 0.565 \\
+& 0.04 & 30.6 & 32.1 & 7.17 & 14.4 & 0.516 & 0.343 & 0.639 & 0.438 & 0.797 \\
+$\beta_{(3,4_1)}$ & 0.05 & 30.1 & 30.8 & 3.78 & 8.10 & 0.679 & 0.531 & 0.791 & 0.648 & 0.924 \\
+& 0.06 & 30.0 & 30.2 & 2.09 & 4.00 & 0.775 & 0.670 & 0.880 & 0.785 & 0.972 \\
+& 0.08 & 30.0 & 30.0 & 1.04 & 1.37 & 0.899 & 0.854 & 0.962 & 0.933 & 0.997 \\
+& 0.10 & 30.0 & 30.0 & 0.634 & 0.747 & 0.960 & 0.945 & 0.988 & 0.981 & 1.000
+\\\hline
+& 0.03 & 34.3 & 36.8 & 19.7 & 24.4 & 0.198 & 0.098 & 0.269 & 0.143 & 0.412 \\
+& 0.04 & 31.4 & 34.3 & 12.6 & 20.0 & 0.357 & 0.195 & 0.463 & 0.269 & 0.646 \\
+$\beta_{(1,3,4_2)}$ & 0.05 & 30.7 & 32.2 & 7.74 & 14.2 & 0.514 & 0.332 & 0.636 & 0.433 & 0.827 \\
+& 0.06 & 30.1 & 30.9 & 4.23 & 9.37 & 0.648 & 0.474 & 0.769 & 0.595 & 0.921 \\
+& 0.08 & 30.0 & 30.1 & 1.82 & 3.05 & 0.804 & 0.716 & 0.896 & 0.829 & 0.988 \\
+& 0.10 & 30.0 & 30.0 & 1.09 & 1.48 & 0.891 & 0.849 & 0.953 & 0.925 & 0.999
+\\\hline
+\end{tabular}
+\end{table}
+
+Table 4.5 presents the results for some one-coefficient shifts in the effects of the
+first three orders, such as $\beta_{(2)}$, $\beta_{(1,3)}$, $\beta_{(3,4_1)}$, and
+$\beta_{(1,3,4_2)}$ based on 5,000 replicated simulations. It can be seen that the
+estimator (\ref{F4.12}) for the directional method is always more consistent than
+(\ref{F4.10}) in recognizing the change-point, giving smaller biases, smaller
+standard deviations, and higher probabilities $\mathrm{Pr}_1$ and $\mathrm{Pr}_2$.
+Again, this follows because the estimator (\ref{F4.12}) exploits fully the
+directional information. As for the shift direction, the estimator (\ref{F4.13})
+derived from the directional approach performs fairly well in that it has a high
+matching probability of $\hat{\zeta}=\zeta$, and certainly this probability
+increases as the shift magnitude $\delta$ increases. In addition, according to the
+practical definition of shifts, estimating the shift direction may provide some
+insights into multivariate categorical processes. For example, if the shift
+direction index is estimated as $\hat{\zeta}=7$, by the relation
+$\beta_7=\beta_{(1,3)}$, we may conclude that the interaction of factors $C_1$ and
+$C_3$ deviates at the change-point.
+
+\subsection{Revisiting the AEC Example}
+
+Here we turn to the AEC example introduced previously to show how to implement the
+proposed directional detection and diagnostic methodology in practice. The AEC
+example has $p=3$ factors: leakage current (LC), dissipation factor (DF), and
+capacity (CAP), and each has two levels of conforming and nonconforming. The
+cross-classification counts with all factor level combinations are stored in a
+three-way contingency table with $2^3=8$ cells and can be modeled by a log-linear
+model.
+
+There is a reference dataset of multivariate sampling observations, which involves
+$M=120$ samples of size $N=500$. Usually, the sample size can be chosen as dozens of
+the number of cells. The observation vector ${\bf n}_k$ ($k=1,\ldots,120$) is of
+size $8\times 1$, for instance, ${\bf n}_1=[483,14,2,0,1,0,0,0]^T$. The elements of
+${\bf n}_k$ jointly follow a multinomial distribution $\mbox{MN}(500;{\bf p})$,
+where ${\bf p}$ is the cell probability vector and may shift at a change-point.
+
+In Phase I, the main task is to check whether there are unusual patterns in the
+reference dataset. Let us now employ the proposed directional detection method to
+see if a change-point exists. We select the index subset $\mathbb{I}_2$, because
+shifts tend to occur in main effects and two-factor interaction effects. In
+addition, the desired type I error $\alpha$ is set as 0.05. By first fixing each
+$i\in\mathbb{I}_2$, for each $k=1,\ldots,119$, based on the grouped data
+$\sum_{j=1}^k{\bf n}_j$ and $\sum_{j=k+1}^{120}{\bf n}_j$, we use the method given
+in the appendix to calculate the $-2$LRT statistic $\Lambda_{i,k}$ for testing
+hypothesis (\ref{F4.5}). Then for each $i\in\mathbb{I}_2$, we obtain
+$\Lambda_i=\max_k\Lambda_{i,k}$, which are 2.013, 7.099, 17.33, 5.081, 20.17, and
+11.06. By using Equation (\ref{F4.14}), we calculate the approximate $p$-values of
+these $\Lambda_i$ as 0.900, 0.140, 0.001, 0.323, 0.000, and 0.024, respectively.
+Arranging these $p$-values from the minimum to the maximum as
+$\hat{p}_{(1)},\ldots,\hat{p}_{(6)}$ ($\mathbb{I}_2$ has a cardinality $K=6$), we
+find that $\hat{p}_{(i)}\leq i\alpha/6$ holds for $i=1,2$. Therefore, there is a
+change-point in the reference dataset.
+
+Since a change-point exists, the next step is to identify its location and the shift
+direction, with the assumption that only one coefficient deviates in the effects of
+the first three orders. Here the proposed directional diagnostic approach adopts the
+candidate index subset $\mathbb{I}_3$ for the only potential shift direction. Still,
+for each $i\in\mathbb{I}_3$ and $k=1,\ldots,119$, we calculate the $-2$statistic
+$\Lambda_{i,k}$ for testing hypothesis (\ref{F4.5}). For each $k$, by calculating
+$\max_{i\in\mathbb{I}_3}\Lambda_{i,k}$, we see that
+$\max_{i\in\mathbb{I}_3}\Lambda_{i,48}$ is the maximum among all
+$\max_{i\in\mathbb{I}_3}\Lambda_{i,k}$ ($k=1,\ldots,119$). According to the
+estimator (\ref{F4.12}), the change-point is identified as $\hat{\tau}=48$. For
+$\Lambda_{i,48}$ ($i\in\mathbb{I}_3$), it turns out that the maximum among them is
+$\Lambda_{5,48}$. Hence the shift direction index is recognized as $\hat{\zeta}=5$
+based on the estimator (\ref{F4.13}), and the shifted coefficient is
+$\beta_5=\beta_{(1,3)}$, which represents the interaction effect of factors $C_1$
+and $C_3$. In the settings of the AEC example, this corresponds to a shift in the
+dependence between the characteristics LC and CAP.
+
+
+\section{Summary}\label{sec4.6}
+
+This chapter has developed a new log-linear directional change-point detection
+methodology for Phase I analysis in multivariate categorical processes. The method
+integrates the knowledge of potential shift directions, which are formulated as
+deviations of coefficient subvectors in log-linear modeling. In addition, a
+post-signal diagnostic scheme for recognizing the change-point location and the
+shift direction has been proposed. Both the detection and diagnostic approaches work
+well in multivariate categorical processes that follow multivariate binomial or
+multivariate multinomial distributions. Monte Carlo simulations have shown high
+detection power and good diagnostic consistency.
+
+It should be pointed out that the proposed approach can be readily extended for
+detecting multiple change-points by employing the binary segmentation method
+recursively (Yao (1988)). Moreover, the presence of outliers has seriously adverse
+effects on the modeling and monitoring of multivariate categorical processes.
+Therefore, outlier detection procedures, which aim at identifying any abnormal
+samples from a dataset, are quite important and deserve future research.
+
+
+
+\section{Appendix:
+Derivation of the $-2$LRT Statistic $\lambda_i$ for Testing Hypothesis
+(\ref{F4.5})}\label{sec4.7}
+
+Under $H_1$ of (\ref{F4.5}), $\widetilde{\bm\beta}^{(\mathrm{a})}$ and
+$\widetilde{\bm\beta}^{(\mathrm{b})}$ have a relationship as described in
+(\ref{F4.4}). Because of the constraint $\bm 1^T{\bf p}=1$, the following equations
+hold
+\[
+\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}\big)=1,
+\]
+\[
+\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}+\bm{1}\alpha_i+{\bf x}_i\delta_i\big)=1,
+\]
+where ${\bf x}_i$ is the $i$th column of $\bf X$. So $\beta^{(\mathrm{a})}_0$ and
+$\alpha_i$ can be expressed as
+\[
+\beta^{(\mathrm{a})}_0=-\ln\big(\bm{1}^T\exp\big({\bf
+X}\bm\beta^{(\mathrm{a})}\big)\big),
+\]
+\[
+\alpha_i=-\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}+{\bf x}_i\delta_i\big)\big).
+\]
+Again, assume that ${\bf n}_{\mathrm{a}}$ and ${\bf n}_{\mathrm{b}}$ are two
+independent random vectors subject to $\mbox{MN}(N_{\mathrm{a}};{\bf
+p}_{\mathrm{a}})$ and $\mbox{MN}(N_{\mathrm{b}};{\bf p}_{\mathrm{b}})$,
+respectively. The log-likelihood function of ${\bf p}_{\mathrm{a}}$ and ${\bf
+p}_{\mathrm{b}}$ can be written as
+\begin{align*}
+L&={\bf n}_{\mathrm{a}}^T\ln{\bf p}_{\mathrm{a}}+\ln N_{\mathrm{a}}!-\bm 1^T\ln{\bf
+n}_{\mathrm{a}}!+{\bf
+n}_{\mathrm{b}}^T\ln{\bf p}_{\mathrm{b}}+\ln N_{\mathrm{b}}!-\bm 1^T\ln{\bf n}_{\mathrm{b}}!\\
+&={\bf n}_{\mathrm{a}}^T\widetilde{\bf X}\widetilde{\bm\beta}^{(\mathrm{a})}+\ln
+N_{\mathrm{a}}!-\bm 1^T\ln{\bf n}_{\mathrm{a}}!+{\bf n}_{\mathrm{b}}^T\widetilde{\bf
+X}\widetilde{\bm\beta}^{(\mathrm{b})}+\ln N_{\mathrm{b}}!-\bm 1^T\ln{\bf n}_{\mathrm{b}}!\\
+&=(N_{\mathrm{a}}+N_{\mathrm{b}})\beta^{(\mathrm{a})}_0+({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})^T{\bf X}\bm\beta^{(\mathrm{a})}+N_{\mathrm{b}}\alpha_i+{\bf
+n}_{\mathrm{b}}^T{\bf
+x}_i\delta_i\\
+&\ \ \;\;+\ln N_{\mathrm{a}}!-\bm 1^T\ln{\bf n}_{\mathrm{a}}!+\ln
+N_{\mathrm{b}}!-\bm 1^T\ln{\bf n}_{\mathrm{b}}!.
+\end{align*}
+
+To determine the MLEs of ${\bf p}_{\mathrm{a}}$ and ${\bf p}_{\mathrm{b}}$, the
+first-order partial derivatives of $L$ with respect to both
+$\bm\beta^{(\mathrm{a})}$ and $\delta_i$ are required. After some simplifications,
+we have
+\[
+\frac{\partial L}{\partial\bm\beta^{(\mathrm{a})}}={\bf X}^T({\bf
+n}_{\mathrm{a}}+{\bf n}_{\mathrm{b}}-N_{\mathrm{a}}{\bf
+p}_{\mathrm{a}}-N_{\mathrm{b}}{\bf p}_{\mathrm{b}}),
+\]
+\begin{align*}
+\frac{\partial L}{\partial\delta_i}=s(\delta_i)=&\;{\bf x}_i^T{\bf
+n}_{\mathrm{b}}-N_{\mathrm{b}}{\bf x}_i^T\exp\big[\bm{1}\beta^{(\mathrm{a})}_0+{\bf X}\bm\beta^{(\mathrm{a})}+{\bf x}_i\delta_i\\
+&\;-\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}+{\bf x}_i\delta_i\big)\big)\big].
+\end{align*}
+Let
+\[
+{\bf k}(\delta_i)=\exp\big[\bm{1}\beta^{(\mathrm{a})}_0+{\bf
+X}\bm\beta^{(\mathrm{a})}+{\bf
+x}_i\delta_i-\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}+{\bf x}_i\delta_i\big)\big)\big].
+\]
+The second-order partial derivative $L$ with respect to $\delta_i$ can be formulated
+as
+\begin{align*}
+s^{\prime}(\delta_i)=&\;\frac{\partial^2 L}{\partial\delta^2_i}
+=\;-N_{\mathrm{b}}{\bf x}_i^T\di\big({\bf k}(\delta_i)\big){\bf x}_i +
+N_{\mathrm{b}}{\bf x}_i^T{\bf k}(\delta_i){\bf k}^T(\delta_i){\bf x}_i,
+\end{align*}
+where $\di({\bf a})$ is the diagonal square matrix with the column vector ${\bf a}$
+as its diagonal elements. It is obvious that
+\begin{align*}
+&s(0)={\bf x}_i^T{\bf n}_{\mathrm{b}}-N_{\mathrm{b}}{\bf x}_i^T
+\exp\big(\bm{1}\beta^{(\mathrm{a})}_0+{\bf X}\bm\beta^{(\mathrm{a})}\big)={\bf
+x}_i^T({\bf
+n}_{\mathrm{b}}-N_{\mathrm{b}}{\bf p}_{\mathrm{a}}),\\
+&s^{\prime}(0)=-N_{\mathrm{b}}{\bf x}_i^T\di\big({\bf p}_{\mathrm{a}}\big){\bf x}_i+
+N_{\mathrm{b}}{\bf x}_i^T{\bf p}_{\mathrm{a}}{\bf p}_{\mathrm{a}}^T{\bf
+x}_i=-N_{\mathrm{b}}{\bf x}_i^T\bm{\Sigma}_{\mathrm{a}}{\bf x}_i,
+\end{align*}
+where $\bm\Sigma_{\mathrm{a}}=\di\big({\bf p}_{\mathrm{a}}\big)-{\bf
+p}_{\mathrm{a}}{\bf p}_{\mathrm{a}}^T$. By performing the first-order Taylor
+expansion of $s(\delta_i)$ at $\delta_i=0$, we have
+\[
+s(\delta_i)\approx s(0)+s^{\prime}(0)\delta_i.
+\]
+To obtain the MLE of $\delta_i$, let $s(\delta_i)$ be 0. Therefore, the MLE of
+$\delta_i$ should approximately satisfy
+\begin{align}
+\delta_i\approx-\frac{s(0)}{s^{\prime}(0)}=\frac{1}{N_{\mathrm{b}}}\big({\bf
+x}_i^T\bm{\Sigma}_{\mathrm{a}}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf
+n}_{\mathrm{b}}-N_{\mathrm{b}}{\bf p}_{\mathrm{a}}\big).\label{F4.15}
+\end{align}
+On the other hand, by performing the first-order Taylor expansion of ${\bf
+p}_{\mathrm{b}}$ at ${\bf p}_{\mathrm{a}}$ (i.e., $\delta_i=0$), we have
+\begin{align}
+{\bf p}_{\mathrm{b}}=&\;\exp\big(\bm{1}\beta^{(\mathrm{a})}_0+{\bf
+X}\bm\beta^{(\mathrm{a})}+\bm{1}\alpha_i+{\bf
+x}_i\delta_i\big)\nonumber\\
+=&\;\exp\big(\bm{1}\beta^{(\mathrm{a})}_0+{\bf X}\bm\beta^{(\mathrm{a})}-
+\bm{1}\ln\big(\bm{1}^T\exp\big(\bm{1}\beta^{(\mathrm{a})}_0 +{\bf
+X}\bm\beta^{(\mathrm{a})}+{\bf x}_i\delta_i\big)\big)+{\bf
+x}_i\delta_i\big)\nonumber\\
+\approx &\;\exp\big(\bm{1}\beta^{(\mathrm{a})}_0+{\bf
+X}\bm\beta^{(\mathrm{a})}\big)+\big(\di\big({\bf p}_{\mathrm{a}}\big){\bf
+x}_i-{\bf p}_{\mathrm{a}}{\bf p}_{\mathrm{a}}^T{\bf x}_i\big)\delta_i\nonumber\\
+=&\;{\bf p}_{\mathrm{a}}+\bm{\Sigma}_{\mathrm{a}}{\bf x}_i\delta_i.\label{F4.16}
+\end{align}
+Therefore, similar to $\delta_i$, the MLE of $\bm\beta^{(\mathrm{a})}$ should
+satisfy
+\begin{align}
+\frac{\partial L}{\partial\bm\beta^{(\mathrm{a})}}\approx{\bf X}^T({\bf
+n}_{\mathrm{a}}+{\bf n}_{\mathrm{b}}-N_{\mathrm{a}}{\bf
+p}_{\mathrm{a}}-N_{\mathrm{b}}{\bf
+p}_{\mathrm{a}}-N_{\mathrm{b}}\bm{\Sigma}_{\mathrm{a}}{\bf x}_i\delta_i)=\bm
+0.\label{F4.17}
+\end{align}
+By substituting $\delta_i$ in (\ref{F4.15}) into (\ref{F4.17}), we have
+\begin{align}
+{\bf X}^T\big[{\bf n}_{\mathrm{a}}+{\bf n}_{\mathrm{b}}-N_{\mathrm{a}}{\bf
+p}_{\mathrm{a}}-N_{\mathrm{b}}{\bf p}_{\mathrm{a}}-\bm{\Sigma}_{\mathrm{a}}{\bf
+x}_i\big({\bf x}_i^T\bm{\Sigma}_{\mathrm{a}}{\bf x}_i\big)^{-1}{\bf x}_i^T\big({\bf
+n}_{\mathrm{b}}-N_{\mathrm{b}}{\bf p}_{\mathrm{a}}\big)\big]=\bm 0.\label{F4.18}
+\end{align}
+After some calculations, (\ref{F4.18}) plus the constraint $\bm 1^T{\bf
+p}_{\mathrm{a}}=1$ leads to
+\begin{align}
+{\bf p}_{\mathrm{a}}=\left[\begin{array}{c} \bm 1^T\\
+{\bf X}^T(N_{\mathrm{a}}+N_{\mathrm{b}})-{\bf X}^T\bm{\Sigma}_{\mathrm{a}}{\bf
+A}_iN_{\mathrm{b}}
+\end{array}\right]^{-1}\left[\begin{array}{c}1\\
+{\bf X}^T({\bf n}_{\mathrm{a}}+{\bf n}_{\mathrm{b}})-{\bf
+X}^T\bm{\Sigma}_{\mathrm{a}}{\bf A}_i{\bf n}_{\mathrm{b}}
+\end{array}\right],\label{F4.19}
+\end{align}
+where ${\bf A}_i={\bf x}_i\big({\bf x}_i^T\bm{\Sigma}_{\mathrm{a}}{\bf
+x}_i\big)^{-1}{\bf x}_i^T$. Note that (\ref{F4.19}) may be regarded as ${\bf
+p}_{\mathrm{a}}={\bf f}({\bf p}_{\mathrm{a}})$.
+
+By performing numerical iterations based on (\ref{F4.19}) until some stopping
+criterion is reached, we obtain the MLE $\widehat{\bf p}^{H_1}_{\mathrm{a}}$ of
+${\bf p}_{\mathrm{a}}$ under $H_1$ and hence
+$\widehat{\bm\Sigma}^{H_1}_{\mathrm{a}}$. Generally, the initial value of ${\bf
+p}_{\mathrm{a}}$ in the above iteration can be set as $({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})/(N_{\mathrm{a}}+N_{\mathrm{b}})$, and our simulations show that
+this iteration will stop after only a few steps. The MLE $\hat{\delta}^{H_1}_i$ of
+$\delta_i$ can be calculated from (\ref{F4.15}). Based on $\widehat{\bf
+p}^{H_1}_{\mathrm{a}}$ and $\hat{\delta}^{H_1}_i$, and according to (\ref{F4.16}),
+the MLE $\widehat{\bf p}^{H_1}_{\mathrm{b}}$ of ${\bf p}_{\mathrm{b}}$ under $H_1$
+can also be derived. Under $H_0$ of (\ref{F4.5}), it is known that the MLEs of ${\bf
+p}_{\mathrm{a}}$ and ${\bf p}_{\mathrm{B}}$ are $\widehat{\bf
+p}^{H_0}_{\mathrm{a}}=\widehat{\bf p}^{H_0}_{\mathrm{b}}=({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})/(N_{\mathrm{a}}+N_{\mathrm{b}})$. Based on these, the $-2$LRT
+statistic $\lambda_i$ for testing (\ref{F4.5}) can finally be formulated as
+\begin{align}\label{F4.20}
+\lambda_i&=2{\bf n}_{\mathrm{a}}^T\ln\widehat{\bf p}^{H_1}_{\mathrm{a}}+2{\bf
+n}_{\mathrm{b}}^T\ln\widehat{\bf p}^{H_1}_{\mathrm{b}}-2({\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}})^T\ln\Big(\frac{{\bf n}_{\mathrm{a}}+{\bf
+n}_{\mathrm{b}}}{N_{\mathrm{a}}+N_{\mathrm{b}}}\Big).
+\end{align}
