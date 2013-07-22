@@ -20,7 +20,7 @@ Besides, the calculation after each barrier should be considered as the serial p
 
 Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as follows:
 
-\begin{algorithm}
+\begin{algorithm*}
  \begin{algorithmic}[1]
  \Require $k, \alpha, \delta, n_0$
  \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
@@ -34,7 +34,7 @@ Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly
  \end{algorithmic}
  \caption{Rinott's Procedure}
  \label{rinott_alg}
-\end{algorithm}
+\end{algorithm*}
 
 An obvious unsatisfying issue here is the barrier laying between the two stages. Later we will modify the Rinott's procedure a little to get rid of this barrier, because essentially speaking, the existing of this barrier is due to the "sequential nature" when we describing R\&S procedures.
 
@@ -138,92 +138,105 @@ Since APS procedure can fully utilize all the obtained sample values, it is defi
 
 \section{System Design}
 
+With the revision of existing simulation R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in simulation R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
+
 \subsection{Overview}
 
-With the revision of existing simulation R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
+In parallel computing, the master-slave pattern means that there is a single master execution unit dealing with the serial part while several identical slave execution units sharing the workload which can be carried out in parallel. For simulation R\&S procedures, the serial R\&S procedure should be implemented within the master, while the independent simulation experiments should be spread out among all the slaves, with explict or implict scheduling from the master.
 
-As is introduced in section 3.5.3, master-slave means a master execution unit dealing with the serial part while several slave execution units share the workload which can be carried out in parallel. In the current scenario, the ranking and selection, including specifying sampling rule and making elimination according to obtained sample values from simulation, should be implemented on master, while the independent simulation experiments should be shared among all the slaves, with scheduling from the master.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=120mm]{master-slave-brief.png}
+\caption{Overview Sequence Diagram}
+\end{figure}
 
-In this section we will mainly introduce this architecture inside the scope of a single machine, where the whole program is inside a single process and master or slaves are all threads inside this process. At the end we will take a look at scaling it out to a cluster.
+The above figure is an overview sequence diagram. As it illustrates, the start-up script will firstly start the master, then the agents. The master, including all the agents, will start its local slaves. The agent here may be regarded as a secondary master, because the whole system is deployed on a cluster and some slaves have to run on different machines rather than the same machine as master, which involves network communication from some slaves to the master via their own agent.
 
-\subsection{Master}
+After start-up and many trivial tasks like arguments parsing, the R\&S procedure will be running inside the master, say specifying the sampling rule, collecting the sample values and liminating inferior alternatives based on them, until the best alternative is selected. During that time, all the slaves are doing simulation experiments again and again, against different alternatives and with different random number generation seeds.
 
-As is mentioned above, master will take charge of essential serial steps in ranking and selection procedures, and one thing that should be noticed here is that the master part is not exactly the main thread for the whole program, since there's more "duty" work left to do in the main or entrance thread like parsing parameters of R\&S procedure, inputting the configurations of every alternative and other program level configurations like number of slave threads or directory for log files. Interested reader should refer to the code directly.
+After the whole process, extensive logs are generated and will be used in further analysis. For verification purpose, the process may be carried out more than one time.
 
-At the end of the main thread, when everything is ready including separated slave threads, the main thread will start the execution of master part and end when the master part is done, at which point the whole program is terminated.
-
-For the universality of this implementation, here the logic of ranking and selection procedure is called through a abstract programming interface. To make this clear, readers should first noticed that our implementation can be divided into two major parts. One part includes the core components, the other consists of implementations of different R\&S procedures and different simulation experiments. Every time user of our implementation should choose one specific implementation of R\&S procedure and one specific implementation of simulation experiments, and start this R\&S program together with all the core components.
-
-In other words, the core components are programmed with only dependent on the abstract function signatures of both R\&S and simulation. This follows an important design rule, say, depend on abstract rather than implementation. In this way, the core component part can stay unchanged against the change of R\&S and simulation.
-
-As for the detailed specifications of R\&S implementation and simulation implementation, we will look into details in later part specifically introducing the extension point for self-customized R\&S procedure. And till now we have finished introducing the very abstract master, which is started from almost the end of the main thread and interacts with specific ranking and selection logic through abstract programming interfaces.
+Now, we will introduce these modules one by one.
 
 \subsection{Slave}
 
-Generally speaking, there should be multiple instances of slave within a master-slave structure. Within the single machine scope, a slave instance is a dedicated thread and different slave threads are identical in code while different in the data it is processing and the status it is in.
+Slave is the simplest module within the system and it has many different instances. A slave instance is a dedicated thread. These threads are identical in code while different in the data it is processing and the status it is in.
 
-All the threads except from the main thread are started within the main thread, including the dedicated slave threads here. Advanced thread starting technique like thread pool are involved here to archive better scheduling. Interested reader may refer to the code.
+Briefly speaking, there are three steps inside a working cycle of slave thread, they're simulation arguments or input fetching, simulation experiment executing and simulation result or output submitting. The slave threads will follow this working cycle one round after another until explicitly stopped.
 
-Briefly speaking, there are three steps inside a working cycle of slave thread, they're simulation argument fetching, simulation experiment executing and simulation result submitting. The slave threads will follow this working cycle one round after another until explicitly stopped.
+Both argument fetching step and result submitting step involve communicating with the master, or more precisely, the R\&S procedure. If the slave is not running on the same machine as the master, network communication is also involved, which is considered as extra cost introduced by adopting parallel computing. We have used two FIFO queues to buffer the input and output of simulation to reduce such communication cost. We will leave the illustration of detailed buffering policy in later part, since it's not the duty of slave.
 
-Both argument fetching step and result submitting step involve communication with the master, or ranking and selection logic, which is considered as extra cost introduced by adopting parallel computing. We have used two FIFO queues to buffer the arguments and results to reduce such communication cost. Detailed buffering policy will be illustrated in later section with the name buffered communication.
+As for the simulation step, it is done simply by calling the abstract programming interface of simulation task, thus supporting self-customized simulation experiments. To make this clear, readers should first noticed that our system can be divided into two major parts. One part includes the core components, the other consists of implementations of different R\&S procedures and different simulation experiments. Every time user of our system should choose one specific implementation of R\&S procedure and one specific implementation of simulation experiments, and start this R\&S program together with all the core components.
 
-As for the simulation step, again it is done simply by calling the abstract programming interface of simulation task, thus supporting self-customized simulation experiments. Specification of this programming interface will be described in later section.
-
-\subsection{Worker}
-
-\subsubsection{Dealing with Thread-unsafe Library}
-
-\subsection{User Interface}
-
-In order to reduce the study cost of users who adopt our implementation, well designed user interface is necessary part in the whole system. In our implementation, the user interface can be divided into two kinds. One is for users using our implementation directly, the other is for users extending in ranking and selection procedure and simulation experiment.
-
-For the first kind of user interface, we could simply leave a command line interface since it is only an academic purpose software tool. However, since at the end of day we would like it to become a computing service, or more precisely, cloud computing, which distributes computing service to end user via Internet, we developed a web interface for it, as a prototype for that stage. Here is a screenshot of that web page:
-
-\begin{figure}[ht] \label{web-ui}
-\centering
-\includegraphics[width=120mm]{rase_web.png}
-\caption{Web UI}
-\end{figure}
-
-In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
-
-As for the second kind of user interface, we will give a detailed introduction in the section discussing extension points later.
-
-\subsubsection{Scale Out to Cluster}
-
-With a limited number of slave threads inside a single machine, it is very still far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
-
-However, the maximum number of slave threads is empirically limited by the total number of hardware cores on that machine. We can definitely add more slave threads, but without enough hardware parallel executing units, namely cores, it is concurrency in fact, rather than real parallel. Adding more software threads than hardware executing units will hardly gain extra speed up, but will demand more scheduling effort from operating system.
-
-Buying powerful machine with more hardware cores is an approach, which is named as scale up. However the price of the machine will grow much faster than linear against computing power, since the more the machine scales up, the higher technology it requires for manufacturing, which makes the cost increasing dramatically.
-
-A common solution is to compose a cluster with several machines where each of them are not that powerful in single. This is called scale out. We do have worked out a previous implementation which scales out to a small cluster. However, that version does not include features like supporting self-customized R\&S procedure and simulation experiment, since it involves a fundamental refactoring of design. Till this thesis, our latest trunk version have fully supported all the features mentioned in this thesis inside single machine range. We will take scaling out to cluster within latest trunk version as a future work.
-
-\subsection{Extension Points for Universality}
+In other words, the core components are programmed with only dependent on the abstract function signatures of both R\&S procedures and simulation. This follows an important design rule, say, depend on abstract rather than implementation. In this way, the core component part can stay unchanged against the change of R\&S and simulation.
 
 Since there has already been so many different combinations of R\&S procedures and simulation experiments to solve selecting the best problem, it is necessary to extract the common components and define reasonable extension points for different components, which follows an import design principle saying that "don't repeat your self". And it will also help a lot when facing a new selecting the best problem since researchers can focus on the part that the new problem differs from others, as long as the specific solution for the different part is developed strictly against the specifications of extension points stated in the rest of this section.
 
-\subsubsection{Specification of Self-customized Procedure}
+Now we will look detail into the abstract programming interface of simulation task.
 
-The implementation of self-customized R\&S procedure should follow the specification, or function signature below. By the way, it's in Java.
+\subsubsection{Intergrating Simulation Experiment}
+
+Here is the specification of this programming interface:
 
 \begin{lstlisting}[language=Java]
-public int ras(double[] args, double[][] alts,
-        SimHelper simHelper);
+public double[] sim(double[] alt, double[] args, long[] seed);
 \end{lstlisting}
 
-Here the first function argument args stands for the parameters needed to carry out the R\&S procedure. For example, in the Rinott's procedure it will contain $\alpha$, $\delta$ and $n_0$. Programmer should arrange these parameters in this array.
+The first function parameter alt is an array containing all the data needed to identify and fully describe the alternative, against which to run the simulation.
 
-The second function argument alts stands for all the alternatives. Noticed that it is an two-dimension array and each alternative is fully represented by an one-dimension array inside. For instance, in the (s, S) inventory problem, an alternative could be fully represented by two parameters $s$ and $S$ inside that one-dimension array. Usually a programmer would like to add an extra $id$ as the first parameter representing the alternative for convenience.
+The second function parameter args is an array containing the common arguments for all the simulation.
 
-The third function argument simHelper is a self-defined type, or class in Java, which contains all the needed callable programming interfaces, or pre-build-in functions for implementing a self-customized R\&S procedure. These interfaces will be introduced in the next section.
+The third function parameter seed is an array of integers needed in generating uniformly distributed random numbers with the MRG32k3a algorithm. The main idea here is to make each simulation against the same alternative independent from each other in the viewpoint of statistic by attaching each simulation a different set of seeds, which is generated in master as part of the simulation input. What's more, we also need a set of seeds to generate many sets of seeds used by simulation experiments, and the "master seeds" could be specified by user.
+
+The return value is design as an array to support multiple simulation output.
 
 Throughout the design of these extension points, we will try our best not to involve programming language dependent grammar or feature in the hope of reducing user's learning effort, just like the arrays here is plain array of double which is similar to most C-style languages, rather than advanced data structure like ArrayList provided by Java standard library.
 
-\subsubsection{Interfaces for Self-customized Procedure}
+In a word, integrating customized simulation experiment into slave is quite easy. The only issue that needs attention here is to remember using the seeds provided from master reasonably during simulation.
 
-Here comes to the part introducing all the programming interfaces provided for implementing R\&S procedures. Firstly let's look at two plain old java objects, or POJOs for shout, which act like the struct in C-programming language. They are the wrappers for simulation input and output, so we name them as SimInput and SimOutput, respectively. We only list the fields here, and will explain the meaning of each field later during the explanation of programming interfaces.
+\subsubsection{Dealing with Thread-unsafe Library}
+
+However, the real world is not that perfect as expected. The SSJ, a famous Java library for descrete-event simulation proposed in \cite{ssj}, is not thread-safe, which means it can not guarantee correct execution within multiple threads. The reason is that it place some thread-private data into static fields of Java class, which can be accessed by all threads. To overcome this, we designed our own Java class loading policy, to reload such thread-unsafe classes inside each slave thread, such that related static fields of Java class have its own place inside each slave thread. In this way we work around temporarily, and we will leave redesigning a thread-safe library as future work.
+
+\subsection{Master}
+
+Master has only one instance, which is also a dedicated thread, but not exactly the main thread for the whole process, since there's more "duty" work left to do in main thread like parsing parameters of R\&S procedure, inputting the data of every alternative and other program level configurations like number of slave threads or directory for log files.
+
+After that, some data structures are initialized, where the most important ones are two FIFO queues buffering the input and output of simulation experiments.
+
+\subsubsection{Communication with FIFO Queues}
+
+Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used FIFO queues, or BlockingQueue in Java.
+
+The FIFO queue is is a abstract data structure that all the elements are keep in order and theoretically only two operations are supported. One is enqueue, which appends one element to the end of queue, the other is dequeue, which extract one element at the beginning of the queue. Both of them have $O(1)$ complexity. In parallel environment, the enqueue operation will stuck there if the queue is full, and it's the same for dequeue operation if the queue is empty.
+
+With FIFO queues, the master could just send out simulation parameters to a queue and obtain simulation results from another, thus won't get stuck in most cases. On the hand, slaves can receive simulation parameters from the first queue and put simulation results to the second one. Just like the figure below:
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=120mm]{master-slave-queue.png}
+\caption{master-slave structure with queue}
+\end{figure}
+
+In this way, communication cost inside single machine is dramatically reduced for both master and slaves.Except from the performance benefit it has brought in, adopting FIFO queues also helps to decouple the master and slaves, which makes the design more clear.
+
+\subsubsection{Intergrating R\&S Procedure}
+
+As the simulation experiment is called through an abstract programming interface in slave, in master the R\&S procedure is also dealt in this way. The implementation of self-customized R\&S procedure should follow the specification, or function signature below:
+
+\begin{lstlisting}[language=Java]
+public int ras(double[][] alts, double[] args, SimHelper helper);
+\end{lstlisting}
+
+Here the first function argument alts stands for all the alternatives. Noticed that it is an two-dimension array and each alternative is fully represented by an one-dimension array inside. For instance, in the (s, S) inventory problem, an alternative could be fully represented by two parameters $s$ and $S$ inside that one-dimension array. Usually a programmer would like to add an extra $id$ as the first parameter representing the alternative for convenience.
+
+The second function argument args stands for the parameters needed to carry out the R\&S procedure. For example, in the Rinott's procedure it will contain $\alpha$, $\delta$ and $n_0$. Programmer should arrange these parameters in this array.
+
+The third function argument helper is a self-defined type, or class in Java, which contains all the needed callable programming interfaces, or pre-build-in functions for implementing a self-customized R\&S procedure.
+
+The return value is the id of the selected alternative.
+
+Now we introduce the programming interfaces provided for implementing R\&S procedures. Firstly let's look at two plain old java objects, or POJOs for shout, which act like the struct in C-programming language. They are the wrappers for simulation input and output, so we name them as SimInput and SimOutput, respectively. We only list the fields here, and will explain the meaning of each field later during the explanation of programming interfaces.
 
 \begin{lstlisting}[language=Java]
 public class SimInput {
@@ -282,39 +295,55 @@ Here the first parameter n is the number of simulation result demanded by caller
 
 A typical example of using these asynchronized interfaces is the implementation of the revised fully sequentially procedures. After sending out a certain number of simulation experiment requests, calling takeSimOutputs with $n = 1$ and $block = true$ repeatedly, meaning that the fully sequential procedure could do something after each new sample value. The appending simulation requests are also sent out here, archiving customized sampling rule.
 
-\subsubsection{Specification of Self-customized Simulation}
+\subsection{Agent}
 
-The implementation of self-customized simulation experiment should follow the function signature specified below:
+\subsubsection{Scale Out}
 
-\begin{lstlisting}[language=Java]
-public double[] sim(double[] args, long[] seed);
-\end{lstlisting}
+With a limited number of slave threads inside a single machine, it is very still far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
 
-Here the first function parameter args is all the parameters needed to identify the alternative against which to run the simulation, namely the configuration of an alternative.
+However, the maximum number of slave threads is empirically limited by the total number of hardware cores on that machine. We can definitely add more slave threads, but without enough hardware parallel executing units, namely cores, it is concurrency in fact, rather than real parallel. Adding more software threads than hardware executing units will hardly gain extra speed up, but will demand more scheduling effort from operating system.
 
-The second function parameter seed is an array of integers needed in generating uniformly distributed random numbers with the MRG32k3a algorithm. The main idea here is to make each simulation independent from each other in the viewpoint of statistic by attaching each simulation experiment a different set of seeds, which is generated in master before sending out the simulation request. What's more, we also need a set of seeds to generate many sets of seeds used by simulation experiments, and the "master seeds" here could be specified by user.
+Buying powerful machine with more hardware cores is an approach, which is named as scale up. However the price of the machine will grow much faster than linear against computing power, since the more the machine scales up, the higher technology it requires for manufacturing, which makes the cost increasing dramatically.
 
-The return value is design as an array to support multiple simulation results.
+A common solution is to compose a cluster with several machines where each of them are not that powerful in single. This is called scale out. To make network communication efficiently, slaves communicate with the master via agent, except for those slaves running in the same machine as master. The agent will buffer the simulation input and output with FIFO queues, thus it is possible to make batched communication after scaling to a cluster, which is critical in network communication since with reliable connection-oriented protocol, establishing new connections frequently is much more costly than stable continues transportation.
 
-Generally speaking issues needed consideration in integrating an simulation experiment is much fewer than those in developing a new R\&S procure. The only thing should get attention here is how to use the seeds provided from master reasonably during simulation.
+\subsubsection{Buffering Policy}
 
-\subsection{Communication with FIFO Queues}
+In agent, we have two dedicated threads for managing buffered simulation input and output, respectively. The policy for input management is here:
 
-Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used an FIFO queue, or a BlockingQueue in Java.
+\begin{algorithm}
+ \begin{algorithmic}[1]
+ \Require $k, \alpha, \delta, n_0$
+ \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
+ \State 
+ \While{$r\not=0$}
+ \State $a\gets b$
+ \State $b\gets r$
+ \State $r\gets a\bmod b$
+ \EndWhile
+ \State \textbf{return} $b$ \Comment{The gcd is b}
+ \end{algorithmic}
+ \caption{Vector Filling Procedure}
+ \label{input_buf_alg}
+\end{algorithm}
 
-The FIFO queue is is a abstract data structure that all the elements are keep in order and theoretically only two operations are supported. One is enqueue, which appends one element to the end of queue, the other is dequeue, which extract one element at the beginning of the queue. Both of them have $O(1)$ complexity. In parallel environment, the enqueue operation will stuck there if the queue is full, and it's the same for dequeue operation if the queue is empty.
+It is almost the $(s, S)$ inventory policy, and the two parameters can be specified manually. The $s$ should not be too small, otherwise some slaves may be idle due to lacking simulation input. We use the number of the slaves attached with this agent. Meanwhile, $S$ should not be too large, since it won't speed-up by prefetching too many simulation input, which only takes the risk fetching outdated input, which means that the corresponding alternative gets eliminated during the waiting in the buffer for so long.
 
-With FIFO queues, the master could just send out simulation parameters to a queue and obtain simulation results from another, thus won't get stuck in most cases. On the hand, slaves can receive simulation parameters from the first queue and put simulation results to the second one. Just like the figure below:
+The policy for output management is much more straightforward, just send out all the simulation output as soon as possible, because the earlier master can get these output, the more chance it gets to eliminate inferior alternatives. Currently this policy is perfectly okay since we don't use too many machines. If the number of agents or machines increases dramatically, we need to change this aggressive policy.
 
-\begin{figure}[ht]
+\subsection{User Interface}
+
+In order to reduce the study cost of users who adopt our system, well designed user interface is necessary part in the whole system. In our system, the user interface can be divided into two kinds. One is for users using our system directly, the other is for users extending in ranking and selection procedure and simulation experiment.
+
+For the first kind of user interface, we could simply leave a command line interface since it is only an academic purpose software tool. However, since at the end of day we would like it to become a computing service, or more precisely, cloud computing, which distributes computing service to end user via Internet, we developed a web interface for it, as a prototype for that stage. Here is a screenshot of that web page:
+
+\begin{figure}[ht] \label{web-ui}
 \centering
-\includegraphics[width=120mm]{master-slave-queue.png}
-\caption{master-slave structure with queue}
+\includegraphics[width=120mm]{rase_web.png}
+\caption{Web UI}
 \end{figure}
 
-In this way, communication cost inside single machine is dramatically reduced for both master and slaves. And if we regard these queues as buffers for parameters and results, it is also possible to make batched communication after scaling to a cluster, which is critical in network communication since with reliable connection-oriented protocol, establishing new connections frequently is much more costly than stable continues transportation.
-
-Except from the performance benefit it has brought in, adopting FIFO queues also helps to decouple the master and slaves, which makes the design more clear.
+In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
 
 \section{System Evaluation}
 
