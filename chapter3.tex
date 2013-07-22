@@ -20,7 +20,7 @@ Besides, the calculation after each barrier should be considered as the serial p
 
 Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as follows:
 
-\begin{algorithm*}
+\begin{algorithm}
  \begin{algorithmic}[1]
  \Require $k, \alpha, \delta, n_0$
  \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
@@ -34,7 +34,7 @@ Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly
  \end{algorithmic}
  \caption{Rinott's Procedure}
  \label{rinott_alg}
-\end{algorithm*}
+\end{algorithm}
 
 An obvious unsatisfying issue here is the barrier laying between the two stages. Later we will modify the Rinott's procedure a little to get rid of this barrier, because essentially speaking, the existing of this barrier is due to the "sequential nature" when we describing R\&S procedures.
 
@@ -42,11 +42,11 @@ An obvious unsatisfying issue here is the barrier laying between the two stages.
 
 As can be seen easily that the calculation of each $N_i$ is independent of others. Based on this observation, we can turn the Rinott's procedure into an asynchronous style.
 
-Generally speaking, if a program is not explictly asynchronous, it is synchronous by default. Synchronous means when calling a function or procedure in the program, the calling statement will hang up there until the completion of the executing the called function or procedure, with return value obtained. After that, the statement right after the calling statement will start executing.
+Generally speaking, if a program is not explicitly asynchronous, it is synchronous by default. Synchronous means when calling a function or procedure in the program, the calling statement will hang up there until the completion of the executing the called function or procedure, with return value obtained. After that, the statement right after the calling statement will start executing.
 
 On the contrary, asynchronous means when calling a function or procedure, the calling statement will finish immediately, with input arguments passed to the called function or procedure, but with no return value obtained, and the following statement will also start its execution.
 
-For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called funciton finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm below:
+For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called function finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm below:
 
 \begin{algorithm}
  \begin{algorithmic}[1]
@@ -64,7 +64,7 @@ For asynchronous function call, there should be some mechanism for the caller to
  \label{async_rinott_alg}
 \end{algorithm}
 
-This algorithm is identical to the previous one in mathematics, but they differ greatly in computing. In parallel computing, asynchronous execution is a common technic and we should use asynchronization where we can to reduce the serial execution in main program.
+This algorithm is identical to the previous one in mathematics, but they differ greatly in computing. In parallel computing, asynchronous execution is a common technique and we should use asynchronization where we can to reduce the serial execution in main program.
 
 \subsection{Analysis of Fully Sequential Procedure}
 
@@ -142,7 +142,7 @@ With the revision of existing simulation R\&S procedures, now it is possible to 
 
 \subsection{Overview}
 
-In parallel computing, the master-slave pattern means that there is a single master execution unit dealing with the serial part while several identical slave execution units sharing the workload which can be carried out in parallel. For simulation R\&S procedures, the serial R\&S procedure should be implemented within the master, while the independent simulation experiments should be spread out among all the slaves, with explict or implict scheduling from the master.
+In parallel computing, the master-slave pattern means that there is a single master execution unit dealing with the serial part while several identical slave execution units sharing the workload which can be carried out in parallel. For simulation R\&S procedures, the serial R\&S procedure should be implemented within the master, while the independent simulation experiments should be spread out among all the slaves, with explicit or implicit scheduling from the master.
 
 \begin{figure}[ht]
 \centering
@@ -152,7 +152,7 @@ In parallel computing, the master-slave pattern means that there is a single mas
 
 The above figure is an overview sequence diagram. As it illustrates, the start-up script will firstly start the master, then the agents. The master, including all the agents, will start its local slaves. The agent here may be regarded as a secondary master, because the whole system is deployed on a cluster and some slaves have to run on different machines rather than the same machine as master, which involves network communication from some slaves to the master via their own agent.
 
-After start-up and many trivial tasks like arguments parsing, the R\&S procedure will be running inside the master, say specifying the sampling rule, collecting the sample values and liminating inferior alternatives based on them, until the best alternative is selected. During that time, all the slaves are doing simulation experiments again and again, against different alternatives and with different random number generation seeds.
+After start-up and many trivial tasks like arguments parsing, the R\&S procedure will be running inside the master, say specifying the sampling rule, collecting the sample values and eliminating inferior alternatives based on them, until the best alternative is selected. During that time, all the slaves are doing simulation experiments again and again, against different alternatives and with different random number generation seeds.
 
 After the whole process, extensive logs are generated and will be used in further analysis. For verification purpose, the process may be carried out more than one time.
 
@@ -174,7 +174,7 @@ Since there has already been so many different combinations of R\&S procedures a
 
 Now we will look detail into the abstract programming interface of simulation task.
 
-\subsubsection{Intergrating Simulation Experiment}
+\subsubsection{Integrating Simulation Experiment}
 
 Here is the specification of this programming interface:
 
@@ -182,21 +182,21 @@ Here is the specification of this programming interface:
 public double[] sim(double[] alt, double[] args, long[] seed);
 \end{lstlisting}
 
-The first function parameter alt is an array containing all the data needed to identify and fully describe the alternative, against which to run the simulation.
+The first function parameter $alt$ is an array containing all the data needed to identify and fully describe the alternative, against which to run the simulation.
 
-The second function parameter args is an array containing the common arguments for all the simulation.
+The second function parameter $args$ is an array containing the common arguments for all the simulation.
 
-The third function parameter seed is an array of integers needed in generating uniformly distributed random numbers with the MRG32k3a algorithm. The main idea here is to make each simulation against the same alternative independent from each other in the viewpoint of statistic by attaching each simulation a different set of seeds, which is generated in master as part of the simulation input. What's more, we also need a set of seeds to generate many sets of seeds used by simulation experiments, and the "master seeds" could be specified by user.
+The third function parameter seed is an array of integers needed in generating uniformly distributed random numbers with the $MRG32k3a$ algorithm. The main idea here is to make each simulation against the same alternative independent from each other in the viewpoint of statistic by attaching each simulation a different set of seeds, which is generated in master as part of the simulation input. What's more, we also need a set of seeds to generate many sets of seeds used by simulation experiments, and the "master seeds" could be specified by user.
 
 The return value is design as an array to support multiple simulation output.
 
-Throughout the design of these extension points, we will try our best not to involve programming language dependent grammar or feature in the hope of reducing user's learning effort, just like the arrays here is plain array of double which is similar to most C-style languages, rather than advanced data structure like ArrayList provided by Java standard library.
+Throughout the design of these extension points, we will try our best not to involve programming language dependent grammar or feature in the hope of reducing user's learning effort, just like the arrays here is plain array of double which is similar to most C-style languages, rather than advanced data structure like $ArrayList$ provided by Java standard library.
 
 In a word, integrating customized simulation experiment into slave is quite easy. The only issue that needs attention here is to remember using the seeds provided from master reasonably during simulation.
 
 \subsubsection{Dealing with Thread-unsafe Library}
 
-However, the real world is not that perfect as expected. The SSJ, a famous Java library for descrete-event simulation proposed in \cite{ssj}, is not thread-safe, which means it can not guarantee correct execution within multiple threads. The reason is that it place some thread-private data into static fields of Java class, which can be accessed by all threads. To overcome this, we designed our own Java class loading policy, to reload such thread-unsafe classes inside each slave thread, such that related static fields of Java class have its own place inside each slave thread. In this way we work around temporarily, and we will leave redesigning a thread-safe library as future work.
+However, the real world is not that perfect as expected. The SSJ, a famous Java library for discrete-event simulation proposed in \cite{ssj}, is not thread-safe, which means it can not guarantee correct execution within multiple threads. The reason is that it place some thread-private data into static fields of Java class, which can be accessed by all threads. To overcome this, we designed our own Java class loading policy, to reload such thread-unsafe classes inside each slave thread, such that related static fields of Java class have its own place inside each slave thread. In this way we work around temporarily, and we will leave redesigning a thread-safe library as future work.
 
 \subsection{Master}
 
@@ -206,7 +206,7 @@ After that, some data structures are initialized, where the most important ones 
 
 \subsubsection{Communication with FIFO Queues}
 
-Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used FIFO queues, or BlockingQueue in Java.
+Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used FIFO queues, or $BlockingQueue$ in Java.
 
 The FIFO queue is is a abstract data structure that all the elements are keep in order and theoretically only two operations are supported. One is enqueue, which appends one element to the end of queue, the other is dequeue, which extract one element at the beginning of the queue. Both of them have $O(1)$ complexity. In parallel environment, the enqueue operation will stuck there if the queue is full, and it's the same for dequeue operation if the queue is empty.
 
@@ -220,7 +220,7 @@ With FIFO queues, the master could just send out simulation parameters to a queu
 
 In this way, communication cost inside single machine is dramatically reduced for both master and slaves.Except from the performance benefit it has brought in, adopting FIFO queues also helps to decouple the master and slaves, which makes the design more clear.
 
-\subsubsection{Intergrating R\&S Procedure}
+\subsubsection{Integrating R\&S Procedure}
 
 As the simulation experiment is called through an abstract programming interface in slave, in master the R\&S procedure is also dealt in this way. The implementation of self-customized R\&S procedure should follow the specification, or function signature below:
 
@@ -228,15 +228,15 @@ As the simulation experiment is called through an abstract programming interface
 public int ras(double[][] alts, double[] args, SimHelper helper);
 \end{lstlisting}
 
-Here the first function argument alts stands for all the alternatives. Noticed that it is an two-dimension array and each alternative is fully represented by an one-dimension array inside. For instance, in the (s, S) inventory problem, an alternative could be fully represented by two parameters $s$ and $S$ inside that one-dimension array. Usually a programmer would like to add an extra $id$ as the first parameter representing the alternative for convenience.
+Here the first function argument $alts$ stands for all the alternatives. Noticed that it is an two-dimension array and each alternative is fully represented by an one-dimension array inside. For instance, in the (s, S) inventory problem, an alternative could be fully represented by two parameters $s$ and $S$ inside that one-dimension array. Usually a programmer would like to add an extra $id$ as the first parameter representing the alternative for convenience.
 
-The second function argument args stands for the parameters needed to carry out the R\&S procedure. For example, in the Rinott's procedure it will contain $\alpha$, $\delta$ and $n_0$. Programmer should arrange these parameters in this array.
+The second function argument $args$ stands for the parameters needed to carry out the R\&S procedure. For example, in the Rinott's procedure it will contain $\alpha$, $\delta$ and $n_0$. Programmer should arrange these parameters in this array.
 
 The third function argument helper is a self-defined type, or class in Java, which contains all the needed callable programming interfaces, or pre-build-in functions for implementing a self-customized R\&S procedure.
 
 The return value is the id of the selected alternative.
 
-Now we introduce the programming interfaces provided for implementing R\&S procedures. Firstly let's look at two plain old java objects, or POJOs for shout, which act like the struct in C-programming language. They are the wrappers for simulation input and output, so we name them as SimInput and SimOutput, respectively. We only list the fields here, and will explain the meaning of each field later during the explanation of programming interfaces.
+Now we introduce the programming interfaces provided for implementing R\&S procedures. Firstly let's look at two plain old Java objects, or POJOs for shout, which act like the struct in C-programming language. They are the wrappers for simulation input and output, so we name them as $SimInput$ and $SimOutput$, respectively. We only list the fields here, and will explain the meaning of each field later during the explanation of programming interfaces.
 
 \begin{lstlisting}[language=Java]
 public class SimInput {
@@ -267,11 +267,11 @@ The only synchronized interface is provided as:
 public SimOutput[] sim(int[] altIDs);
 \end{lstlisting}
 
-Here the only parameter altIDs is the list of ids of alternatives need to be simulated against, each for once. Duplicated ids appeared in this array is allowed for replicated execution of simulation.
+Here the only parameter $altIDs$ is the list of ids of alternatives need to be simulated against, each for once. Duplicated ids appeared in this array is allowed for replicated execution of simulation.
 
 For example, during the implementation of the Rinott's procedure, this interface should be called twice, say, each in one stage. In the first stage the length of this array should be $kn_0$, standing for simulating against all the $k$ alternatives for $n_0$ times. As for in the second stage, the length of this array should be dependent on the result of first stage.
 
-The return value here is an array of SimOutput and each SimOutput stands for the result of one simulation experiment. The order inside this array can be totally different from that in the input altIDs array, which doesn't matter since the altID field is exactly the one from the input altIDs array. The result field will contain the simulation result, using an array to support multiple result values from simulation experiment.
+The return value here is an array of $SimOutput$ and each $SimOutput$ stands for the result of one simulation experiment. The order inside this array can be totally different from that in the input $altIDs$ array, which doesn't matter since the $altID$ field is exactly the one from the input $altIDs$ array. The result field will contain the simulation result, using an array to support multiple result values from simulation experiment.
 
 Still in the example of the Rinott's procedure, since this interface is synchronized, it won't return until all the simulation results are ready, which archives an implicit barrier here. In this way, the classic two-staged Rinott's procedure can be fully implemented with this synchronized interface.
 
@@ -283,7 +283,7 @@ The asynchronized interface for sending out simulation request is provided as:
 public int asyncSim(int[] altIDs);
 \end{lstlisting}
 
-Here the only parameter altIDs is the same meaning as that in the synchronized interface, while it will return immediately with an single int value representing an internal identification for synchronized simulation batch. This value will be used in implementing future procedure.
+Here the only parameter $altIDs$ is the same meaning as that in the synchronized interface, while it will return immediately with an single int value representing an internal identification for synchronized simulation batch. This value will be used in implementing future procedure.
 
 After calling this interface, the procedure can do what ever it needs to do, or call the asynchronized interface for collecting simulation result, which is provided as:
 
@@ -293,13 +293,13 @@ public SimOutput[] takeSimOutputs(int n, boolean block);
 
 Here the first parameter n is the number of simulation result demanded by caller, the second parameter block is a bool variable with following logic: If this variable is set to true, then this function will not return until n simulation result are ready for taken. Otherwise if this variable  is set to false, then this function will always return immediately no matter the n simulation result is ready. It is possible that only several simulation results are return with the number smaller than n, or no result get returned at all. Caller of this function can judge the situation from the return value.
 
-A typical example of using these asynchronized interfaces is the implementation of the revised fully sequentially procedures. After sending out a certain number of simulation experiment requests, calling takeSimOutputs with $n = 1$ and $block = true$ repeatedly, meaning that the fully sequential procedure could do something after each new sample value. The appending simulation requests are also sent out here, archiving customized sampling rule.
+A typical example of using these asynchronized interfaces is the implementation of the revised fully sequentially procedures. After sending out a certain number of simulation experiment requests, calling $takeSimOutputs$ with $n = 1$ and $block = true$ repeatedly, meaning that the fully sequential procedure could do something after each new sample value. The appending simulation requests are also sent out here, archiving customized sampling rule.
 
 \subsection{Agent}
 
-\subsubsection{Scale Out}
+\subsubsection{Scale Out to Cluster}
 
-With a limited number of slave threads inside a single machine, it is very still far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
+With a limited number of slave threads inside a single machine, it is enough to have master and slave, but it's still very far way from reaching the bottle neck of the single master structure. In other words, we can get more speed up by simply adding slaves threads.
 
 However, the maximum number of slave threads is empirically limited by the total number of hardware cores on that machine. We can definitely add more slave threads, but without enough hardware parallel executing units, namely cores, it is concurrency in fact, rather than real parallel. Adding more software threads than hardware executing units will hardly gain extra speed up, but will demand more scheduling effort from operating system.
 
@@ -312,22 +312,23 @@ A common solution is to compose a cluster with several machines where each of th
 In agent, we have two dedicated threads for managing buffered simulation input and output, respectively. The policy for input management is here:
 
 \begin{algorithm}
- \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
- \end{algorithmic}
- \caption{Vector Filling Procedure}
- \label{input_buf_alg}
+\begin{algorithmic}[1]
+\While{\text{true}}
+  \If{$inputQueue.size() < s1$}
+    \State{send one request for $(s2 - s1)$ simulation inputs via network}
+    \ForAll{obtained simulation inputs}
+      \State{inputQueue.put(input)}
+    \EndFor
+  \Else
+    \State{sleep for 1 second}
+  \EndIf
+\EndWhile
+\end{algorithmic}
+\caption{Simulation Input Management in Agent}
+\label{input_buf_alg}
 \end{algorithm}
 
-It is almost the $(s, S)$ inventory policy, and the two parameters can be specified manually. The $s$ should not be too small, otherwise some slaves may be idle due to lacking simulation input. We use the number of the slaves attached with this agent. Meanwhile, $S$ should not be too large, since it won't speed-up by prefetching too many simulation input, which only takes the risk fetching outdated input, which means that the corresponding alternative gets eliminated during the waiting in the buffer for so long.
+It is almost the $(s, S)$ inventory policy, and the two parameters can be specified manually. The $s$ should not be too small, otherwise some slaves may be idle due to lacking simulation input. We use the number of the slaves attached with this agent. Meanwhile, $S$ should not be too large, since it won't speed-up by pre-fetching too many simulation input, which only takes the risk fetching outdated input, which means that the corresponding alternative gets eliminated during the waiting in the buffer for so long.
 
 The policy for output management is much more straightforward, just send out all the simulation output as soon as possible, because the earlier master can get these output, the more chance it gets to eliminate inferior alternatives. Currently this policy is perfectly okay since we don't use too many machines. If the number of agents or machines increases dramatically, we need to change this aggressive policy.
 
@@ -347,7 +348,7 @@ In this way it is much more user friendly than command line. Beginning users cou
 
 \section{System Evaluation}
 
-In this section we will present the numerical results from the latest version of our implementation. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
+In this section we will present the numerical results from the latest version of our system. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
 
 \subsection{Hardware Environment}
 
@@ -363,7 +364,7 @@ In our experiment, in order to guarantee an good parallel computing status among
 
 \subsection{Software Environment}
 
-Commercial software components like the Windows from Micro Software or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
+Commercial software components like the Windows from Microsoft or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
 
 \subsubsection{Operating System}
 
