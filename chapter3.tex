@@ -1,32 +1,74 @@
-\chapter{System Construction and Evaluation}
+\chapter{System Construction}
 
-\section{Parallel Implementation of Ranking and Selection Procedure}
+\section{Parallelism Analysis of Existing R\&S Procedures}
 
-As can be seen from above, due to the complicated way in which the computing power grows in the age of parallel computing, it is impossible to gain speed-up in problem solving without carefully design a parallelism plan against targeted problem. Now we will start this part by analysing the parallelism inside the existing procedures.
+Independent is a frequently appeared modifier in literatures of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesigning simulation R\&S procedures into parallel.
 
-\subsection{Parallelism Analysis of Existing Procedures}
-
-Independent is a frequently appeared modifier in literatures of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesign R\&S into parallel.
-
-However that's only for the simulation, or sampling part. The procedure itself is completely in a serial style, namely one step is often dependent on the one prior to it. Sometimes even loops exist among steps. This serial style composes an implicit dependency chain, and becoming the potential performance bottle-neck for the whole implementation.
+However the independency is only for the simulations part. The R\&S procedure itself is completely in a serial style, namely one step is often dependent on the one prior to it. Sometimes even loops exist among steps. This serial style composes an implicit dependency chain, and becoming the potential performance bottle-neck for the whole implementation.
 
 Now let's look into the two representative procedures we have reviewed before.
 
-\subsubsection{Rinott's Procedure}
+\subsection{Analysis of the Rinott's Procedure}
 
-In the beginning part of Ronott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
+In the beginning part of the Ronott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
 
-Later sampling tasks in the initialize step, or first-stage, can be paralleled due to the independence. However, a hidden lock, or barrier lays here, since we have to wait until all the simulation experiments return its result, or sample value before we move on to the next step. Luckily to archive load balance here is quite easy.
+Later, sampling tasks in the initialize step, or first-stage, can be paralleled due to the independence. However, a hidden lock, or barrier lays here, since we have to wait until all the simulation experiments return its result, or sample value before we move on to the next step. Luckily to archive load balance here is quite easy.
 
 As for the sampling tasks in the stopping step, or second-stage, it is similar to those mentioned above, only differs that the required sample numbers of different alternatives are not the same, which doesn't affect parallelism at all. Again, a implicit barrier is needed before we report the final selection.
 
 Besides, the calculation after each barrier should be considered as the serial part of the whole program.
 
-Anyway, Rinott's procedure is fairly easy getting paralleled.
+Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as follows:
 
-\subsubsection{Fully Sequential Procedure}
+\begin{algorithm}
+ \begin{algorithmic}[1]
+ \Require $k, \alpha, \delta, n_0$
+ \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
+ \State 
+ \While{$r\not=0$}
+ \State $a\gets b$
+ \State $b\gets r$
+ \State $r\gets a\bmod b$
+ \EndWhile
+ \State \textbf{return} $b$ \Comment{The gcd is b}
+ \end{algorithmic}
+ \caption{Rinott's Procedure}
+ \label{rinott_alg}
+\end{algorithm}
 
-Although Rinott's procedure can get paralleled with fairly little effort, there is still enough motivation for us to study the parallelism of fully sequential procedures, since such procedure can solve problem with smaller sample size, namely total computing effort in terms of serial computing. Let's still take the one in \cite{ras-seq-jeff} as an example.
+An obvious unsatisfying issue here is the barrier laying between the two stages. Later we will modify the Rinott's procedure a little to get rid of this barrier, because essentially speaking, the existing of this barrier is due to the "sequential nature" when we describing R\&S procedures.
+
+\subsubsection{Asynchronous Rinott's Procedure}
+
+As can be seen easily that the calculation of each $N_i$ is independent of others. Based on this observation, we can turn the Rinott's procedure into an asynchronous style.
+
+Generally speaking, if a program is not explictly asynchronous, it is synchronous by default. Synchronous means when calling a function or procedure in the program, the calling statement will hang up there until the completion of the executing the called function or procedure, with return value obtained. After that, the statement right after the calling statement will start executing.
+
+On the contrary, asynchronous means when calling a function or procedure, the calling statement will finish immediately, with input arguments passed to the called function or procedure, but with no return value obtained, and the following statement will also start its execution.
+
+For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called funciton finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm below:
+
+\begin{algorithm}
+ \begin{algorithmic}[1]
+ \Require $k, \alpha, \delta, n_0$
+ \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
+ \State 
+ \While{$r\not=0$}
+ \State $a\gets b$
+ \State $b\gets r$
+ \State $r\gets a\bmod b$
+ \EndWhile
+ \State \textbf{return} $b$ \Comment{The gcd is b}
+ \end{algorithmic}
+ \caption{Asynchronous Rinott's Procedure}
+ \label{async_rinott_alg}
+\end{algorithm}
+
+This algorithm is identical to the previous one in mathematics, but they differ greatly in computing. In parallel computing, asynchronous execution is a common technic and we should use asynchronization where we can to reduce the serial execution in main program.
+
+\subsection{Analysis of Fully Sequential Procedure}
+
+Although the Rinott's procedure can get well paralleled with fairly little effort, there is still enough motivation for us to study the parallelism of fully sequential procedures, since such procedure can solve problem with potentially smaller sample size, namely total computing effort in terms of serial computing. Let's still take the one in \cite{ras-seq-jeff} as an example.
 
 In the beginning part of this procedure, it's the same as Ronott's procedure and work here has to be done serially.
 
@@ -44,35 +86,67 @@ It should be noticed that, carrying out a global comparison will need mutual exc
 
 Solutions based on decreasing comparison time sounds reasonable, but they waste elimination chances in potential. Besides, existing theory does not offer enough support.
 
-All these trouble lays on the point that the original typical fully sequential procedures are not designed specifically for parallel environment at all. It's time to revise conventional fully sequential R\&S procedure and we will introduce two revised fully sequential procedures which are more suitable in parallel environment, in the next section.
+Thirdly, can we get rid of the barrier at the end of first stage, as what we have done in the Asynchronous Rinott's procedure?
 
-\subsection{Revised Fully Sequential Procedures}
+All these trouble lays on the point that the original typical fully sequential procedures are not designed specifically for parallel environment at all. It's time to revise conventional fully sequential R\&S procedure and now we will introduce two revised fully sequential procedures which are more suitable in parallel environment.
 
 \subsubsection{Vector Filling Procedure}
 
-The basic idea for vector fill procedure, or VF for short, is sticking to perform comparisons based on the originally specified sampling sequence, by using an vector recording the sampling values exactly in the order specified by the sampling rule.
+The basic idea for vector fill procedure, or VF for short, is sticking to perform comparisons based on the originally specified sampling sequence, by using an vector recording the sample values exactly in the order specified by the sampling rule. The corresponding algorithm is as follows:
 
-In this way, the first problem mentioned above get solved with the original statistical validity staying unchanged. However as for the second problem, the VF procedure may not use all obtained sample values at the time of each comparison, although procedure users do have a control on comparison opportunity.
+\begin{algorithm}
+ \begin{algorithmic}[1]
+ \Require $k, \alpha, \delta, n_0$
+ \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
+ \State 
+ \While{$r\not=0$}
+ \State $a\gets b$
+ \State $b\gets r$
+ \State $r\gets a\bmod b$
+ \EndWhile
+ \State \textbf{return} $b$ \Comment{The gcd is b}
+ \end{algorithmic}
+ \caption{Vector Filling Procedure}
+ \label{vf_alg}
+\end{algorithm}
 
-From the viewpoint of implementation, the most critical issue is that essentially the VF procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
+In this way, the first problem mentioned above get solved immediately with the original statistical validity staying unchanged, and the third problem is also not a big deal, since we can just consider the alternatives with sample value greater than $n_0$ when carrying out the comparison and elimination. However as for the second problem, the VF procedure may not use all obtained sample values at the time of each comparison, which makes it too conservative to be efficient.
+
+And a critical implementation issue here is that essentially the VF procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
 
 \subsubsection{Asymptotic Parallel Sequential Procedure}
 
-VF procedure is conservative in the sense that in order to keep most statistical validity it does not utilize all the obtained sample values, which loses many potential chances to eliminate inferior alternative earlier, thus is not that satisfying in speeding up the whole process.
+To over come the weaknesses in vector filling procedure, asymptotic parallel sequential procedure, or APS for short, is developed to allow unequal sample sizes for all alternatives and make elimination decisions based on all obtained sample values. In \cite{ras-seq-parallel} it has been shown that the asymptotically validity can be guaranteed as the indifference-zone parameter goes to zero. The corresponding algorithm is as follows:
 
-To over come this weakness of vector filling procedure, asymptotic parallel sequential procedure, or APS for short, is developed to allow unequal sample sizes for all alternatives and make elimination decisions based on all obtained sample values. It has been shown that the asymptotically validity can be guaranteed as the indifference-zone parameter goes to zero. Interested reader may refer to \cite{ras-seq-parallel} for more details.
+\begin{algorithm}
+ \begin{algorithmic}[1]
+ \Require $k, \alpha, \delta, n_0$
+ \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
+ \State 
+ \While{$r\not=0$}
+ \State $a\gets b$
+ \State $b\gets r$
+ \State $r\gets a\bmod b$
+ \EndWhile
+ \State \textbf{return} $b$ \Comment{The gcd is b}
+ \end{algorithmic}
+ \caption{Vector Filling Procedure}
+ \label{aps_alg}
+\end{algorithm}
 
 Since APS procedure can fully utilize all the obtained sample values, it is definitely more efficient in eliminating inferior alternatives than VF. Besides, APS procedure doesn't require recording all the sample values obtained. It only needs some summarising information of obtained sample values like summation, summation of square and so on, which can be updated as new sample value obtained. This feature lowers the storage space demand and in this way the whole data of APS procedure can be easily fit into main memory, which guarantees the order of computing speed.
 
-\subsection{Architecture Based on Master-Slave}
+\section{System Design}
 
-With the revision of existing fully sequential R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
+\subsection{Overview}
+
+With the revision of existing simulation R\&S procedures, now it is possible to implement serial ranking and selection within an architecture for parallel execution. We will adopt the master-slave pattern as the higher lever architecture for its flexibility to support features aside of embarrassingly parallel part in R\&S procedures and scalability to deal with the large-scale size in selecting the best problem. Besides, it is also fairly easy from a implementation viewpoint.
 
 As is introduced in section 3.5.3, master-slave means a master execution unit dealing with the serial part while several slave execution units share the workload which can be carried out in parallel. In the current scenario, the ranking and selection, including specifying sampling rule and making elimination according to obtained sample values from simulation, should be implemented on master, while the independent simulation experiments should be shared among all the slaves, with scheduling from the master.
 
 In this section we will mainly introduce this architecture inside the scope of a single machine, where the whole program is inside a single process and master or slaves are all threads inside this process. At the end we will take a look at scaling it out to a cluster.
 
-\subsubsection{Master}
+\subsection{Master}
 
 As is mentioned above, master will take charge of essential serial steps in ranking and selection procedures, and one thing that should be noticed here is that the master part is not exactly the main thread for the whole program, since there's more "duty" work left to do in the main or entrance thread like parsing parameters of R\&S procedure, inputting the configurations of every alternative and other program level configurations like number of slave threads or directory for log files. Interested reader should refer to the code directly.
 
@@ -84,7 +158,7 @@ In other words, the core components are programmed with only dependent on the ab
 
 As for the detailed specifications of R\&S implementation and simulation implementation, we will look into details in later part specifically introducing the extension point for self-customized R\&S procedure. And till now we have finished introducing the very abstract master, which is started from almost the end of the main thread and interacts with specific ranking and selection logic through abstract programming interfaces.
 
-\subsubsection{Slave}
+\subsection{Slave}
 
 Generally speaking, there should be multiple instances of slave within a master-slave structure. Within the single machine scope, a slave instance is a dedicated thread and different slave threads are identical in code while different in the data it is processing and the status it is in.
 
@@ -96,7 +170,11 @@ Both argument fetching step and result submitting step involve communication wit
 
 As for the simulation step, again it is done simply by calling the abstract programming interface of simulation task, thus supporting self-customized simulation experiments. Specification of this programming interface will be described in later section.
 
-\subsubsection{User Interface}
+\subsection{Worker}
+
+\subsubsection{Dealing with Thread-unsafe Library}
+
+\subsection{User Interface}
 
 In order to reduce the study cost of users who adopt our implementation, well designed user interface is necessary part in the whole system. In our implementation, the user interface can be divided into two kinds. One is for users using our implementation directly, the other is for users extending in ranking and selection procedure and simulation experiment.
 
@@ -220,11 +298,7 @@ The return value is design as an array to support multiple simulation results.
 
 Generally speaking issues needed consideration in integrating an simulation experiment is much fewer than those in developing a new R\&S procure. The only thing should get attention here is how to use the seeds provided from master reasonably during simulation.
 
-\subsection{Features for Performance}
-
-Till now we have introduced our work in higher level for a efficient and flexible architecture. In this section we will describe two low level designs specifically for better parallel performance. One is to reduce communication cost by buffering the messages with an FIFO queue, the other is to speed up serial comparison by adopting the heap, which is also a common data structure.
-
-\subsubsection{Communication with FIFO Queues}
+\subsection{Communication with FIFO Queues}
 
 Direct communication among the master and slaves are quite expensive, in the sense that slaves have to take turns when communicating with master and the master itself needs to guarantee mutual exclusion, which put more burden on the single threaded master. In order to overcome this shortage, we have used an FIFO queue, or a BlockingQueue in Java.
 
@@ -242,7 +316,7 @@ In this way, communication cost inside single machine is dramatically reduced fo
 
 Except from the performance benefit it has brought in, adopting FIFO queues also helps to decouple the master and slaves, which makes the design more clear.
 
-\section{Numerical Experiment and Analysis}
+\section{System Evaluation}
 
 In this section we will present the numerical results from the latest version of our implementation. We will start from listing the hardware and software environment of our experiment, then present the results when solving the three-stage buffer allocation problem, and finally give an analysis of the result.
 
