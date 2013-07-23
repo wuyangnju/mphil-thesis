@@ -225,7 +225,7 @@ In this way, communication cost inside single machine is dramatically reduced fo
 As the simulation experiment is called through an abstract programming interface in slave, in master the R\&S procedure is also dealt in this way. The implementation of self-customized R\&S procedure should follow the specification, or function signature below:
 
 \begin{lstlisting}[language=Java]
-public int ras(double[][] alts, double[] args, SimHelper helper);
+public int ras(double[][] alts,double[] args,SimHelper helper);
 \end{lstlisting}
 
 Here the first function argument $alts$ stands for all the alternatives. Noticed that it is an two-dimension array and each alternative is fully represented by an one-dimension array inside. For instance, in the (s, S) inventory problem, an alternative could be fully represented by two parameters $s$ and $S$ inside that one-dimension array. Usually a programmer would like to add an extra $id$ as the first parameter representing the alternative for convenience.

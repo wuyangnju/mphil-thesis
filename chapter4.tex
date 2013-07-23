@@ -35,7 +35,7 @@ When implementing heap, we can used an array, named $a$, to represent such tree 
 
 It's still that example and it can be shown that the two children nodes of node $a[i]$ can be represented as $a[2 \times i + 1]$ and $a[2 \times i + 2]$, if exists.
 
-\subsection{$O(1)$ Find Operation in Heap}
+\subsection{$O(1)$ Query Operation in Heap}
 
 In our specific scenario, the node of heap stands for an alternative with statistic information of its sample values. We used an external array, since the ids of alternatives are natural numbers from $0$ to $k - 1$, to track the internal location, namely the index of the underlay array, of corresponding alternative node inside the heap. It means that we have implemented our own heap which differs from the one in Java standard library to support $O(1)$ complexity query from alternative id to corresponding statistic information.
 
