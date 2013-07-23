@@ -136,13 +136,13 @@ With the help of operating system, processes are isolated from each other, in th
 
 On the other hand, processes on the same physical machine can communicate with each other through mechanisms provided by operating system, like shared memory, pipeline, where the output of one process get passed to another as input, and so on.
 
-Achieving parallelism through multiple processes is based on the underlay distributed memory architecture, even they're on the same physical machine, since the operating system isolated the memories by virtual memory mechanise. Another famous memory architecture is called shared memory architecture, and we will use the concept of thread to illustrate it in the next paragraph.
+Achieving parallelism through multiple processes is based on the underlying distributed memory architecture, even they're on the same physical machine, since the operating system isolated the memories by virtual memory mechanism. Another famous memory architecture is called shared memory architecture, and we will use the concept of thread to illustrate it in the next paragraph.
 
 \subsubsection{Thread inside Process}
 
-Thread is a lighter concept compared with process in the sense that it is always contained inside a process. A process can have multiple threads, but at least have one, the "main" thread. Scheduling and cooperating multiple threads inside the same process involves less about operating system, thus saving computing resources. Besides, the underlay shared memory architecture, covering the memory spaces of containing process, has also provided more convenience and flexibility for programmers.
+Thread is a lighter concept compared with process in the sense that it is always contained inside a process. A process can have multiple threads, but at least have one, the "main" thread. Scheduling and cooperating multiple threads inside the same process involves less about operating system, thus saving computing resources. Besides, the underlying shared memory architecture, covering the memory spaces of containing process, has also provided more convenience and flexibility for programmers.
 
-Except from thread, or precisely the POSIX Thread, OpenMP is another most widely used shared memory API. API is short for Application Programming Interfaces and can be regarded as the conventional way to use libraries installed on or provided by operating system. Both two APIs are supposed to be provided on different operating systems, in another word, cross-platform. However, the API related to process will be different if they're on different kind of operating systems since its highly coupled with underlay operating system and not cross-platform.
+Except from thread, or precisely the POSIX Thread, OpenMP is another most widely used shared memory API. API is short for Application Programming Interfaces and can be regarded as the conventional way to use libraries installed on or provided by operating system. Both two APIs are supposed to be provided on different operating systems, in another word, cross-platform. However, the API related to process will be different if they're on different kind of operating systems since its highly coupled with underlying operating system and not cross-platform.
 
 \subsubsection{Communication through Protocol}
 

@@ -18,13 +18,7 @@ The most popular software pipeline should be Unix pipeline. It composes Unix com
 
 \section{Master-Slave}
 
-Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task. The figure later in this section is a brief illustration of how master-slave pattern works.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=120mm]{master-slave-brief.png}
-\caption{A brief illustration of master-slave pattern}
-\end{figure}
+Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task.
 
 Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
 
@@ -32,7 +26,7 @@ Master-Slave pattern is a high-level abstract pattern. There're many specific in
 
 Fork-join maybe the simplest instance of master-slave structure. In this instance the master will start or fork many slaves first, then wait for or join the finish point of all the slaves, with a barrier generally.
 
-Master-Slave structure is so high-level abstract that even the Hadoop map-reduce, which we will introduce in the next section, has a master-slave structured underlay.
+Master-Slave structure is so high-level abstract that even the Hadoop map-reduce, which we will introduce in the next section, has a master-slave structured underlying.
 
 \section{Map-Reduce}
 
