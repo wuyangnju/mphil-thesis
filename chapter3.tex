@@ -2,15 +2,15 @@
 
 \section{Parallelism Analysis of Existing R\&S Procedures}
 
-Independent is a frequently appeared modifier in literatures of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesigning simulation R\&S procedures into parallel.
+Independent is a frequently appeared modifier in literature of R\&S. Although this modifier is kept mainly for ensuring good statistical properties of sample values, it also save us much burdens redesigning simulation R\&S procedures into parallel.
 
-However the independency is only for the simulations part. The R\&S procedure itself is completely in a serial style, namely one step is often dependent on the one prior to it. Sometimes even loops exist among steps. This serial style composes an implicit dependency chain, and becoming the potential performance bottle-neck for the whole implementation.
+However the independence is only for the simulations part. The R\&S procedure itself is completely in a serial style, namely one step is often dependent on the one prior to it. Sometimes even loops exist among steps. This serial style composes an implicit dependency chain, and becoming the potential performance bottle-neck for the whole implementation.
 
 Now let's look into the two representative procedures we have reviewed before.
 
 \subsection{Analysis of the Rinott's Procedure}
 
-In the beginning part of the Ronott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
+In the beginning part of the Rinott's procedure, things like setting up the parameters and calculating the Rinott's constant have to be done serially.
 
 Later, sampling tasks in the initialize step, or first-stage, can be paralleled due to the independence. However, a hidden lock, or barrier lays here, since we have to wait until all the simulation experiments return its result, or sample value before we move on to the next step. Luckily to archive load balance here is quite easy.
 
@@ -21,19 +21,33 @@ Besides, the calculation after each barrier should be considered as the serial p
 Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as follows:
 
 \begin{algorithm}
- \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
- \end{algorithmic}
- \caption{Rinott's Procedure}
- \label{rinott_alg}
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$ \\
+\State initialize first stage simulation input vector $altIds \gets \emptyset$ \Comment{use id of alternative to represent the simulation input}
+\For{$i = 0 \to k - 1$}
+  \For{$j = 0 \to n_0 - 1$}
+    \State append $i$ into $altIds$
+  \EndFor
+\EndFor
+\State simulate against all simulation input in $altIds$ \textbf{in parallel}, and store the result into $X_{ij}$ \\
+\State initialize first stage simulation input vector $altIds \gets \emptyset$
+\For{$i = 0 \to k - 1$}
+  \State $\bar{X_i}(n_0) = \frac{1}{n_0} \sum_{j=0}^{n_0 - 1}X_{ij}$
+  \State $S_i^2 = \frac{1}{n_0 - 1} \sum_{j=0}^{n_0 - 1}(X_{ij} - \bar{X_i}(n_0))^2$
+  \State $N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\}$
+  \For{$j = 0 \to (N_0 - n_0) - 1$}
+    \State append $i$ into $altIds$
+  \EndFor
+\EndFor
+\State simulate against all simulation input in $altIds$ \textbf{in parallel}, and store the result into $X_{ij}$ \Comment{this time $j \geq n_0$} \\
+\For{$i = 0 \to k - 1$}
+  \State $\bar{X_i}(N_0) = \frac{1}{N_0} \sum_{j=0}^{N_0 - 1}X_{ij}$
+\EndFor \\
+\Return $\argmax_{i}\bar{X_i}(N_0)$
+\end{algorithmic}
+\caption{Rinott's Procedure}
+\label{rinott_alg}
 \end{algorithm}
 
 An obvious unsatisfying issue here is the barrier laying between the two stages. Later we will modify the Rinott's procedure a little to get rid of this barrier, because essentially speaking, the existing of this barrier is due to the "sequential nature" when we describing R\&S procedures.
@@ -49,19 +63,42 @@ On the contrary, asynchronous means when calling a function or procedure, the ca
 For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called function finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm below:
 
 \begin{algorithm}
- \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
- \end{algorithmic}
- \caption{Asynchronous Rinott's Procedure}
- \label{async_rinott_alg}
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$ \\
+\State initialize simulation input vector $altIds \gets \emptyset$ \Comment{use id of alternative to represent the simulation input}
+\For{$i = 0 \to k - 1$}
+  \For{$j = 0 \to n_0 - 1$}
+    \State append $i$ into $altIds$
+  \EndFor
+\EndFor
+\State start simulating against all simulation input in $altIds$ \textbf{in parallel and asynchronously}
+\State $samplingCount \gets k \times n_0$ \\
+\State initialize $count[k], sum[k], sumOfSquare[k]$
+\While {$samplingCount > 0$}
+  \State $simOutput \gets $ take one generated simulation output
+  \State $i \gets simOutput.altId$
+  \State update corresponding $count[i], sum[i], sumOfSquare[i]$
+  \State $samplingCount \gets samplingCount -1$
+  \If{$count[i] = n_0$}
+	\State $mean \gets sum[i] / count[i]$
+	\State $S2 \gets (sumOfSquare[i] - count[i] \times mean \times mean) / (count[i] - 1)$
+	\State $N \gets \max\{n_0, \lceil \frac{h^2S2}{\delta^2} \rceil\}$
+	\If{$N > n_0$}
+	  \State initialize simulation input vector $altIds \gets \emptyset$
+      \For{$j = 0 \to (N - n_0) - 1$}
+        \State append $i$ into $altIds$
+      \EndFor
+	  \State add simulations against input in $altIds$ as new \textbf{asynchronous} task
+	  \State $samplingCount \gets samplingCount + (N - n_0)$
+	\EndIf
+  \EndIf
+\EndWhile\\
+\\
+\Return $\argmax_{i} sum[i] / count[i]$
+\end{algorithmic}
+\caption{Asynchronous Rinott's Procedure}
+\label{async_rinott_alg}
 \end{algorithm}
 
 This algorithm is identical to the previous one in mathematics, but they differ greatly in computing. In parallel computing, asynchronous execution is a common technique and we should use asynchronization where we can to reduce the serial execution in main program.
