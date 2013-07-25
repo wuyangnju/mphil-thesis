@@ -18,33 +18,27 @@ As for the sampling tasks in the stopping step, or second-stage, it is similar t
 
 Besides, the calculation after each barrier should be considered as the serial part of the whole program.
 
-Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as follows:
+Anyway, Rinott's procedure is fairly easy getting paralleled and we can directly turn it into algorithm as algorithm \ref{rinott_alg}.
 
 \begin{algorithm}
 \begin{algorithmic}[1]
 \Require $k, \alpha, \delta, n_0$
-\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$ \\
-\State initialize first stage simulation input vector $altIds \gets \emptyset$ \Comment{use id of alternative to represent the simulation input}
+\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State simulate against alternatives with id in $altIds$ \textbf{in parallel}; store result into $X_{ij}$
+\State $altIds2 \gets \emptyset$
 \For{$i = 0 \to k - 1$}
-  \For{$j = 0 \to n_0 - 1$}
-    \State append $i$ into $altIds$
-  \EndFor
-\EndFor
-\State simulate against all simulation input in $altIds$ \textbf{in parallel}, and store the result into $X_{ij}$ \\
-\State initialize first stage simulation input vector $altIds \gets \emptyset$
-\For{$i = 0 \to k - 1$}
-  \State $\bar{X_i}(n_0) = \frac{1}{n_0} \sum_{j=0}^{n_0 - 1}X_{ij}$
-  \State $S_i^2 = \frac{1}{n_0 - 1} \sum_{j=0}^{n_0 - 1}(X_{ij} - \bar{X_i}(n_0))^2$
+  \State $\bar{X_i}(n_0) = \frac{1}{n_0} \sum_{j=0}^{n_0 - 1}X_{ij}$;  $S_i^2 = \frac{1}{n_0 - 1} \sum_{j=0}^{n_0 - 1}(X_{ij} - \bar{X_i}(n_0))^2$;
   \State $N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\}$
   \For{$j = 0 \to (N_0 - n_0) - 1$}
-    \State append $i$ into $altIds$
+    \State append $i$ into $altIds2$
   \EndFor
 \EndFor
-\State simulate against all simulation input in $altIds$ \textbf{in parallel}, and store the result into $X_{ij}$ \Comment{this time $j \geq n_0$} \\
+\State simulate against alternatives with id in $altIds2$ \textbf{in parallel}; store result into $X_{ij}$
 \For{$i = 0 \to k - 1$}
   \State $\bar{X_i}(N_0) = \frac{1}{N_0} \sum_{j=0}^{N_0 - 1}X_{ij}$
-\EndFor \\
-\Return $\argmax_{i}\bar{X_i}(N_0)$
+\EndFor
+\State \Return $\argmax_{i}\bar{X_i}(N_0)$
 \end{algorithmic}
 \caption{Rinott's Procedure}
 \label{rinott_alg}
@@ -60,42 +54,32 @@ Generally speaking, if a program is not explicitly asynchronous, it is synchrono
 
 On the contrary, asynchronous means when calling a function or procedure, the calling statement will finish immediately, with input arguments passed to the called function or procedure, but with no return value obtained, and the following statement will also start its execution.
 
-For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called function finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm below:
+For asynchronous function call, there should be some mechanism for the caller to obtain the return value after the called function finish its execution. It could be polling, say the caller check somewhere repeatedly to see whether the result is generated, or notification, namely the called function will notify the caller when it finishes executing and the caller will take corresponding action, or precisely, execute pre-specified call-back function. Here to keep it simple we choose the polling policy, and we have another algorithm \ref{async_rinott_alg}.
 
 \begin{algorithm}
 \begin{algorithmic}[1]
 \Require $k, \alpha, \delta, n_0$
-\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$ \\
-\State initialize simulation input vector $altIds \gets \emptyset$ \Comment{use id of alternative to represent the simulation input}
-\For{$i = 0 \to k - 1$}
-  \For{$j = 0 \to n_0 - 1$}
-    \State append $i$ into $altIds$
-  \EndFor
-\EndFor
-\State start simulating against all simulation input in $altIds$ \textbf{in parallel and asynchronously}
-\State $samplingCount \gets k \times n_0$ \\
-\State initialize $count[k], sum[k], sumOfSquare[k]$
-\While {$samplingCount > 0$}
-  \State $simOutput \gets $ take one generated simulation output
-  \State $i \gets simOutput.altId$
-  \State update corresponding $count[i], sum[i], sumOfSquare[i]$
-  \State $samplingCount \gets samplingCount -1$
+\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State simulate against alternatives with id in $altIds$ \textbf{in parallel and asynchronously}
+\State $sCount \gets k \times n_0$ \Comment{sCount: sampling count}
+\State initialize $count[k], sum[k], sos[k]$ \Comment{sos: sum of square}
+\While {$sCount > 0$}
+  \State $simOutput \gets $ take one generated simulation output; $i \gets simOutput.altId$
+  \State update corresponding $count[i], sum[i], sumOfSquare[i]$; $sCount \gets sCount - 1$
   \If{$count[i] = n_0$}
-	\State $mean \gets sum[i] / count[i]$
-	\State $S2 \gets (sumOfSquare[i] - count[i] \times mean \times mean) / (count[i] - 1)$
-	\State $N \gets \max\{n_0, \lceil \frac{h^2S2}{\delta^2} \rceil\}$
+	\State $mean \gets sum[i] / count[i]$; $S2 \gets (sos[i] - count[i] \times mean^2) / (count[i] - 1)$ \State $N \gets \max\{n_0, \lceil \frac{h^2S2}{\delta^2} \rceil\}$
 	\If{$N > n_0$}
-	  \State initialize simulation input vector $altIds \gets \emptyset$
+	  \State $altIds2 \gets \emptyset$
       \For{$j = 0 \to (N - n_0) - 1$}
-        \State append $i$ into $altIds$
+        \State append $i$ into $altIds2$
       \EndFor
-	  \State add simulations against input in $altIds$ as new \textbf{asynchronous} task
-	  \State $samplingCount \gets samplingCount + (N - n_0)$
+	  \State simulate against alternatives with id in $altIds2$ \textbf{in parallel and asynchronously}
+	  \State $sCount \gets sCount + (N - n_0)$
 	\EndIf
   \EndIf
-\EndWhile\\
-\\
-\Return $\argmax_{i} sum[i] / count[i]$
+\EndWhile
+\State \Return $\argmax_{i} sum[i] / count[i]$
 \end{algorithmic}
 \caption{Asynchronous Rinott's Procedure}
 \label{async_rinott_alg}
@@ -107,9 +91,9 @@ This algorithm is identical to the previous one in mathematics, but they differ 
 
 Although the Rinott's procedure can get well paralleled with fairly little effort, there is still enough motivation for us to study the parallelism of fully sequential procedures, since such procedure can solve problem with potentially smaller sample size, namely total computing effort in terms of serial computing. Let's still take the one in \cite{ras-seq-jeff} as an example.
 
-In the beginning part of this procedure, it's the same as Ronott's procedure and work here has to be done serially.
+In the beginning part of this procedure, it's the same as Rinott's procedure and work here has to be done serially.
 
-In the first-stage, it's exactly the same as Ronott's procedure, say embarrassingly parallel ends with a barrier.
+In the first-stage, it's exactly the same as Rinott's procedure, say embarrassingly parallel ends with a barrier.
 
 However in the second-stage, things become totally different and much more interesting. Basically, the original idea is to repeat the process of taking a sample value, or running a simulation experiment, against certain alternative, then do some calculation globally to see whether some alternative can get eliminated, until there's only one alternative surviving. Let's dig out the parallelism here bit by bit.
 
@@ -127,51 +111,64 @@ Thirdly, can we get rid of the barrier at the end of first stage, as what we hav
 
 All these trouble lays on the point that the original typical fully sequential procedures are not designed specifically for parallel environment at all. It's time to revise conventional fully sequential R\&S procedure and now we will introduce two revised fully sequential procedures which are more suitable in parallel environment.
 
-\subsubsection{Vector Filling Procedure}
+\subsubsection{Vector Filling KN Procedure}
 
-The basic idea for vector fill procedure, or VF for short, is sticking to perform comparisons based on the originally specified sampling sequence, by using an vector recording the sample values exactly in the order specified by the sampling rule. The corresponding algorithm is as follows:
+The basic idea for vector filling KN procedure, or VFKN for short, is sticking to perform comparisons based on the originally specified sampling sequence, specified in classic KN procedure, by using an vector recording the sample values exactly in the order specified by the sampling rule. The corresponding algorithm is as algorithm \ref{vfkn_alg}.
 
 \begin{algorithm}
- \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
- \end{algorithmic}
- \caption{Vector Filling Procedure}
- \label{vf_alg}
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $h^2 \gets (n_0 -1)[(\frac{2\alpha}{k - 1})^{-2/(n_0-1)} - 1]$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State simulate against alternatives with id in $altIds$ \textbf{in parallel}; store result into $X_{i\ell}$
+\State $survivingCount \gets k$; $r \gets n_0$
+\State comparison and elimination
+\While{$survivingCount > 1$}
+  \State $simOutput \gets $ take one generated simulation output into $X_{i\ell}$
+  \State simulate against all surviving alternatives \textbf{in parallel and asynchronously}
+  \If{$\min{len(X_i)} > r$}
+    \State $r \gets r + 1$; comparison and elimination
+  \EndIf
+\EndWhile
+\State \Return id of the surviving alternative
+\end{algorithmic}
+\caption{Vector Filling KN Procedure}
+\label{vfkn_alg}
 \end{algorithm}
 
-In this way, the first problem mentioned above get solved immediately with the original statistical validity staying unchanged, and the third problem is also not a big deal, since we can just consider the alternatives with sample value greater than $n_0$ when carrying out the comparison and elimination. However as for the second problem, the VF procedure may not use all obtained sample values at the time of each comparison, which makes it too conservative to be efficient.
+The comparison and elimination here stands for a global check of inferior alternatives, namely eliminate $i$ where exist $j$ such that $\bar{X_{i\ell}}(r) - \bar{X_{j\ell}}(r) < \min\{0, -\frac{h^2S_{ij}^2}{2r\delta} + \frac{\delta}{2}\}$.
 
-And a critical implementation issue here is that essentially the VF procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
+In this way, the first problem mentioned above get solved immediately with the original statistical validity staying unchanged, and the third problem is also not a big deal, since we can just consider the alternatives with sample value greater than $n_0$ when carrying out the comparison and elimination. However as for the second problem, the VFKN procedure may not use all obtained sample values at the time of each comparison, which makes it too conservative to be efficient.
+
+And a critical implementation issue here is that essentially the VFKN procedure is to sacrifice space for statistical validity. The space here could be memory space only, with improving opportunity from self-customized memory management policy, or switching back and force from hard disks to memory if total memory space can not afford the whole vector, which will definitely slow down the computation dramatically since hard disk accessing always costs much more time than memory accessing.
 
 \subsubsection{Asymptotic Parallel Sequential Procedure}
 
-To over come the weaknesses in vector filling procedure, asymptotic parallel sequential procedure, or APS for short, is developed to allow unequal sample sizes for all alternatives and make elimination decisions based on all obtained sample values. In \cite{ras-seq-parallel} it has been shown that the asymptotically validity can be guaranteed as the indifference-zone parameter goes to zero. The corresponding algorithm is as follows:
+To over come the weaknesses in vector filling procedure, asymptotic parallel sequential procedure, or APS for short, is developed to allow unequal sample sizes for all alternatives and make elimination decisions based on all obtained sample values. In \cite{ras-seq-parallel} it has been shown that the asymptotically validity can be guaranteed as the indifference-zone parameter goes to zero. The corresponding algorithm is as algorithm \ref{aps_alg}. This time the comparison and elimination is also a global check of inferior alternatives, to eliminate $i$ where exist $j$ such that $\bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < \min\{0, -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2}\}$.
 
 \begin{algorithm}
  \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
+\Require $k, \alpha, \delta, n_0$
+\State $a \gets - \log{[2\alpha / (k - 1)]}$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State simulate against alternatives with id in $altIds$ \textbf{in parallel}; store result into $X_{i\ell}$
+\State $survivingCount \gets k$;
+\State comparison and elimination
+\State simulate against all surviving alternatives \textbf{in parallel and asynchronously}, with a phantom alternative p.
+\While{$survivingCount > 1$}
+  \State $simOutput \gets $ take one generated simulation output into $X_{i\ell}$
+  \If{$simOutput is phantom$}
+    \State simulate against all surviving alternatives \textbf{in parallel and asynchronously}, with a phantom alternative p.
+    \State comparison and elimination
+  \EndIf
+\EndWhile
+\State \Return id of the surviving alternative
  \end{algorithmic}
- \caption{Vector Filling Procedure}
+ \caption{Asymptotic Parallel Sequential Procedure}
  \label{aps_alg}
 \end{algorithm}
 
-Since APS procedure can fully utilize all the obtained sample values, it is definitely more efficient in eliminating inferior alternatives than VF. Besides, APS procedure doesn't require recording all the sample values obtained. It only needs some summarising information of obtained sample values like summation, summation of square and so on, which can be updated as new sample value obtained. This feature lowers the storage space demand and in this way the whole data of APS procedure can be easily fit into main memory, which guarantees the order of computing speed.
+Since APS procedure can almost fully utilize all the obtained sample values, it is definitely more efficient in eliminating inferior alternatives than VF. Besides, APS procedure doesn't require recording all the sample values obtained. It only needs some summarizing information of obtained sample values like summation, summation of square and so on, which can be updated as new sample value obtained. This feature lowers the storage space demand and in this way the whole data of APS procedure can be easily fit into main memory, which guarantees the order of computing speed.
 
 \section{System Design}
 
@@ -401,7 +398,7 @@ In our experiment, in order to guarantee an good parallel computing status among
 
 \subsection{Software Environment}
 
-Commercial software components like the Windows from Microsoft or Matlab from MathWorks are not suitable for building systems which are going to scale out in the viewpoint of licence cost, so we will build our implementation based on software that is free in charge.
+Commercial software components like the Windows from Microsoft or Matlab from Mathworks are not suitable for building systems which are going to scale out in the viewpoint of license cost, so we will build our implementation based on software that is free in charge.
 
 \subsubsection{Operating System}
 
@@ -409,9 +406,9 @@ We have installed CentOS 6.2 as the operating system on our server, which is the
 
 CentOS is extremely stable since it has $100\%$ binary compatibility with its upstream source Red Hat Enterprise Linux, a ceremonially supported and enterprise server level Linux distribution from Red Hat, which is the leading Linux service provider in the world. 
 
-\subsubsection{Runtime Environment}
+\subsubsection{Run-time Environment}
 
-We have installed Java Runtime Environment 1.6. We choose Java programming language since it is free compared to Matlab and powerful enough with abundant third-party libraries.
+We have installed Java Run-time Environment 1.6. We choose Java programming language since it is free compared to Matlab and powerful enough with abundant third-party libraries.
 
 Extra benefit with Java includes but not limited to the natural ability of cross-platform, the robustness in the language itself, e.g..
 
@@ -476,7 +473,7 @@ The time cost reported in this time is at least affordable for research purpose 
 
 \subsection{Performance Analysis}
 
-We can see from the table above that the sample size varies very little from number of slaves, which implies that the simulation work load is almost fixed. According to Amdahl's law, the speed up ratio can be modelled as $\frac{1}{(1 - p) + \frac{p}{n}}$, where $p$ the parallel proportion of the program, $1 - p$ is the remaining serial proportion, and $n$ is the number of processors. Now we would like to estimate $p$ with model below:
+We can see from the table above that the sample size varies very little from number of slaves, which implies that the simulation work load is almost fixed. According to Amdahl's law, the speed up ratio can be modeled as $\frac{1}{(1 - p) + \frac{p}{n}}$, where $p$ the parallel proportion of the program, $1 - p$ is the remaining serial proportion, and $n$ is the number of processors. Now we would like to estimate $p$ with model below:
 
 $$ t = a \times (1 - p + \frac{p}{n}) + \epsilon $$
 
