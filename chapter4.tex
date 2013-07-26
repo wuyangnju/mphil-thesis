@@ -1,6 +1,6 @@
 \chapter{Implementation Acceleration}
 
-\section{Comparison Acceleration with Heap}
+\section{Comparison Acceleration in APS Procedure with Heap}
 
 \subsection{Heap}
 
@@ -43,42 +43,53 @@ In our specific scenario, the node of heap stands for an alternative with statis
 
 Straightforwardly speaking, when receiving a new sample value of certain alternative in fully sequential R\&S procedure, which cause the update of statistic information of that alternative, we need to carry out a linear complexity comparison, say, comparing this alternatives with every surviving one, to see whether it will eliminate some alternative, or be eliminated by some one else. The linear complexity may be critical when the number of alternatives is extremely large.
 
-After we have customized the heap to support $O(1)$ query in our scenario, we can discuss our $O(\log{n})$ comparison algorithm, digging into the case where we need to select the alternative with minimum mean, since selecting the maximum is quite similar. In this case, alternative i dominates alternative j is equivalent to:
+After we have customized the heap to support $O(1)$ query in our scenario, we can discuss our $O(\log{n})$ comparison algorithm, digging into the case where we need to select the alternative with maximum mean, since selecting the minimum is quite similar. In this case, alternative i dominated by alternative j is equivalent to:
 
-$$ \bar{X}_j(n_j)-\bar{X}_i(n_i) \ge \max\{0,a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b\} $$
+$$ \bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < \min\{0, -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2}\} $$
 
 From the coding viewpoint, for any updated alternative, which just received an new sample value in fully sequential case, to check whether it dominates other alternatives or be dominated, we need three steps.
 
-Step one is to consider the extreme scenario, although seldom occurs, where $a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b < 0$. To see whether it really happens, just check from the updated alternative and the alternative whose $\frac{S^2}{n}$ is largest among all the alternative except the updated one. If so, one of the two alternatives will be eliminated immediately. For the elimination of the updated alternative, the whole comparing algorithm is done and we can move on directly to next sample value, while for the the elimination of the other one, this step will be repeated. In this way, maintaining a max-heap of alternatives with their $\frac{S^2}{n}$ as sorting key value will save us from looking for the next alternative whose $\frac{S^2}{n}$ is largest among all the survived alternative except the updated one with O(n) time complexity every time repeating this step.
+Step one is to consider the extreme scenario, although seldom occurs, where $-\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} > 0$. To see whether it really happens, just check from the updated alternative and the alternative whose $\frac{S^2(N_r)}{N_r}$ is largest among all the alternative except the updated one. If so, one of the two alternatives will be eliminated immediately. For the elimination of the updated alternative, the whole comparing algorithm is done and we can move on directly to next sample value, while for the the elimination of the other one, this step will be repeated. In this way, maintaining a max-heap of alternatives with their $\frac{S^2(N_r)}{N_r}$ as sorting key value will save us from looking for the next alternative whose $\frac{S^2(N_r)}{N_r}$ is largest among all the survived alternative except the updated one with O(n) time complexity every time repeating this step.
 
-After consideration of extreme scenario, alternative i dominates alternative j only happens when
-$$ \bar{X}_j(n_j)-\bar{X}_i(n_i) \ge a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b $$
-since for any pair of survived alternatives i and j, $a(\frac{S_i^2}{n_i}+\frac{S_j^2}{n_j}) - b \ge 0$ always holds.
+After consideration of extreme scenario, alternative i dominated by alternative j only happens when
+$ \bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} $ since for any pair of survived alternatives i and j, $-\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} \le 0$ always holds. With moving items from one side of equation to the other, we have:
 
-With basic algebra operation, say moving items from one side of equation to the other, the two alternatives can be separated into different sides:
+$$ \bar{X_{i}}(N_{ir}) + \frac{a}{\delta}\frac{S_i^2(N_{ir})}{N_{ir}} < \bar{X_{j}}(N_{jr}) - \frac{a}{\delta}\frac{S_j^2(N_{jr})}{N_{jr}} + \frac{\delta}{2} $$
 
-$$ \bar{X}_j(n_j) - a \times \frac{S_j^2}{n_j} \ge \bar{X}_i(n_i) + a \times \frac{S_i^2}{n_i} - b $$
+Now is the second step. To see whether the updated alternative dominates any other surviving alternatives, just check from the alternative with smallest $\bar{X}(N_r) + \frac{a}{\delta}\frac{S^2(N_r)}{N_r}$, repeatedly if any elimination happens. Another min-heap of alternatives with $\bar{X}(N_r) + \frac{a}{\delta}\frac{S^2(N_r)}{N_r}$ as its sorting key value is maintained, for the possibility of repeated elimination.
 
-Now is the second step, to see whether the updated alternative dominates any other surviving alternatives, just check from the alternative with largest $\bar{X}(n) - a \times \frac{S^2}{n}$, repeatedly if any elimination happens. This is step two actually and another max-heap of alternatives with $\bar{X}(n) - a \times \frac{S^2}{n}$ as its sorting key value is maintained, for the possibility of repeated elimination.
+The third step is even simpler, just checking the survival of the updated alternative against the alternative with largest $\bar{X}(N_r) - \frac{a}{\delta}\frac{S^2(N_r)}{N_r}$ and no iteration is needed here.
 
-The third step is even simpler, just checking the survival of the updated alternative against the alternative with smallest $\bar{X}_i(n_i) + a \times \frac{S_i^2}{n_i}$ and no iteration is needed here.
-
-Below is the complete algorithm in fully sequential procedure when processing a new sample value alone:
+Algorithm \ref{comparsion_one} is the complete algorithm when processing a new sample value alone:
 
 \begin{algorithm}
- \begin{algorithmic}[1]
- \Require $k, \alpha, \delta, n_0$
- \State $h \gets \text{the Rinott's const with arguments } k, \alpha, n_0$
- \State 
- \While{$r\not=0$}
- \State $a\gets b$
- \State $b\gets r$
- \State $r\gets a\bmod b$
- \EndWhile
- \State \textbf{return} $b$ \Comment{The gcd is b}
- \end{algorithmic}
- \caption{Comparison with One New Sample Value}
- \label{comparsion_one}
+\begin{algorithmic}[1]
+\Require $simOutput$, including corresponding $altId$ and $value$ of output
+\State $alt = alts0[altId]$ \Comment{$alts0$ is an array of alternative objects, $O(1)$}
+\If{$alt.isSurviving() = false$} 
+  \State \Return
+\EndIf
+\State $alts.addSample(value)$ \Comment{update $N, \bar{X}(N), S^2(N)$ e.g. $O(1)$}
+\State adjust heap $alts1$, $alts2$, $alts3$, where $alts1$ is a max-heap with key $S^2(N)/N$, $alts2$ is a min-heap with key $\bar{X}(N) + \frac{a}{\delta}\frac{S^2(N)}{N}$, $alts3$ is a max-heap with key $\bar{X} - \frac{a}{\delta}\frac{S^2(N)}{N}$, the complexity is $O(\log k)$
+\State $alt1 = alts1.peek()$
+\While {$alt.key1() + alt1.key1() < \frac{\delta^2}{2a}$}
+  \If{alt.mean() < alt1.mean()}
+    \State eliminate $alt$ and \Return \Comment{heap adjustment involved, $O(\log k)$}
+  \Else
+    \State eliminate $alt1$ and $alt1 = alts1.peek()$ \Comment{heap adjustment involved, $O(\log k)$}
+  \EndIf
+\EndWhile
+\State $alt2 = alts2.peek()$
+\While{$alt2.key2() < alt.key3()$}
+  \State eliminate $alt2$ and $alt2 = alts2.peek()$ \Comment{heap adjustment involved, $O(\log k)$}
+\EndWhile
+\State $alt3 = alts3.peek()$
+\If{$alt.key2() < alt3.key3()$}
+  \State eliminate $alt$ and \Return \Comment{heap adjustment involved, $O(\log k)$}
+\EndIf
+\end{algorithmic}
+\caption{Comparison with One New Sample Value}
+\label{comparsion_one}
 \end{algorithm}
 
 During the comparison, time complexity for each possible elimination is $O(\log n)$ , under the condition that locating any certain alternative inside a heap costs less than, at most equal to $O(\log n)$, and this is already satisfied by the customization we have made on standard heap.
@@ -91,11 +102,11 @@ In order to focus on the efficiency of comparison part, we used generated sample
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
-Num. of Slaves(n): & 1 & 4 & 8 & 16 & 32 & 48 \\
+of Alternatives(k): & 10 & 100 & 500 & 1000 & 5000 & 10000 \\
 \hline
-Sample Size($\times 10^5$) & 2.426 & 2.434 & 2.442 & 2.442 & 2.433 & 2.436\\
+Log(n) Seconds(): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 41.7 \\
 \hline
-Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
+Actual Seconds(): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 41.7 \\
 \hline
 \end{tabular} \\
 \caption{Effect of Heaped Comparison}
