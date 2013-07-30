@@ -96,21 +96,21 @@ During the comparison, time complexity for each possible elimination is $O(\log 
 
 \subsection{Numerical Experiment}
 
-In order to focus on the efficiency of comparison part, we used generated sample values loaded from text file. Below is the result, the x-axis stands for the number of processed sample values and the y-axis is the time cost.
+In order to focus on the efficiency of comparison part, we used normal generation simulation and 4 slaves on local pc, to make simulation fast enough and keep master busy comparing. In this way, the total time cost of procedure is fully determined by comparison part. Below is the performance result:
 
 \begin{table}[ht]
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
-of Alternatives(k): & 10 & 100 & 500 & 1000 & 5000 & 10000 \\
+Num. of Alternatives(k): & 100 & 1000 & 10000 & 100000 \\
 \hline
-Log(n) Seconds(): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 41.7 \\
+Linear Comparison (ms): & 56 & 199.6 & 5606.4 & 884992.6 \\
 \hline
-Actual Seconds(): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 41.7 \\
+Heaped Comparison (ms): & 54.8 & 163.6 & 906 & 10338.6 \\
 \hline
 \end{tabular} \\
 \caption{Effect of Heaped Comparison}
 \end{center}
 \end{table}
 
-The figure shows that our comparing algorithm performs much better than $O(\log n)$ in average. Because if there's no elimination during the comparison, which occurs frequently in experiments, the time complexity will be reduced to $O(1)$, since no adjustment of any data structure is needed. Rigorous algorithm analysis with heap adjustment probability can be regarded as future work.
+The table shows that heaped comparison is extremely time-saving when $k$ is large, and simulation is fast, which is often the case, since sample generating can be speed-up by adopting more parallel computing units.
