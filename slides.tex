@@ -4,6 +4,9 @@
 
 \usepackage{graphicx}
 
+\usepackage{slashbox}
+\usepackage{arydshln}
+
 \usepackage[noend]{algpseudocode}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
@@ -87,7 +90,7 @@ Design and Implementation of Parallel Simulation~Ranking~and~Selection~Procedure
 \begin{itemize}
 \item fast-growing of serial computing speed has almost stopped, due to physical limitations
 \vspace{\baselineskip}
-\item growing of computing power relies on available parallel execution units
+\item growing of computing power relies on multiple parallel execution units
 \vspace{\baselineskip}
 \item large problem can be divided into smaller ones, and small problems can be executed simultaneously, thus speeding up
 \end{itemize}
@@ -120,17 +123,20 @@ Design and Implementation of Parallel Simulation~Ranking~and~Selection~Procedure
 \item {\bf response time:} time cost per job
 \item {\bf throughput:} number of jobs done per time unit
 \end{itemize}
+depend on problem size, serial execution speed, number of parallel computing units...
 \item {\bf time complexity}
 \begin{itemize}
 \item evaluate the serial algorithm performance against the increasing of problem size
 \item independent of serial execution speed
+\item without considering number of parallel computing units
 \end{itemize}
 \item {\bf scalability}
 \begin{itemize}
-\item evaluate the system performance against the increasing of computing resource
+\item evaluate the system performance against the increasing of parallel computing units
 \item also independent of serial execution speed
-\item extremely important, in the sense that we can get better performance almost immediately simply by adding more computing resources
+\item fixed problem size
 \end{itemize}
+extremely important, means that we can get better performance immediately simply by adding more computing resources
 \end{itemize}
 \end{frame}
 
@@ -139,7 +145,7 @@ Design and Implementation of Parallel Simulation~Ranking~and~Selection~Procedure
 \begin{itemize}
 \item We design and implement a parallel framework for simulation R\&S procedures, with master-slave structure in higher level, and achieves a good scalability illustrated in numerical experiments.
 \vspace{\baselineskip}
-\item Based on this framework, we design and implement several specific simulation experiments and R\&S procedures, which has demonstrated the good extensibility of our framework.
+\item Based on this framework, we design and implement several specific simulation experiments and R\&S procedures, which has demonstrated the extensibility of our framework.
 \vspace{\baselineskip}
 \item Within specific R\&S procedure, we decrease the serial algorithm time complexity, by adopting heap, a widely used data structure. This also help improve the performance of the whole system.
 \end{itemize}
@@ -148,30 +154,25 @@ Design and Implementation of Parallel Simulation~Ranking~and~Selection~Procedure
 \section{Parallelism Analysis}
 
 \begin{frame}
-\frametitle{Parallelism Analysis}
-\framesubtitle{A Staged Procedure: the Rinott's Procedure}
+\frametitle{Staged Procedure}
+\framesubtitle{the Rinott's Procedure}
 \begin{enumerate}
 \item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. $n_0$ is the sample size in first stage and $n_0 \geqslant 2$.
 \item{Initialize: } Calculate Rinott's constant $h$ with $n_0, k, \alpha$. Collect $n_0$ independent sample values $X_{ij}$, where $j = 1, 2,...,n_0$, for each alternative $i$, by repeatedly running simulation experiments against that alternative, and for $i = 1, 2,...,k$, calculate $S_i^2$. Let 
 $ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $ where $N_i$ is the number of sample value that will eventually taken from alternative $i$.
-\item{Stopping Rule: } If $n_0 \geqslant \max N_i$ then stop and select the alternative with the best sample mean, namely the largest or smallest $\bar{X_i(n_0)}$. Else take $\max\{N_i - n_0, 0\}$ extra sample values from each alternative $i$ by continue repeating the simulation experiments, after which select the alternative with largest or smallest $\bar{X_i(N_i)}$ as the best.
+\item{Stopping Rule: } If $n_0 \geqslant \max N_i$ then stop and select the alternative with the best sample mean, namely the largest or smallest $\bar{X}_i(n_0)$. Else take $\max\{N_i - n_0, 0\}$ extra sample values from each alternative $i$ by continue repeating the simulation experiments, after which select the alternative with largest or smallest $\bar{X}_i(N_i)$ as the best.
 \end{enumerate}
 \end{frame}
 
 \begin{frame}
-\frametitle{Parallelism Analysis}
-\framesubtitle{A Fully Sequential Procedure: the KN Procedure}
-\begin{enumerate}
-\item{Set up: } Set up parameters $\alpha$, $\delta$, $n_0$ and $h^2 = (n_0 -1)[(\frac{2\alpha}{k - 1})^{-2/(n_0-1)} - 1]$.
-\item{Initialize: } Collect $n_0$ independent sample values $X_{i\ell}$, where $\ell = 1, 2,...,n_0$, for each alternative $i$, by repeatedly running simulation experiments against that alternative, and for $i \neq j$ compute $S_{ij}^2 = \frac{1}{n_0 - 1}\sum_{\ell=1}^{n_0}(X_{i\ell} - X_{j\ell} - [\bar{X_i}(n_0) - \bar{X_j}(n_0)]^2)$, let $r = n_0$.
-\item{Elimination: } Set $I^{old} = I$. Let $I = I^{old} - \{i \in I^{old}: \bar{X}_{i\ell}(r) - \bar{X}_{j\ell}(r) < \min\{0, - \frac{h^2S_{ij}^2}{2r\delta} + \frac{\delta}{2} \} \}$
-\item{Stopping Rule: } If $|I| = 1$, then stop and select the only surviving alternative, otherwise take another simulation output $X_{i,r+1}$ from each system $i$ and set $r = r + 1$ and go to Elimination.
-\end{enumerate}
+\begin{figure}[ht]
+\centering
+\includegraphics[height=96mm]{rinott_activity.png}
+\end{figure}
 \end{frame}
 
 \begin{frame}
-\frametitle{Redesign of Existing Procedures}
-\framesubtitle{Rinott's Procedure}
+\frametitle{Redesign of the Rinott's Procedure}
 \begin{algorithmic}[1]
 \Require $k, \alpha, \delta, n_0$
 \State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$
@@ -194,7 +195,95 @@ $ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $ where $N_i$ is th
 \end{frame}
 
 \begin{frame}
-\frametitle{Redesign of Existing Procedures}
+\frametitle{Fully Sequential Procedure}
+\framesubtitle{the KN Procedure}
+\begin{enumerate}
+\item{Set up: } Set up parameters $\alpha$, $\delta$, $n_0$ and $h^2 = (n_0 -1)[(\frac{2\alpha}{k - 1})^{-2/(n_0-1)} - 1]$.
+\item{Initialize: } Collect $n_0$ independent sample values $X_{i\ell}$, where $\ell = 1, 2,...,n_0$, for each alternative $i$, by repeatedly running simulation experiments against that alternative, and for $i \neq j$ compute $S_{ij}^2 = \frac{1}{n_0 - 1}\sum_{\ell=1}^{n_0}(X_{i\ell} - X_{j\ell} - [\bar{X_i}(n_0) - \bar{X_j}(n_0)]^2)$, let $r = n_0$.
+\item{Elimination: } Set $I^{old} = I$. Let $I = I^{old} - \{i \in I^{old}: \bar{X}_{i\ell}(r) - \bar{X}_{j\ell}(r) < \min\{0, - \frac{h^2S_{ij}^2}{2r\delta} + \frac{\delta}{2} \} \}$
+\item{Stopping Rule: } If $|I| = 1$, then stop and select the only surviving alternative, otherwise take another simulation output $X_{i,r+1}$ from each system $i$ and set $r = r + 1$ and go to Elimination.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+\begin{figure}[ht]
+\centering
+\includegraphics[height=96mm]{kn_activity.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Redesign of Fully Sequential Procedure}
+\framesubtitle{Discussion of Sequential Processing}
+% Original idea is to repeat running a simulation experiment against certain alternative, then doing some calculation globally, until the best one is decided.
+\begin{itemize}
+\item Why only run simulation experiment one at a time?
+\begin{itemize}
+\item Statistical problem caused by running multiple simulation experiments simultaneously.
+\item Random order of output sequence, violating of the sequential nature.
+\end{itemize}
+\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[height=28mm]{queueing.png}
+\caption{A Queuing Analogy borrowed from \cite{ras-seq-parallel}:}
+\end{figure}
+\tiny
+{
+\begin{thebibliography}{10}
+\bibitem{ras-seq-parallel} J. LUO, L. Jeff HONG, Barry L. Nelson, Y. WU. Fully Sequential Procedures for Large-Scale Ranking-and-Selection Problems in Parallel Computing Environments. Operation Research, 2013.
+\end{thebibliography}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{Redesign of Fully Sequential Procedure}
+\framesubtitle{Discussion of Sequential Processing: cont.}
+\begin{itemize}
+\item Do we have to carry out global calculation each time after we obtain a sample value?
+\begin{itemize}
+\item Global calculation is expensive in parallel computing.
+\end{itemize}
+\end{itemize}
+Essential problems in parallel computing:
+\begin{itemize}
+\item update lost
+\item inconsistent read
+\end{itemize}
+New problems introduced by parallelism control mechanism:
+\begin{itemize}
+\item starvation
+\item dead lock
+\end{itemize}
+Conduct fewer global calculation?
+\end{frame}
+
+\begin{frame}
+\frametitle{Redesign of Fully Sequential Procedure}
+\framesubtitle{Vector Filling KN Procedure}
+\begin{table}[ht]
+\begin{center}
+\scalebox{0.8}
+{
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\backslashbox{r}{Alternative Id:} & 0 & 1 & 2 & ... & $k - 1$ \\
+\hline
+1 & $X_{0,1}$ & $X_{1,1}$ & $X_{2,1}$ & ... & $X_{k - 1,1}$ \\
+2 & $X_{0,2}$ & $X_{1,2}$ & $X_{2,2}$ & ... & $X_{k - 1,2}$ \\
+\hdashline
+3 & $X_{0,3}$ & null & $X_{2,2}$ & ... & $X_{k - 1,2}$ \\
+4 & $X_{0,4}$ & null & null & ... & null \\
+5 & null & null & null & ... & null \\
+... & ... & ... & ... & ... & ... \\
+\end{tabular}
+}
+\end{center}
+\end{table}
+\end{frame}
+
+\begin{frame}
+\frametitle{Redesign of Fully Sequential Procedure}
 \framesubtitle{Vector Filling KN Procedure}
 \begin{algorithmic}[1]
 \Require $k, \alpha, \delta, n_0$
@@ -215,7 +304,40 @@ $ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $ where $N_i$ is th
 \end{frame}
 
 \begin{frame}
-\frametitle{Redesign of Existing Procedures}
+\frametitle{Redesign of Fully Sequential Procedure}
+\framesubtitle{Asymptotic Parallel Sequential Procedure}
+\begin{table}[ht]
+\begin{center}
+\scalebox{0.8}
+{
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\backslashbox{r}{Alternative Id:} & 0 & 1 & 2 & ... & $k - 1$ & phantom \\
+\hline
+1 & $X_{0,1}$ & $X_{1,1}$ & $X_{2,1}$ & ... & $X_{k - 1,1}$ & received \\
+2 & $X_{0,2}$ & $X_{1,2}$ & $X_{2,2}$ & ... & $X_{k - 1,2}$ & received \\
+3 & $X_{0,3}$ & null & $X_{2,2}$ & ... & $X_{k - 1,2}$ & received \\
+\hdashline
+4 & $X_{0,4}$ & null & null & ... & null & null \\
+5 & null & null & null & ... & null & null \\
+... & ... & ... & ... & ... & ... & ... \\
+\end{tabular}
+}
+\end{center}
+\end{table}
+\begin{itemize}
+\item only need to keep track of the triple $(count, sum, sum\_of\_square)$
+\end{itemize}
+\tiny
+{
+\begin{thebibliography}{10}
+\bibitem{ras-seq-parallel} J. LUO, L. Jeff HONG, Barry L. Nelson, Y. WU. Fully Sequential Procedures for Large-Scale Ranking-and-Selection Problems in Parallel Computing Environments. Operation Research, 2013.
+\end{thebibliography}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{Redesign of Fully Sequential Procedure}
 \framesubtitle{Asymptotic Parallel Sequential Procedure}
 \begin{algorithmic}[1]
 \Require $k, \alpha, \delta, n_0$
@@ -242,21 +364,24 @@ $ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $ where $N_i$ is th
 \framesubtitle{A Sequence Diagram}
 \begin{figure}[ht]
 \centering
-\includegraphics[height=72mm]{overview_seq.png}
+\includegraphics[height=72mm]{overview_seq_single.png}
 \end{figure}
 \end{frame}
 
 \begin{frame}
-\frametitle{Master-Slave Structure on Single Machine}
+\frametitle{Master-Slave Structure}
 \framesubtitle{Communication via FIFO Queue}
 \begin{figure}[ht]
 \centering
-\includegraphics[height=64mm]{master-slave-queue.png}
+\includegraphics[height=48mm]{master-slave-queue.png}
 \end{figure}
+\begin{itemize}
+\item producer-consumer problem
+\end{itemize}
 \end{frame}
 
 \begin{frame}
-\frametitle{Design for Extensibility}
+\frametitle{Design for Extension}
 \framesubtitle{Partial Class Diagram}
 \begin{figure}[ht]
 \centering
@@ -265,24 +390,30 @@ $ N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\} $ where $N_i$ is th
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Design for Extensibility}
+\frametitle{Design for Extension}
 \framesubtitle{Interfaces to Implement}
 \begin{itemize}
 \item Sim interface:
 \begin{lstlisting}[language=Java]
 public double[] sim(double[] alt, double[] args, long[] seed);
 \end{lstlisting}
-\vspace{\baselineskip}
 \item Ras interface:
 \begin{lstlisting}[language=Java]
 public int ras(double[][] alts, double[] args, SimHelper helper);
 \end{lstlisting}
+\item For example, in $(s, S)$ Inventory model:
+\begin{itemize}
+\item $alt$: $[id, s, S]$
+\item Sim $args$: $[warmup\_len, running\_len, arrive\_rate...]$
+\item $alts$: $[alt1, alt2...]$
+\item Ras $args$: $[\alpha, \delta, n_0...]$
+\end{itemize}
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Design for Extensibility}
-\framesubtitle{SimHelper interface used by implementing Ras interface}
+\frametitle{Design for Extension}
+\framesubtitle{SimHelper interface used for implementing Ras interface}
 \begin{lstlisting} [language=Java]
 public class SimInput
 {
@@ -304,63 +435,177 @@ public interface SimHelper
   public SimOutput[] syncSim(int[] altIDs);
   public int asyncSim(int[] altIDs);
   public int phantomSim(int[] altIDs);
+  public SimOupput takeSimOutput();
   public SimOutput[] takeSimOutputs(int n, boolean block);
 }
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}
-\frametitle{Logging Items}
+\frametitle{Illustration of synchronous $sim$ interface}
+\framesubtitle{Revisit of the Rinott's Procedure}
+\tiny
+{
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State {\color{blue} SimOutput[] outputs = simHelper.syncSim(altIds);}
+\State store {\color{blue} outputs} into $X_{ij}$
+\State $altIds2 \gets \emptyset$
+\For{$i = 0 \to k - 1$}
+  \State $\bar{X_i}(n_0) = \frac{1}{n_0} \sum_{j=0}^{n_0 - 1}X_{ij}$; 
+  \State $S_i^2 = \frac{1}{n_0 - 1} \sum_{j=0}^{n_0 - 1}(X_{ij} - \bar{X_i}(n_0))^2$;
+  \State $N_i = \max\{n_0, \lceil \frac{h^2S_i^2}{\delta^2} \rceil\}$
+  \For{$j = 0 \to (N_0 - n_0) - 1$}
+    \State append $i$ into $altIds2$
+  \EndFor
+\EndFor
+\State {\color{blue} SimOutput[] outputs2 = simHelper.syncSim(altIds2);}
+\State store {\color{blue} outputs2} into $X_{ij}$
+\For{$i = 0 \to k - 1$}
+  \State $\bar{X_i}(N_0) = \frac{1}{N_0} \sum_{j=0}^{N_0 - 1}X_{ij}$
+\EndFor
+\State \Return $\argmax_{i}\bar{X_i}(N_0)$
+\end{algorithmic}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{Illustration of asynchronous $sim$ interface}
+\framesubtitle{Revisit of the Vector Filling KN Procedure}
+\tiny
+{
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $h^2 \gets (n_0 -1)[(\frac{2\alpha}{k - 1})^{-2/(n_0-1)} - 1]$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State {\color{blue} SimOutput[] outputs = simHelper.syncSim(altIds);}
+\State store outputs into $X_{ij}$
+\State $survivingCount \gets k$;
+\State $r \gets n_0$
+\State comparison and elimination
+\While{$survivingCount > 1$}
+  \State $altIds2 \gets \emptyset$
+  \For{$i = 0 \to k - 1$}
+    \If{alternative $i$ is still surviving}
+      \State append $i$ into $altIds2$
+    \EndIf
+  \EndFor
+  \State {\color{blue}simHelper.asyncSim(altIds);} \Comment{More added simulation input than simulation output taken}
+  \State {\color{blue} SimOutput output = simHelper.takeSimOutput();}
+  \State store outputs into $X_{ij}$
+  \If{$\min{len(X_i)} > r$}
+    \State $r \gets r + 1$;
+    \State comparison and elimination
+  \EndIf
+\EndWhile
+\State \Return id of the surviving alternative
+\end{algorithmic}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{Illustration of phantom $sim$ interface}
+\framesubtitle{Revisit of the Asymptotic Parallel Sequential Procedure}
+\tiny
+{
+\begin{algorithmic}[1]
+\Require $k, \alpha, \delta, n_0$
+\State $a \gets - \log{[2\alpha / (k - 1)]}$
+\State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
+\State {\color{blue} SimOutput[] outputs = simHelper.syncSim(altIds);}
+\State store outputs into $X_{i\ell}$
+\State $survivingCount \gets k$;
+\State comparison and elimination
+\State $altIds2 \gets \emptyset$
+\For{$i = 0 \to k - 1$}
+  \If{alternative $i$ is still surviving}
+    \State append $i$ into $altIds2$
+  \EndIf
+\EndFor
+\State {\color{blue}simHelper.asyncSim(altIds);}
+\State {\color{blue}simHelper.phantomSim(k);}
+\While{$survivingCount > 1$}
+  \State {\color{blue} SimOutput output = simHelper.takeSimOutput();}
+  \State store {\color{blue} outputs} into $X_{i\ell}$
+  \If{$simOutput$ is phantom}
+    \State $altIds2 \gets \emptyset$
+    \For{$i = 0 \to k - 1$}
+      \If{alternative $i$ is still surviving}
+        \State append $i$ into $altIds2$
+      \EndIf
+    \EndFor
+    \State {\color{blue}simHelper.asyncSim(altIds);}
+    \State {\color{blue}simHelper.phantomSim(k);}
+    \State comparison and elimination
+  \EndIf
+\EndWhile
+\State \Return id of the surviving alternative
+\end{algorithmic}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{Logging}
+\framesubtitle{To Reproduce Simulation R\&S Procedure}
 \begin{itemize}
 \item selection result
 \item response time
 \item input sequence
 \begin{itemize}
 \item $altId, args, seeds$
-\item $count for put and take$
+\item count of simulation input enqueue and dequeue
 \item record of sampling rule
 \end{itemize}
 \item output sequence
 \begin{itemize}
-\item $altId, result$, optionally corresponding input info
-\item $count for put and take$
-\item can be used to "replay" the parallel procedure in serial
+\item $altId, result$, corresponding input info
+\item count of simulation output enqueue and dequeue
+\item {\color{blue} can be used to reproduce the parallel execution into serial}
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}
-\frametitle{Deploy on Cluster}
-\begin{itemize}
-\item Scale-up v.s. Scale-out
-\item agent in charge of communication via network
-\item simulation input management
-\begin{algorithmic}[1]
-\While{\text{true}}
-  \If{$inputQueue.size() < s1$}
-    \State{send request for $(s2 - s1)$ simulation inputs via network}
-    \ForAll{obtained simulation inputs}
-      \State{inputQueue.put(input)}
-    \EndFor
-  \Else
-    \State{sleep for 1 second}
-  \EndIf
-\EndWhile
-\end{algorithmic}
-\item simulation output management (as aggressive as possible)
-\end{itemize}
-\end{frame}
+%\begin{frame}
+%\frametitle{Deploy on Cluster}
+%\begin{itemize}
+%\item Scale-up v.s. Scale-out
+%\item agent in charge of communication via network
+%\item simulation input management
+%\begin{algorithmic}[1]
+%\While{\text{true}}
+%  \If{$inputQueue.size() < s1$}
+%    \State{send request for $(s2 - s1)$ simulation inputs via network}
+%    \ForAll{obtained simulation inputs}
+%      \State{inputQueue.put(input)}
+%    \EndFor
+%  \Else
+%    \State{sleep for 1 second}
+%  \EndIf
+%\EndWhile
+%\end{algorithmic}
+%\item simulation output management (as aggressive as possible)
+%\end{itemize}
+%\end{frame}
 
 \section{System Evaluation}
 
 \begin{frame}
 \frametitle{Comparative Study of Three Parallel Procedures}
+\framesubtitle{Nemerical Experiments Setting}
 \begin{itemize}
-\item {Alternative: } normal distributed simulation result, with pre-known mean and variance
-\item {Configuration: } 100 alternatives, one of them has max-mean 1, others has mean of 0. Variance is 1.
-\item {Environment: } pc with 8 hardware thread, using 4 slaves. $\alpha=0.05, \delta=1, n_0 = 10$, the Rinott's const is 68.2226.
-\item {Result: } $100\%$ correct selection.
+\item {Problem Setting: } \\ 100 normal distributed alternatives, with pre-known mean and variance. One of them has maximum mean 1, others has mean of 0, and all of them has variance of 1.
+\vspace{\baselineskip}
+\item {Computing Environment: } \\ A local pc with 8 hardware thread, using 4 slaves.
+\vspace{\baselineskip}
+\item {R\&S Parameters: } \\ Rinott's procedure with $\alpha=0.05, \delta=1, n_0 = 10$, the Rinott's const is 68.2226.
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Comparative Study of Three Parallel Procedures}
+\framesubtitle{Nemerical Result}
 \begin{table}[ht]
 \begin{center}
 \scalebox{0.6}
@@ -383,16 +628,25 @@ public interface SimHelper
 }
 \end{center}
 \end{table}
-\tiny{In each table cell, the numbers means count of simulation input put, count of simulation input taken, count of simulation output put, count of simulation output taken and total time cost, respectively.}
+{\tiny In each table cell, the numbers means count of simulation input put, count of simulation input taken, count of simulation output put, count of simulation output taken and total time cost, respectively.}
+\begin{itemize}
+\item sample number
+\item time cost
+\item count of enqueue and dequeue
+\end{itemize}
 \end{frame}
 
 \begin{frame}
-\frametitle{Scalability on Single Machine}
+\frametitle{Scalability Testing}
+\framesubtitle{Numerical Experiments}
 \begin{itemize}
-\item {Alternative: } feasible region of a three-stage allocation problem.
-\item {Configuration: } 21660 alternatives, with 2 best one, and 4 acceptable good one, from IZ viewpoint.
-\item {Environment: } a powerful server with 48 threads. APS procedure, $\alpha=0.05, \delta=1, n_0 = 10$.
-\item {Result: } $100\%$ correct selection.
+\item {Problem Setting: } \\ 21660 alternatives consists the feasible region of a three-stage allocation problem, with 2 best one, and 4 acceptable good one, from IZ viewpoint.
+\vspace{\baselineskip}
+\item {Computing Environment: } \\ A powerful server with 48 threads.
+\vspace{\baselineskip}
+\item {R\&S Parameters: } \\ APS procedure with $\alpha=0.05, \delta=1, n_0 = 10$.
+\vspace{\baselineskip}
+\item {Numerical Results: }
 \begin{table}[ht]
 \begin{center}
 \scalebox{0.85}
@@ -413,13 +667,27 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \end{frame}
 
 \begin{frame}
-\frametitle{Scalability Analysis}
+\frametitle{Scalability Testing}
+\framesubtitle{Related Concept and Theory}
 \begin{itemize}
-\item According to Amdahl's law, the speed up ratio can be modeled as $\frac{1}{(1 - p) + \frac{p}{n}}$.
-\item We model the time cost as $ t = a \times (1 - p + \frac{p}{n}) + \epsilon $.
-\item The model can be turned into: $ t = (a - ap) + ap \times \frac{1}{n} + \epsilon $
-\item With linear regression, we can get $a - ap = 40.4$ and $ap = 332.9$ with $R^2 \geqslant 0.994$, so $p$ is 0.892, which means roughly $89.2\%$ of simulation work is paralleled.
+\item Speed-up Ratio
+$$ S_n = \frac{T_1}{T_n} $$
+\item Amdahl's Law
+\begin{align*}
+S_n & = \frac{1}{(1 - p) + \frac{p}{n}} \\
+\lim_{n \to +\infty} S_n & = \lim_{n \to +\infty} \frac{1}{(1 - p) + \frac{p}{n}} = \frac{1}{1 - p}
+\end{align*}
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Scalability Testing}
+\framesubtitle{Time cost modeling}
+\begin{align*}
+t & = a \times (1 - p + \frac{p}{n}) + \epsilon \\
+& = (a - ap) + ap \times \frac{1}{n} + \epsilon
+\end{align*}
+With linear regression, we can get $a - ap = 40.4$ and $ap = 332.9$ with $R^2 \geqslant 0.994$, so $p$ is 0.892, which means roughly $89.2\%$ of simulation work is paralleled.
 \end{frame}
 
 \section{Implementation Acceleration}
@@ -432,12 +700,13 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \Require $k, \alpha, \delta, n_0$
 \State $h \gets$ the Rinott's const with arguments $k, \alpha, n_0$
 \State $altIds \gets \{0, 1, 2...k - 1, 0, 1, 2...k - 1...\}$ \Comment{repeat $n_0$ cycles}
-\State simulate against alternatives with id in $altIds$ \textbf{in parallel and asynchronously}
+\State {\color{blue}simHelper.asyncSim(altIds);}
 \State $sCount \gets k \times n_0$ \Comment{sCount: sampling count}
 \State initialize $count[k], sum[k], sos[k]$ \Comment{sos: sum of square}
 \While {$sCount > 0$}
-  \State $simOutput \gets $ take one generated simulation output \State $i \gets simOutput.altId$
-  \State update corresponding $count[i], sum[i], sumOfSquare[i]$ \State $sCount \gets sCount - 1$
+  \State {\color{blue} SimOutput output = simHelper.takeSimOutput();}
+  \State update corresponding $count[i], sum[i], sumOfSquare[i]$
+  \State $sCount \gets sCount - 1$
   \If{$count[i] = n_0$}
 	\State $mean \gets sum[i] / count[i]$
 	\State $S2 \gets (sos[i] - count[i] \times mean^2) / (count[i] - 1)$
@@ -447,7 +716,7 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
       \For{$j = 0 \to (N - n_0) - 1$}
         \State append $i$ into $altIds2$
       \EndFor
-	  \State simulate against alternatives with id in $altIds2$ \textbf{in parallel and asynchronously}
+      \State {\color{blue}simHelper.asyncSim(altIds2);}
 	  \State $sCount \gets sCount + (N - n_0)$
 	\EndIf
   \EndIf
@@ -455,6 +724,17 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \State \Return $\argmax_{i} sum[i] / count[i]$
 \end{algorithmic}
 }
+\end{frame}
+
+\begin{frame}
+\frametitle{Comment of Async Rinott Procedure}
+\begin{itemize}
+\item Numerical experiment end with a non-positive result, not too much difference compared with the classic Rinott's procedure.
+\vspace{\baselineskip}
+\item Omitting a barrier saves the time cost of one simulation at most, since a barrier will wait for the slowest simulation. But during Rinott's procedure we need many simulations in total, even for a very small $k$.
+\vspace{\baselineskip}
+\item It provides a trial combining staged procedure and sequential procedure, and reminds us that some barriers in existing procedures are not necessary.
+\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -492,11 +772,11 @@ Elapsed Minutes(t): & 370.5 & 129.4 & 94.4 & 68.3 & 41.7 & 34.2 \\
 \frametitle{Heaped APS}
 \framesubtitle{Heaped Comparing}
 $$ \bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < \min\{0, -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2}\} $$
-\begin{itemize}
-\item To see whether $ -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} > 0$, just check largest $\frac{S^2(N_r)}{N_r}$.
-\end{itemize}
-$$ \bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} $$
-$$ \bar{X_{i}}(N_{ir}) + \frac{a}{\delta}\frac{S_i^2(N_{ir})}{N_{ir}} < \bar{X_{j}}(N_{jr}) - \frac{a}{\delta}\frac{S_j^2(N_{jr})}{N_{jr}} + \frac{\delta}{2} $$
+To see whether $ -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} > 0$, just check largest $\frac{S^2(N_r)}{N_r}$.
+\begin{align*}
+& \bar{X_{i}}(N_{ir}) - \bar{X_{j}}(N_{jr}) < -\frac{a}{\delta}[\frac{S_i^2(N_{ir})}{N_{ir}} + \frac{S_j^2(N_{jr})}{N_{jr}}] + \frac{\delta}{2} \\
+\Longrightarrow & \bar{X_{i}}(N_{ir}) + \frac{a}{\delta}\frac{S_i^2(N_{ir})}{N_{ir}} < \bar{X_{j}}(N_{jr}) - \frac{a}{\delta}\frac{S_j^2(N_{jr})}{N_{jr}} + \frac{\delta}{2}
+\end{align*}
 \begin{itemize}
 \item Check smallest $\bar{X}(N_r) + \frac{a}{\delta}\frac{S^2(N_r)}{N_r}$, with iteration.
 \item Check largest $\bar{X}(N_r) - \frac{a}{\delta}\frac{S^2(N_r)}{N_r}$, without iteration.
@@ -540,13 +820,14 @@ $$ \bar{X_{i}}(N_{ir}) + \frac{a}{\delta}\frac{S_i^2(N_{ir})}{N_{ir}} < \bar{X_{
 \frametitle{Heaped Comparing Algorithm}
 \framesubtitle{Substantial Accelaration of Serial Part}
 \begin{itemize}
-\item {Alternative: } normal distributed simulation result, with pre-known mean and variance
-\item {Configuration: } increasing number of alternatives, one of them has max-mean 1, others has mean of 0. Variance is 1.
-\item {Environment: } pc with 8 hardware thread, using 4 slaves. $\alpha=0.05, \delta=1, n_0 = 10$.
-\item {Result: } $100\%$ correct selection.
-\end{itemize}
+\item {Problem Setting: } \\ Variant number of normal distributed alternatives, with pre-known mean and variance. One of them has maximum mean 1, others has mean of 0, and all of them has variance of 1.
+\item {Computing Environment: } \\ A local pc with 8 hardware thread, using 4 slaves. Simulation output queue is always non-empty.
+\item {R\&S Parameters: } \\ APS and HAPS procedure with $\alpha=0.05, \delta=1, n_0 = 10$.
+\item {Numerical Results: }
 \begin{table}[ht]
 \begin{center}
+\scalebox{0.85}
+{
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
 Num. of Alternatives(k): & 100 & 1000 & 10000 & 100000 \\
@@ -555,10 +836,11 @@ Linear Comparison (ms): & 56 & 199.6 & 5606.4 & 884992.6 \\
 \hline
 Heaped Comparison (ms): & 54.8 & 163.6 & 906 & 10338.6 \\
 \hline
-\end{tabular} \\
-\caption{Effect of Heaped Comparison}
+\end{tabular}
+}
 \end{center}
 \end{table}
+\end{itemize}
 \end{frame}
 
 \section{Conclusion and Future Work}
@@ -590,7 +872,7 @@ Heaped Comparison (ms): & 54.8 & 163.6 & 906 & 10338.6 \\
 \begin{itemize}
 \item system viewpoint
 \begin{itemize}
-\item architecture: centralized v.s. decentralized (see \cite{potwsc05ras})
+\item scale out: centralized v.s. decentralized (see \cite{potwsc05ras})
 \item task scheduling: task-pool v.s. explicit scheduler
 \end{itemize}
 \item implementation viewpoint
