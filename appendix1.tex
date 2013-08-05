@@ -1,6 +1,6 @@
 \chapter{Common Parallel Patterns}
 
-A pattern is a tested solution to a certain kind of problem under some conditions. Here we have summarised several common patterns in parallel computing and listed them below.
+A pattern is a tested solution to a certain kind of problem under some conditions. Here we have summarized several common patterns in parallel computing and listed them below.
 
 \section{Embarrassingly Parallel}
 
@@ -20,7 +20,7 @@ The most popular software pipeline should be Unix pipeline. It composes Unix com
 
 Master-Slave pattern or architecture may be the easiest one to implement on distributed environment. In a Master-Slave structure, a master process takes care of the essential serial part of the whole parallel program, while several slaves execute the paralleled workload. Any slave who finishes current workload will inform the master and wait for master's response, like starting a new task.
 
-Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-levelled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
+Since master does serial part and takes extra cost like coordination, it is very easy to become the bottle neck of whole parallel program, although get multi-leveled. We will give a deeper analysis in the next chapter since we adopted this pattern or architecture in our implementation.
 
 Master-Slave pattern is a high-level abstract pattern. There're many specific instances, like fork-join. 
 

@@ -26,7 +26,7 @@ Typically, R\&S Procedures allocate simulation effort to all alternatives, namel
 
 Rinott's procedure is a classic two-staged R\&S procedure developed in 1978 by Rinott in \cite{cistam1978rinott}. It guarantees with the confidence level $1 - \alpha$ that the alternative get selected is at least $\delta$ better than the second best one. If alternatives within $\delta$ worse than the best one exist, then Rinott's procedure guarantees to select one of these "good enough" alternatives with the same probability. The $\delta$ here is called indifference-zone. It is set by procedure user to determine the smallest difference that is worth getting noticed. In other word, differences less than this $\delta$ can be ignored from a practical viewpoint.
 
-Suppose there are $k$ systems where $k \geqslant 2$. Let $X_{ij}$ denote the $j$th independent sample value from simulation experiments of alternative $i$. We assume that $X_{ij} \backsim N(\mu_i, \theta_i^2)$, where both $\mu_i$ and $\theta_i^2$ are unknown, and each $X_{ij}$ is independent from each other. Also let $\bar{X_i}(r) = r^{-1}\sum_{j=1}^r$, namely the sample mean of first $r$ sample values of alternative $i$, and let $S_i^2 = \frac{1}{n_0 - 1}\sum_{j=1}{n_0}(X_{ij} - \bar{X_i}(n_0))^2$, the sample variance of first $r$ sample values of alternative $i$.
+Suppose there are $k$ systems where $k \geqslant 2$. Let $X_{ij}$ denote the $j$th independent sample value from simulation experiments of alternative $i$. We assume that $X_{ij} \backsim N(\mu_i, \theta_i^2)$, where both $\mu_i$ and $\theta_i^2$ are unknown, and each $X_{ij}$ is independent from each other. Also let $\bar{X_i}(r) = r^{-1}\sum_{j=1}^r$, namely the sample mean of first $r$ sample values of alternative $i$, and let $S_i^2 = \frac{1}{n_0 - 1}\sum_{j=1}^{n_0}(X_{ij} - \bar{X_i}(n_0))^2$, the sample variance of first $r$ sample values of alternative $i$.
 
 With these symbols, we organize the Rinott's procedure as following steps:
 
@@ -41,13 +41,13 @@ And specifically, if the best alternative is defined as the one with largest exp
 $$ Pr\{\text{select alternative i }|\text{ }\mu_i - \mu_j \geqslant \delta \} \geqslant 1 - \alpha $$
 where $1/k < 1 - \alpha < 1$. Since this thesis focuses on implementation, reader interested in the proof may refer to \cite{ras-recent-advances}. 
 
-One related issue worth mentioning here is that the total sample size required in Rinott's procedure is slightly less that $O(k\log{k})$, which determines the total computing effort.
+One related issue worth mentioning here is that the total sample size required in Rinott's procedure is slightly less than $O(k\log{k})$, which determines the total computing effort.
 
 \subsubsection{A Fully Sequential Procedure}
 
 While the Rinott's procedure mentioned above is a classic two-staged procedure, fully sequential is another important type of procedures, with classic examples like KN in \cite{tomacs01kn} and NSGS in \cite{or01nsgs}. However the procedure we will review right after this paragraph is a newly developed one also featured as fully sequential. It first appears in \cite{ras-seq-jeff} by L. J HONG in 2004. This procedure provides good statistical validity while keeps a great opportunity of decreasing total number of sample values, approximately the total computing effort need to spend, at same time. The key point is that if at any time there is enough evidence to prove that some certain alternative is clearly inferior, then this alternative will get eliminated immediately in theoretic like what most fully sequential procedures do.
 
-With the symbols same as those in Rinott's procedure, we organize the this procedure as following steps:
+With the symbols same as those in Rinott's procedure, we organize the procedure as following steps:
 
 \begin{enumerate}
 \item{Set up: } Set up parameters $\alpha$, $\delta$ and $n_0$. Let $\lambda = \eta / 2$ and $a$ be the solution of the equation below:
@@ -69,7 +69,7 @@ A missing specification of the above procedure lays in the part of stopping rule
 
 In \cite{ras-seq-jeff}, such sampling rule is applied: after first stage, run next simulation experiment against the surviving alternative with the lowest $n_i(r)/Si$. If a tie exists, run next simulation against the surviving alternative with lowest $S_i$ among them.
 
-The sample size of such fully sequential procedures is typically smaller than that in Ronott's procedure except for some extreme case. Interested reader may refer to \cite{ras-seq-jeff} for detailed properties as well statistical validity proofs.
+The sample size of such fully sequential procedures is typically smaller than that in the Rinott's procedure except for some extreme case. Interested reader may refer to \cite{ras-seq-jeff} for detailed properties as well statistical validity proofs.
 
 \section{Parallel Computing}
 
@@ -110,7 +110,7 @@ One step further from multi-core processor, a computer can have more than one pr
 
 A computer where every address of memory can be accessed within equal latency and bandwidth is recognized as Uniform Memory Access(UMA), otherwise it belongs to Non-Uniform Memory Access (NUMA). SMP is one kind of Uniform Memory Access, while MPP, standing for massively parallel processor, which is a single computer with multiple networked processors, belongs to Non-Uniform Memory Access.
 
-Communication among processors of the same computer can be implemented in many ways, from a simple shared media like memory or bus to complicated internal network involving topologies like star or ring and routing strategies if some processors are not connected directly.
+Communication among processors of the same computer can be implemented in many ways, from a simple shared media like memory or bus to complicated internal network involving typologies like star or ring and routing strategies if some processors are not connected directly.
 
 \subsubsection{Cluster}
 
@@ -150,7 +150,7 @@ The only way for processes deployed on different physical machines to communicat
 
 Network communication protocol is layered. The theoretical standard is OSI model with seven layers, while the practical standard is TCP/IP model, which only has for broad layers: link layer, Internet layer, transport layer and application layer.
 
-For software developers of distributed application, including pure parallel computing, the design decision starts varying from the Transport layer, with basically two big choices: Transmission Control Protocol(TCP) or User Datagram Protocol(UDP). TCP provides reliable, ordered, error-checked delivery of data, while UDP is connectionless and emphasizes more on lowered overhead and reduced latency. In other words, using UDP brings the chance to speed up communication with the risk of possible invalid transmitted data. Software developers of distributed application can choose to ignore the risk or pay more code on ensuring transmitted data.
+For software developers of distributed application, including pure parallel computing, the design decision starts varying from the Transport layer, with basically two big choices: Transmission Control Protocol(TCP) or User Datagram Protocol(UDP). TCP provides reliable, ordered, error-checked delivery of data, while UDP is connection-less and emphasizes more on lowered overhead and reduced latency. In other words, using UDP brings the chance to speed up communication with the risk of possible invalid transmitted data. Software developers of distributed application can choose to ignore the risk or pay more code on ensuring transmitted data.
 
 Beyond transport layer, software developers also need to make design decision of application layer, say, to use existing protocols like HTTP or develop application specified protocol. HTTP stands for Hypertext Transfer Protocol and is based on client/server model. It is well supported in most dominant programming languages in format of library thus quite easy to use. Developing application specified protocol based on TCP or UDP may gain extra performance but also cost more effect and taking the risk of non-robustness.
 
@@ -188,7 +188,7 @@ $$ S_n = (1 - p) + n \times p $$
 
 Here $n$ and $p$ is still the same meaning as what they're in Amdahl's Law but the speed-up ratio does not have a upper limit as $n$ goes to infinity any more.
 
-Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practise.
+Be attention that both Amdahl's law and Gustafson's law assume that the execution time of the serial portion of the program is independent of the number of execution units, which always violated in practice.
 
 \subsubsection{More Affecting Issues}
 

@@ -176,7 +176,9 @@ With the revision of existing simulation R\&S procedures, now it is possible to 
 
 \subsection{Overview}
 
-In parallel computing, the master-slave pattern means that there is a single master execution unit dealing with the serial part while several identical slave execution units sharing the workload which can be carried out in parallel. For simulation R\&S procedures, the serial R\&S procedure should be implemented within the master, while the independent simulation experiments should be spread out among all the slaves, with explicit or implicit scheduling from the master.
+In parallel computing, the master-slave pattern means that there is a single master execution unit dealing with the serial part while several identical slave execution units sharing the workload which can be carried out in parallel. The workload within the single master could make the the bottle-neck of the whole system, so spreading as more workload to all slaves as possible is an important design goal when applying master-slave pattern.
+
+For simulation R\&S procedures, the serial R\&S procedure should be implemented within the master, while the independent simulation experiments should be spread out among all the slaves, with explicit or implicit scheduling from the master.
 
 \begin{figure}[ht]
 \centering
@@ -220,7 +222,7 @@ The first function parameter $alt$ is an array containing all the data needed to
 
 The second function parameter $args$ is an array containing the common arguments for all the simulation.
 
-The third function parameter seed is an array of integers needed in generating uniformly distributed random numbers with the $MRG32k3a$ algorithm. The main idea here is to make each simulation against the same alternative independent from each other in the viewpoint of statistic by attaching each simulation a different set of seeds, which is generated in master as part of the simulation input. What's more, we also need a set of seeds to generate many sets of seeds used by simulation experiments, and the "master seeds" could be specified by user.
+The third function parameter $seed$ is an array of integers(6 integers in total) needed in generating $U(0,1)$ distributed random numbers with the $MRG32k3a$ algorithm. The main idea here is to make each simulation of same alternative independent from each other in the viewpoint of statistic by attaching each simulation a different set of seed, which is generated in master, as part of the simulation input. And in master, we generate 6 $U(1, 2^32 - 1)$ distributed integers as a set of seeds for each simulation. What's more, in master we also need a set of seeds when generating $U(1,2^32 - 1)$ distributed integers, which is the "master seeds" and it could be specified by user. 
 
 The return value is design as an array to support multiple simulation output.
 
@@ -379,6 +381,52 @@ For the first kind of user interface, we could simply leave a command line inter
 \end{figure}
 
 In this way it is much more user friendly than command line. Beginning users could just choose corresponding R\&S procedure and simulation experiments and fill in the parameters intuitively, advanced users may develop his own simulation experiments, and professional users can develop his own procedure with fairly less effort than what he needs to spend without our work. Interested reader may refer to the appendix to get a detailed user guide of this web interface.
+
+\section{A Comparative Study of Redesigned Procedures}
+
+\subsection{Experiment Settings:}
+
+\begin{itemize}
+\item {Problem Setting: } 100 normal distributed alternatives, with pre-known mean and variance. One of them has maximum mean 1, others has mean of 0, and all of them has variance of 1.
+\item {Computing Environment: } A local pc with 8 hardware thread, using 4 slaves.
+\item {R\&S Parameters: } $\alpha=0.05, \delta=1, n_0 = 10$.
+\end{itemize}
+
+\subsection{Numerical Results:}
+
+\begin{table}[ht]
+\begin{center}
+\scalebox{0.75}
+{
+\begin{tabular}{|c|c|c|c|}
+\hline
+rep: & Rinott & VFKN & APS \\
+\hline
+1 & 457533, 457533, 457533, 457533, 3368ms & 23889, 23833, 23832, 3780, 476ms & 1296, 1296, 1296, 1292, 95ms \\
+\hline
+2 & 467561, 467561, 467561, 467561, 3293ms & 16363, 14981, 14980, 2173, 116ms & 1333, 1333, 1333, 1329, 56ms \\
+\hline
+3 & 490175, 490175, 490175, 490175, 3356ms & 24061, 17010, 17009, 3050, 138ms & 1265, 1265, 1265, 1262, 47ms \\
+\hline
+4 & 473949, 473949, 473949, 473949, 3306ms & 16638, 13863, 13862, 2898, 111ms & 1205, 1205, 1205, 1202, 37ms \\
+\hline
+5 & 446015, 446015, 446015, 446015, 3151ms & 14937, 13771, 13769, 3758, 114ms & 1247, 1247, 1247, 1243, 45ms \\
+\hline
+\end{tabular}
+}
+\end{center}
+\caption{Comparative Study of Redesigned Procedures}
+\end{table}
+
+In each table cell, the numbers means count of simulation input enqueue operations, count of simulation input dequeue operations, count of simulation output enqueue operations, count of simulation output dequeue operations and total time cost, respectively.
+
+\subsection{Comparative Analysis:}
+
+From the table above we can see that the time cost of the Rinott's procedure is much more than the VFKN procedure, while the time cost of Vector-Filling KN Procedure is slightly more than the APS procedure. The first result is not surprising, since generally the Rinott's procedure requires more samples to make decision, which means more simulation workload. The second result can also be explained from the two redesigned procedures, laying on the fact that the VFKN procedure is more conservative when using already obtained sample values.
+
+Except from the time cost, another issue worth noticing is the different number of enqueue operations and the dequeue operations. For the Rinott's procedure, it's not a problem, since the required sample number can be calculated before starting simulation. But for the other two fully sequential procedures, we have to sampling more in advance, in order to keep the input queue non-empty and the slaves busy since they can always obtain simulation input without wait ahead of an empty queue.
+
+The most significant difference is within the output queue of the VFKN procedure. The number of enqueued output is much greater than that of dequeued output, which means that in the VFKN procedure, the master is dealing with samples in a very low speed, which is related to the growing size of vector, and it becomes the bottle-neck of the system. As for the APS procedure, the situation is much better, the number of enqueued output is almost the same as that of the dequeued output, which means the APS procedure could deal with obtained sample values more effectively.
 
 \section{System Evaluation}
 
